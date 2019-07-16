@@ -12,10 +12,18 @@ repositories {
 }
 
 dependencies {
+
+    // source code parsing
     implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.14.7'
+
+    // graph db drivers
     implementation 'org.apache.tinkerpop:gremlin-core:3.4.2'
     implementation 'org.apache.tinkerpop:tinkergraph-gremlin:3.4.2'
     implementation 'io.shiftleft:tinkergraph-gremlin:3.3.4.18'
+
+    // logging
+    implementation 'org.slf4j:slf4j-api:1.6.6'
+    implementation 'ch.qos.logback:logback-classic:1.0.13'
 
     testImplementation 'junit:junit:4.12'
 }

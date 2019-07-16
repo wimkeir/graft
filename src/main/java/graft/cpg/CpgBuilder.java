@@ -8,30 +8,34 @@ import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.utils.SourceRoot;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * TODO: javadoc
  */
 public class CpgBuilder {
 
+    private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);
+
     private SourceRoot srcRoot;
 
     public CpgBuilder(String srcRoot) {
         this.srcRoot = new SourceRoot(Paths.get(srcRoot));
-        System.out.println("New CpgBuilder (srcRoot=" + srcRoot + ")");
+        log.debug("New CpgBuilder (srcRoot=" + srcRoot + ")");
     }
 
     /**
      * TODO: javadoc
      */
     public void buildCpg() {
-        System.out.println("Building CPG");
+        log.info("Building CPG");
 
         List<ParseResult<CompilationUnit>> results;
         try {
             results = srcRoot.tryToParse();
         } catch (IOException e) {
-            System.out.println("IOException in <CpgBuilder>.buildCpg");
-            System.out.println(e.getMessage());
+            log.error("IOException in <CpgBuilder>.buildCpg", e);
             return;
         }
 
@@ -40,10 +44,10 @@ public class CpgBuilder {
                 CompilationUnit cu = result.getResult().get();
                 cu.findRootNode().walk(new AstWalker(null));
             } else {
-                System.out.println("Problems with parse");
+                log.error("Problems with parse");
                 List<Problem> problems = result.getProblems();
                 for (Problem problem : problems) {
-                    System.out.println(problem.getVerboseMessage());
+                    log.error(problem.getVerboseMessage());
                 }
             }
         }

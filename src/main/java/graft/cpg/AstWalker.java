@@ -6,10 +6,15 @@ import com.github.javaparser.ast.Node;
 
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * TODO: javadoc
  */
 public class AstWalker implements Consumer<Node> {
+
+    private static Logger log = LoggerFactory.getLogger(AstWalker.class);
 
     private Graph graph;
 
