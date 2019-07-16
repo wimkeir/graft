@@ -1,9 +1,20 @@
 package graft;
 
+import graft.cpg.CpgBuilder;
+
+/**
+ * TODO: javadoc
+ */
 public class Graft {
 
+    /**
+     * TODO: javadoc
+     *
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
-        System.out.println("Hello, world!");
+        CpgBuilder cpgBuilder = new CpgBuilder(args[0]);
+        cpgBuilder.buildCpg();
     }
 
 }
