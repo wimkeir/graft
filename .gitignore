@@ -1,0 +1,18 @@
+# Java stuff
+*.class
+*.jar
+*.zip
+*.tar.gz
+
+# Gradle stuff
+.gradle
+build/
+!gradle-wrapper.jar
+
+# IDE stuff
+*.iml
+.idea/
+.vscode/
+
+# other
+etc/
