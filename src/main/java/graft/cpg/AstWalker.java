@@ -17,14 +17,16 @@ public class AstWalker implements Consumer<Node> {
     private static Logger log = LoggerFactory.getLogger(AstWalker.class);
 
     private Graph graph;
+    private AstNodeVisitor visitor;
 
     public AstWalker(Graph graph) {
         this.graph = graph;
+        visitor = new AstNodeVisitor();
     }
 
     @Override
     public void accept(Node node) {
-        node.accept(new AstNodeVisitor(), graph);
+        node.accept(visitor, graph);
     }
 
 }

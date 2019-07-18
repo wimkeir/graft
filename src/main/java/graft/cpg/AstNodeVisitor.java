@@ -1,5 +1,9 @@
 package graft.cpg;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
+import com.github.javaparser.Position;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.*;
@@ -12,12 +16,23 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import graft.traversal.CpgTraversalSource;
+
+import static graft.Const.*;
+
 /**
  * TODO: javadoc
  */
 public class AstNodeVisitor extends VoidVisitorWithDefaults<Graph> {
 
     private static Logger log = LoggerFactory.getLogger(AstNodeVisitor.class);
+
+    // TODO: group these in context object
+    private String currentFileName;         // the Java file currently being walked
+    private String currentFilePath;         // relative to the source root
+    private String currentPackage;
+    private ClassOrInterfaceInfo currentClassOrInterface;
+    private MethodInfo currentMethod;
 
     @Override
     public void defaultAction(Node node, Graph graph) {
@@ -35,13 +50,32 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<Graph> {
     public void visit(CompilationUnit cu, Graph graph) {
         // a compilation unit represents a single Java source file, and consists of an optional
         // package declaration, zero or more import declarations, and zero or more type declarations
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting CompilationUnit");
+
+        // reset current AST walk context
+        currentPackage = NONE;
+        currentClassOrInterface = null;
+        currentMethod = null;
+
+        // get source file path and filename
+        Optional<CompilationUnit.Storage> optStorage = cu.getStorage();
+        if (optStorage.isPresent()) {
+            CompilationUnit.Storage storage = optStorage.get();
+            Path srcRoot = storage.getSourceRoot();
+            Path filePath = storage.getPath();
+            currentFilePath = srcRoot.relativize(filePath).toString();
+            currentFileName = storage.getFileName();
+        } else {
+            currentFilePath = UNKNOWN;
+            currentFileName = UNKNOWN;
+        }
+        log.debug("Walking AST of file '{}'", currentFilePath);
     }
 
     @Override
     public void visit(Modifier mod, Graph graph) {
-        // a modifier like private, public, volatile, final etc.
-        throw new UnsupportedOperationException("Not implemented yet");
+        // a modifier like private, static, volatile etc.
+        log.trace("Visiting Modifier");
     }
 
     @Override
@@ -53,7 +87,7 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<Graph> {
     @Override
     public void visit(SimpleName name, Graph graph) {
         // a name consisting of a single identifier, ie. no dot qualifiers
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting SimpleName");
     }
 
     @Override
@@ -446,7 +480,10 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<Graph> {
     @Override
     public void visit(ClassOrInterfaceDeclaration decl, Graph graph) {
         // the definition of a class or interface
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting ClassOrInterfaceDeclaration");
+        currentClassOrInterface = ClassOrInterfaceInfo.fromClassOrInterfaceDecl(decl);
+        log.debug("Walking AST of class '{}'", currentClassOrInterface.simpleName());
+        log.debug(currentClassOrInterface.toString());
     }
 
     @Override
@@ -465,7 +502,37 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<Graph> {
     public void visit(MethodDeclaration decl, Graph graph) {
         // a full method declaration, with possibly empty lists of modifiers, annotations, type
         // parameters and regular parameters, and a return type, simple name, and body.
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting MethodDeclaration");
+        currentMethod = MethodInfo.fromMethodDecl(decl);
+        log.debug("Walking AST of method '{}'", currentMethod.name());
+        log.debug(currentMethod.toString());
+
+        // get position in source code
+        // TODO: this can be factored out as a util function
+        Optional<Position> posOpt = decl.getBegin();
+        int line, col;
+        if (posOpt.isPresent()) {
+            Position pos = posOpt.get();
+            line = pos.line;
+            col = pos.column;
+        } else {
+            line = -1;
+            col = -1;
+        }
+
+        // generate the method entry node
+        CpgTraversalSource g = graph.traversal(CpgTraversalSource.class);
+        // TODO: the base properties can be added in a util function given the walk context
+        g.addV(CFG_NODE)
+                .property(NODE_TYPE, ENTRY)
+                .property(FILE_PATH, currentFilePath)
+                .property(FILE_NAME, currentFileName)
+                .property(PACKAGE_NAME, currentPackage)
+                .property(CLASS_NAME, currentClassOrInterface.simpleName())
+                .property(METHOD_NAME, currentMethod.name())
+                .property(LINE_NO, line)
+                .property(COL_NO, col)
+                .iterate();
     }
 
     @Override
