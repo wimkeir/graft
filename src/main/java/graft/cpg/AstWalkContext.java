@@ -1,5 +1,10 @@
 package graft.cpg;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.PackageDeclaration;
@@ -9,10 +14,7 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import static graft.Const.*;
 
@@ -27,8 +29,14 @@ class AstWalkContext {
     private String currentClass;
     private String currentMethod;
 
+    private int paramIndex;
+    private int argIndex;
+
     private ClassOrInterfaceContext classOrInterfaceContext;
     private MethodContext methodContext;
+
+    private Vertex astTail;
+    private Vertex cfgTail;
 
     AstWalkContext() {
         currentFileName = UNKNOWN;
@@ -58,6 +66,30 @@ class AstWalkContext {
         return currentMethod;
     }
 
+    int getParamIndex() {
+        return paramIndex;
+    }
+
+    void incrementParamIndex() {
+        paramIndex++;
+    }
+
+    Vertex astTail() {
+        return astTail;
+    }
+
+    Vertex cfgTail() {
+        return cfgTail;
+    }
+
+    void setAstTail(Vertex tail) {
+        astTail = tail;
+    }
+
+    void setCfgTail(Vertex tail) {
+        cfgTail = tail;
+    }
+
     void update(CompilationUnit cu) {
         Optional<CompilationUnit.Storage> optStorage = cu.getStorage();
         if (optStorage.isPresent()) {
@@ -78,10 +110,13 @@ class AstWalkContext {
 
     void update(ClassOrInterfaceDeclaration decl) {
         classOrInterfaceContext = ClassOrInterfaceContext.fromClassOrInterfaceDecl(decl);
+        currentClass = classOrInterfaceContext.simpleName;
     }
 
     void update(MethodDeclaration decl) {
         methodContext = MethodContext.fromMethodDecl(decl);
+        currentMethod = methodContext.name;
+        paramIndex = 0;
     }
 
     private static class ClassOrInterfaceContext {

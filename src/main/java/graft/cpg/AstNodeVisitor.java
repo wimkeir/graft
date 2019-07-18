@@ -10,6 +10,8 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.VoidVisitorWithDefaults;
 
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,8 +64,24 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(Parameter param, AstWalkContext context) {
-        // a parameter to a method declaration or lambda
-        throw new UnsupportedOperationException("Not implemented yet");
+        // TODO: varargs, annotations
+        log.trace("Visiting Parameter");
+        String textLabel = param.getType().asString() + " " + param.getNameAsString();
+        Vertex paramVertex = baseAstNode(param, PARAM, textLabel, context);
+
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        g.V(paramVertex)
+                .property(JAVA_TYPE, param.getType().asString())
+                .property(NAME, param.getNameAsString())
+                .iterate();
+        g.addE(AST_EDGE)
+                .from(context.astTail()).to(paramVertex)
+                .property(INDEX, context.getParamIndex())
+                .property(EDGE_TYPE, PARAM)
+                .property(TEXT_LABEL, PARAM)
+                .iterate();
+
+        context.incrementParamIndex();
     }
 
     @Override
@@ -84,8 +102,7 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(BlockStmt stmt, AstWalkContext context) {
-        // a block of statements enclosed between curly braces
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting BlockStmt");
     }
 
     @Override
@@ -126,8 +143,20 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(ExpressionStmt stmt, AstWalkContext context) {
-        // a wrapper around an expression to allow it to be used as a statement
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting ExpressionStmt");
+
+        String textLabel = stmt.toString();
+        Vertex exprStmtVertex = baseCfgNode(stmt, EXPR_STMT, textLabel, context);
+
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        g.addE(CFG_EDGE)
+                .from(context.cfgTail()).to(exprStmtVertex)
+                .property(EDGE_TYPE, EMPTY)
+                .property(TEXT_LABEL, EMPTY)
+                .iterate();
+
+        context.setAstTail(exprStmtVertex);
+        context.setCfgTail(exprStmtVertex);
     }
 
     @Override
@@ -291,9 +320,6 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(MethodCallExpr expr, AstWalkContext context) {
-        // a method call on an object or class, with an optional scope and list of type arguments,
-        // a name, and a (possibly empty) list of arguments
-        // TODO: set scope to this when not present
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -404,14 +430,12 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(ArrayType type, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting ArrayType");
     }
 
     @Override
     public void visit(ClassOrInterfaceType type, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting ClassOrInterfaceType");
     }
 
     @Override
@@ -434,8 +458,7 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(VoidType type, AstWalkContext context) {
-        // the return type of a void method declaration
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.trace("Visiting VoidType");
     }
 
     @Override
@@ -474,25 +497,13 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
         log.debug("Walking AST of method '{}'", context.currentMethod());
 
         String textLabel = decl.getDeclarationAsString(true, false, true);
-
-        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
-        // TODO: the base properties can be added in a util function given the walk context, node and label
-        g.addV(CFG_NODE)
-                .property(NODE_TYPE, ENTRY)
-                .property(FILE_PATH, context.currentFilePath())
-                .property(FILE_NAME, context.currentFileName())
-                .property(PACKAGE_NAME, context.currentPackage())
-                .property(CLASS_NAME, context.currentClass())
-                .property(METHOD_NAME, context.currentMethod())
-                .property(TEXT_LABEL, textLabel)
-                .property(LINE_NO, getLineNr(decl))
-                .property(COL_NO, getColNr(decl))
-                .iterate();
+        Vertex entryNode = baseCfgNode(decl, ENTRY, textLabel, context);
+        context.setAstTail(entryNode);
+        context.setCfgTail(entryNode);
     }
 
     @Override
     public void visit(PackageDeclaration decl, AstWalkContext context) {
-        // a package declaration consisting of a possibly qualified package name
         log.trace("Visiting PackageDeclaration");
         context.update(decl);
     }
@@ -520,6 +531,29 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
         } else {
             return -1;
         }
+    }
+
+    private Vertex baseCfgNode(Node node, String type, String textLabel, AstWalkContext context) {
+        return baseCpgNode(node, CFG_NODE, type, textLabel, context);
+    }
+
+    private Vertex baseAstNode(Node node, String type, String textLabel, AstWalkContext context) {
+        return baseCpgNode(node, AST_NODE, type, textLabel, context);
+    }
+
+    private Vertex baseCpgNode(Node node, String label, String nodeType, String textLabel, AstWalkContext context) {
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        return g.addV(label)
+                .property(NODE_TYPE, nodeType)
+                .property(FILE_PATH, context.currentFilePath())
+                .property(FILE_NAME, context.currentFileName())
+                .property(PACKAGE_NAME, context.currentPackage())
+                .property(CLASS_NAME, context.currentClass())
+                .property(METHOD_NAME, context.currentMethod())
+                .property(TEXT_LABEL, textLabel)
+                .property(LINE_NO, getLineNr(node))
+                .property(COL_NO, getColNr(node))
+                .next();
     }
 
 }
