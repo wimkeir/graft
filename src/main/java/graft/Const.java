@@ -14,6 +14,7 @@ public class Const {
     public static final String METHOD_NAME = "method-name";
     public static final String LINE_NO = "line-no";
     public static final String COL_NO = "col-no";
+    public static final String TEXT_LABEL = "text-label";
 
     // CFG node types
     public static final String ENTRY = "entry";

@@ -4,8 +4,6 @@ import java.util.function.Consumer;
 
 import com.github.javaparser.ast.Node;
 
-import org.apache.tinkerpop.gremlin.structure.Graph;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,17 +14,15 @@ public class AstWalker implements Consumer<Node> {
 
     private static Logger log = LoggerFactory.getLogger(AstWalker.class);
 
-    private Graph graph;
-    private AstNodeVisitor visitor;
+    private AstWalkContext context;
 
-    public AstWalker(Graph graph) {
-        this.graph = graph;
-        visitor = new AstNodeVisitor();
+    AstWalker() {
+        this.context = new AstWalkContext();
     }
 
     @Override
     public void accept(Node node) {
-        node.accept(visitor, graph);
+        node.accept(new AstNodeVisitor(), context);
     }
 
 }
