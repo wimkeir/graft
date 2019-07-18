@@ -1,5 +1,6 @@
 package graft;
 
+import graft.utils.DotUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,7 @@ public class Graft {
 
         try {
             cpgBuilder.buildCpg();
+            DotUtil.cpgToDot("etc/dot/cpg.dot", "cpg");
         } catch (GraftException e) {
             log.error("Unable to build CFG: {}", e.getMessage(), e);
         }
