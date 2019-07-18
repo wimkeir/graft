@@ -8,6 +8,8 @@ import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.utils.SourceRoot;
 
+import graft.GraftException;
+import graft.db.GraphUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +30,7 @@ public class CpgBuilder {
     /**
      * TODO: javadoc
      */
-    public void buildCpg() {
+    public void buildCpg() throws GraftException {
         log.info("Building CPG");
 
         List<ParseResult<CompilationUnit>> results;
@@ -42,7 +44,7 @@ public class CpgBuilder {
         for (ParseResult<CompilationUnit> result : results) {
             if (result.isSuccessful()) {
                 CompilationUnit cu = result.getResult().get();
-                cu.findRootNode().walk(new AstWalker(null));
+                cu.findRootNode().walk(new AstWalker(GraphUtil.graph()));
             } else {
                 log.error("Problems with parse");
                 List<Problem> problems = result.getProblems();
