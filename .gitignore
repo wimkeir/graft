@@ -15,5 +15,8 @@ out/
 .idea/
 .vscode/
 
+# generated code
+src/main/generated
+
 # other
 etc/
