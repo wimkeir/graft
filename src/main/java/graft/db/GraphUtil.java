@@ -3,8 +3,6 @@ package graft.db;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 
-import graft.GraftException;
-
 public class GraphUtil {
 
     private static Graph graph;
@@ -15,11 +13,13 @@ public class GraphUtil {
         graphReady = true;
     }
 
-    public static Graph graph() throws GraftException {
+    public static Graph graph() {
         if (graphReady) {
             return graph;
+        } else {
+            initGraph();
+            return graph;
         }
-        throw new GraftException("Graph DB not yet initialised");
     }
     
 }

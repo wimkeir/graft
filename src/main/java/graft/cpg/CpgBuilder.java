@@ -44,7 +44,7 @@ public class CpgBuilder {
         for (ParseResult<CompilationUnit> result : results) {
             if (result.isSuccessful()) {
                 CompilationUnit cu = result.getResult().get();
-                cu.findRootNode().walk(new AstWalker(GraphUtil.graph()));
+                cu.findRootNode().walk(new AstWalker());
             } else {
                 log.error("Problems with parse");
                 List<Problem> problems = result.getProblems();
