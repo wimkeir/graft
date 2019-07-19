@@ -22,6 +22,7 @@ public class AstWalker implements Consumer<Node> {
 
     @Override
     public void accept(Node node) {
+        node.removeComment();
         node.accept(new AstNodeVisitor(), context);
     }
 

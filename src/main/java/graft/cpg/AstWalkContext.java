@@ -1,18 +1,14 @@
 package graft.cpg;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.Stack;
 
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.ReferenceType;
-import com.github.javaparser.ast.type.Type;
 
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
@@ -28,14 +24,10 @@ class AstWalkContext {
     private String currentPackage;
     private String currentClass;
     private String currentMethod;
-
     private int paramIndex;
-
-    private ClassOrInterfaceContext classOrInterfaceContext;
-    private MethodContext methodContext;
-
     private Vertex astTail;
     private Vertex cfgTail;
+    private Stack<EnclosingStmtContext> enclosingStmtContexts;
 
     AstWalkContext() {
         currentFileName = UNKNOWN;
@@ -43,6 +35,7 @@ class AstWalkContext {
         currentPackage = NONE;
         currentClass = NONE;
         currentMethod = NONE;
+        enclosingStmtContexts = new Stack<>();
     }
 
     String currentFileName() {
@@ -85,6 +78,7 @@ class AstWalkContext {
         astTail = tail;
     }
 
+    // TODO: get rid of this (use enter/exit methods)
     void setCfgTail(Vertex tail) {
         cfgTail = tail;
     }
@@ -108,117 +102,108 @@ class AstWalkContext {
     }
 
     void update(ClassOrInterfaceDeclaration decl) {
-        classOrInterfaceContext = ClassOrInterfaceContext.fromClassOrInterfaceDecl(decl);
-        currentClass = classOrInterfaceContext.simpleName;
+        currentClass = decl.getNameAsString();
     }
 
     void update(MethodDeclaration decl) {
-        methodContext = MethodContext.fromMethodDecl(decl);
-        currentMethod = methodContext.name;
+        currentMethod = decl.getNameAsString();
         paramIndex = 0;
     }
 
-    private static class ClassOrInterfaceContext {
+    void enterStmt(Statement stmt, Vertex stmtVertex) {
 
-        private String fullName;
-        private String simpleName;
-        private boolean isInterface;
-        private List<Modifier> modifiers;
-        private List<ClassOrInterfaceType> extendedTypes;
-        private List<ClassOrInterfaceType> implementedTypes;
+        if (stmt instanceof WhileStmt) {
+            EnclosingStmtContext context = new EnclosingStmtContext();
+            context.enclosingStmtHead = stmtVertex;
+            context.enclosingStmtType = WHILE_STMT;
+            WhileStmt whileStmt = (WhileStmt) stmt;
 
-        private static ClassOrInterfaceContext fromClassOrInterfaceDecl(ClassOrInterfaceDeclaration decl) {
-            ClassOrInterfaceContext context = new ClassOrInterfaceContext();
-            context.simpleName = decl.getNameAsString();
-            context.isInterface = decl.isInterface();
-
-            context.modifiers = new ArrayList<>(decl.getModifiers());
-            context.extendedTypes = new ArrayList<>(decl.getExtendedTypes());
-            context.implementedTypes = new ArrayList<>(decl.getImplementedTypes());
-
-            Optional<String> fullNameOpt = decl.getFullyQualifiedName();
-            if (fullNameOpt.isPresent()) {
-                context.fullName = fullNameOpt.get();
+            if (whileStmt.getBody() instanceof BlockStmt) {
+                BlockStmt whileBlock = whileStmt.getBody().asBlockStmt();
+                context.stmtsRemaining = whileBlock.getStatements().size();
+            } else if (whileStmt.hasEmptyBody()) {
+                context.stmtsRemaining = 0;
             } else {
-                context.fullName = UNKNOWN;
+                context.stmtsRemaining = 1;
             }
+            enclosingStmtContexts.push(context);
 
-            return context;
-        }
+        } else if (stmt instanceof IfStmt) {
+            EnclosingStmtContext context = new EnclosingStmtContext();
+            context.enclosingStmtHead = stmtVertex;
+            context.enclosingStmtType = IF_STMT;
+            context.inThenBlock = true;
+            IfStmt ifStmt = (IfStmt) stmt;
 
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-
-            for (Modifier modifier : modifiers) {
-                sb.append(modifier.getKeyword().toString());
-            }
-
-            if (isInterface) {
-                sb.append("interface '");
+            if (ifStmt.getThenStmt() instanceof BlockStmt) {
+                BlockStmt thenBlock = ifStmt.getThenStmt().asBlockStmt();
+                context.stmtsRemaining = thenBlock.getStatements().size();
+            } else if (ifStmt.getThenStmt() instanceof EmptyStmt) {
+                context.stmtsRemaining = 0;
             } else {
-                sb.append("class '");
+                context.stmtsRemaining = 1;
             }
 
-            sb.append(simpleName).append("' (").append(fullName).append(")");
+            // TODO: explain this
+            if (ifStmt.hasElseBranch()) {
+                context.hasElseBlock = true;
+                EnclosingStmtContext elseContext = new EnclosingStmtContext();
+                elseContext.enclosingStmtHead = stmtVertex;
+                elseContext.enclosingStmtType = IF_STMT;
+                elseContext.inThenBlock = false;
+                Statement elseBranch = ifStmt.getElseStmt().get();
 
-            if (extendedTypes.size() > 0) {
-                sb.append(" extends ");
-                for (ReferenceType type : extendedTypes) {
-                    sb.append(type.asString()).append(", ");
+                if (elseBranch instanceof BlockStmt) {
+                    BlockStmt elseBlock = elseBranch.asBlockStmt();
+                    elseContext.stmtsRemaining = elseBlock.getStatements().size();
+                } else if (elseBranch instanceof EmptyStmt) {
+                    elseContext.stmtsRemaining = 0;
+                } else {
+                    elseContext.stmtsRemaining = 1;
                 }
-                sb.delete(sb.lastIndexOf(","), sb.length());
+                enclosingStmtContexts.push(elseContext);
             }
-            if (implementedTypes.size() > 0) {
-                sb.append(" implements ");
-                for (ReferenceType type : implementedTypes) {
-                    sb.append(type.asString()).append(", ");
-                }
-                sb.delete(sb.lastIndexOf(","), sb.length());
-            }
-
-            return sb.toString();
+            enclosingStmtContexts.push(context);
         }
     }
 
-    private static class MethodContext {
-
-        private String name;
-        private Type returnType;
-        private List<Modifier> modifiers;
-        private List<ReferenceType> exceptionsThrown;
-
-        private static MethodContext fromMethodDecl(MethodDeclaration decl) {
-            MethodContext context = new MethodContext();
-            context.name = decl.getNameAsString();
-            context.returnType = decl.getType();
-
-            context.modifiers = new ArrayList<>(decl.getModifiers());
-            context.exceptionsThrown = new ArrayList<>(decl.getThrownExceptions());
-
-            return context;
+    void exitStmt(Statement stmt, Vertex stmtVertex) {
+        if (enclosingStmtContexts.isEmpty()) {
+            cfgTail = stmtVertex;
+            return;
         }
 
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-
-            for (Modifier modifier : modifiers) {
-                sb.append(modifier.getKeyword().asString());
-            }
-
-            sb.append(returnType).append(" ");
-            sb.append(name);
-
-            if (exceptionsThrown.size() > 0) {
-                sb.append("throws ");
-                for (ReferenceType exception : exceptionsThrown) {
-                    sb.append(exception.asString()).append(", ");
-                }
-                sb.delete(sb.lastIndexOf(","), sb.length());
-            }
-
-            return sb.toString();
+        EnclosingStmtContext context = enclosingStmtContexts.pop();
+        if (context.stmtsRemaining > 0) {
+            context.stmtsRemaining--;
+            enclosingStmtContexts.push(context);
+            cfgTail = stmtVertex;
+            return;
         }
+        assert context.stmtsRemaining == 0;
+
+        if (context.enclosingStmtType.equals(IF_STMT)) {
+            if (context.inThenBlock) {
+                cfgTail = context.enclosingStmtHead;
+                return;
+            }
+        } else if (context.enclosingStmtType.equals(WHILE_STMT)) {
+            CpgUtil.genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
+            cfgTail = context.enclosingStmtHead;
+            return;
+        }
+
+        cfgTail = stmtVertex;
     }
+
+    private static class EnclosingStmtContext {
+        String enclosingStmtType;
+        Vertex enclosingStmtHead;
+        int stmtsRemaining;
+
+        // if statements
+        boolean inThenBlock;
+        boolean hasElseBlock;
+    }
+
 }

@@ -51,8 +51,11 @@ public class Const {
     public static final String ASSIGN_EXPR = "var-assign";
     public static final String BINARY_EXPR = "binary-expr";
     public static final String UNARY_EXPR = "unary-expr";
+    public static final String THIS_EXPR = "this-expr";
     public static final String PARAM = "param";
     public static final String LOCAL_VAR = "local-var";
+    public static final String SUPER_EXPR = "super-expr";
+    public static final String INSTANCEOF_EXPR = "instanceof-expr";
     public static final String CALL_EXPR = "call-expr";
     public static final String LITERAL = "literal";
 
