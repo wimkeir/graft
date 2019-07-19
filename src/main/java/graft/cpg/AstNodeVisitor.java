@@ -169,7 +169,7 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
             stmts.add(stmt.getThenStmt());
             thenBlock = new BlockStmt(stmts);
         }
-        stmt.remove(stmt.getThenStmt());
+        stmt.setThenStmt(new EmptyStmt());
 
         String textLabel = "if " + "(" + stmt.getCondition().toString() + ")";
         Vertex v = baseCfgNode(stmt, IF_STMT, textLabel, context);
@@ -195,15 +195,14 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
         BlockStmt elseBlock;
         if (stmt.hasElseBranch() && stmt.hasElseBlock()) {
             elseBlock = stmt.getElseStmt().get().asBlockStmt();
-            stmt.remove(stmt.getElseStmt().get());
         } else if (stmt.hasElseBranch()) {
             NodeList<Statement> stmts = new NodeList<>();
             stmts.add(stmt.getElseStmt().get());
             elseBlock = new BlockStmt(stmts);
-            stmt.remove(stmt.getElseStmt().get());
         } else {
             elseBlock = null;
         }
+        stmt.setElseStmt(new EmptyStmt());
 
         context.setCfgTail(v);
         if (elseBlock != null) {
@@ -274,7 +273,49 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(WhileStmt stmt, AstWalkContext context) {
-        throw new UnsupportedOperationException("WhileStmt visitor implemented yet");
+        // TODO NB: true/false edges
+        log.trace("Visiting WhileStmt");
+
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+
+        BlockStmt whileBlock;
+        if (stmt.getBody() instanceof BlockStmt) {
+            whileBlock = (BlockStmt) stmt.getBody();
+        } else {
+            NodeList<Statement> whileStmts = new NodeList<>();
+            whileStmts.add(stmt.getBody());
+            whileBlock = new BlockStmt(whileStmts);
+        }
+
+        String textLabel = "while (" + stmt.getCondition().toString() + ")";
+        Vertex v = baseCfgNode(stmt, WHILE_STMT, textLabel, context);
+        g.addE(CFG_EDGE)
+                .from(context.cfgTail()).to(v)
+                .property(EDGE_TYPE, EMPTY)
+                .property(TEXT_LABEL, EMPTY)
+                .iterate();
+
+        Vertex guard = genExprNode(stmt.getCondition(), context).get(0);
+        g.addE(AST_EDGE)
+                .from(v).to(guard)
+                .property(EDGE_TYPE, GUARD)
+                .property(TEXT_LABEL, GUARD)
+                .iterate();
+
+        context.setCfgTail(v);
+        for (Statement whileStmt : whileBlock.getStatements()) {
+            whileStmt.accept(this, context);
+        }
+
+        g.addE(CFG_EDGE)
+                .from(context.cfgTail()).to(v)
+                .property(EDGE_TYPE, EMPTY)
+                .property(TEXT_LABEL, EMPTY)
+                .iterate();
+
+        // TODO: why does this not stick? NB
+        stmt.setBody(new EmptyStmt());
+        context.setCfgTail(v);
     }
 
     // ********************************************************************************************

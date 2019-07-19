@@ -40,6 +40,7 @@ public class Const {
     public static final String EXPR_STMT = "expr-stmt";
     public static final String IF_STMT = "if-stmt";
     public static final String PHI = "phi";
+    public static final String WHILE_STMT = "while-stmt";
 
     // CFG edge types
     public static final String EMPTY = "E";
@@ -53,7 +54,6 @@ public class Const {
     public static final String LOCAL_VAR = "local-var";
     public static final String CALL_EXPR = "call-expr";
     public static final String LITERAL = "literal";
-    public static final String STRING_LITERAL = "string-literal";
 
     // AST edge types
     public static final String EXPR = "expr";
@@ -64,6 +64,7 @@ public class Const {
     public static final String LEFT_OPERAND = "left-op";
     public static final String RIGHT_OPERAND = "right-op";
     public static final String OPERAND = "operand";
+    public static final String GUARD = "guard";
 
     // AST node property keys
     public static final String JAVA_TYPE = "java-type";
