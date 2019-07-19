@@ -238,7 +238,30 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(ReturnStmt stmt, AstWalkContext context) {
-        throw new UnsupportedOperationException("ReturnStmt visitor not implemented yet");
+        log.trace("Visiting ReturnStmt");
+
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+
+        Vertex v = baseCfgNode(stmt, RETURN_STMT, stmt.toString(), context);
+        Optional<Expression> exprOpt = stmt.getExpression();
+
+        if (exprOpt.isPresent()) {
+            Vertex expr = genExprNode(exprOpt.get(), context).get(0);
+            g.addE(AST_EDGE)
+                    .from(v).to(expr)
+                    .property(EDGE_TYPE, RETURNS)
+                    .property(TEXT_LABEL, RETURNS)
+                    .iterate();
+            g.V(v).property(VOID, FALSE);
+        } else {
+            g.V(v).property(VOID, TRUE);
+        }
+
+        g.addE(CFG_EDGE)
+                .from(context.cfgTail()).to(v)
+                .property(EDGE_TYPE, EMPTY)
+                .property(TEXT_LABEL, EMPTY)
+                .iterate();
     }
 
     @Override

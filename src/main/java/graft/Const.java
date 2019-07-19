@@ -41,6 +41,7 @@ public class Const {
     public static final String IF_STMT = "if-stmt";
     public static final String PHI = "phi";
     public static final String WHILE_STMT = "while-stmt";
+    public static final String RETURN_STMT = "return-stmt";
 
     // CFG edge types
     public static final String EMPTY = "E";
@@ -65,6 +66,7 @@ public class Const {
     public static final String RIGHT_OPERAND = "right-op";
     public static final String OPERAND = "operand";
     public static final String GUARD = "guard";
+    public static final String RETURNS = "returns";
 
     // AST node property keys
     public static final String JAVA_TYPE = "java-type";
@@ -109,6 +111,7 @@ public class Const {
     public static final String DOUBLE = "double";
     public static final String INT = "int";
     public static final String STRING = "string";
+    public static final String VOID = "void";
 
     public enum Direction {
         LEFT,
