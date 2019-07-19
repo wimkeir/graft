@@ -30,7 +30,6 @@ class AstWalkContext {
     private String currentMethod;
 
     private int paramIndex;
-    private int argIndex;
 
     private ClassOrInterfaceContext classOrInterfaceContext;
     private MethodContext methodContext;

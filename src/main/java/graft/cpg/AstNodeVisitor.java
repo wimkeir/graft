@@ -1,5 +1,7 @@
 package graft.cpg;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import com.github.javaparser.Position;
@@ -10,6 +12,7 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.VoidVisitorWithDefaults;
 
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -29,7 +32,7 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void defaultAction(Node node, AstWalkContext context) {
-        log.debug("Unsupported node type '{}', ignoring", node.getClass());
+        log.debug("Unhandled node type '{}', ignoring", node.getClass());
     }
 
     @Override
@@ -44,22 +47,6 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
         log.trace("Visiting CompilationUnit");
         context.update(cu);
         log.debug("Walking AST of file '{}'", context.currentFileName());
-    }
-
-    @Override
-    public void visit(Modifier mod, AstWalkContext context) {
-        log.trace("Visiting Modifier");
-    }
-
-    @Override
-    public void visit(Name name, AstWalkContext context) {
-        // a name that may consist of multiple dot-separated qualifiers and identifiers
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(SimpleName name, AstWalkContext context) {
-        log.trace("Visiting SimpleName");
     }
 
     @Override
@@ -155,6 +142,16 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
                 .property(TEXT_LABEL, EMPTY)
                 .iterate();
 
+        Vertex expr = genExprNode(stmt.getExpression(), context).get(0);
+
+        if (expr != null) {
+            g.addE(AST_EDGE)
+                    .from(exprStmtVertex).to(expr)
+                    .property(EDGE_TYPE, EXPR)
+                    .property(TEXT_LABEL, EXPR)
+                    .iterate();
+        }
+
         context.setAstTail(exprStmtVertex);
         context.setCfgTail(exprStmtVertex);
     }
@@ -232,242 +229,6 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
     }
 
     // ********************************************************************************************
-    // expressions
-    // ********************************************************************************************
-
-    @Override
-    public void visit(ArrayAccessExpr expr, AstWalkContext context) {
-        // an array access (square brackets) with a name and index expression
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(ArrayCreationExpr expr, AstWalkContext context) {
-        // an array creation expression consists of an element type, a list of one or more array
-        // creation levels (containers for size expressions), and an optional initializer.
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(ArrayCreationLevel level, AstWalkContext context) {
-        // a container for an array dimension expression
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(ArrayInitializerExpr expr, AstWalkContext context) {
-        // a curly braces initialisation of an array literal, containing a list of expressions
-        // which might be array initialisations themselves in the case of multi-dimensional arrays.
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(AssignExpr expr, AstWalkContext context) {
-        // an assignment consisting of a target, value and assignment operator (see the
-        // AssignExpr.Operator enum)
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(BinaryExpr expr, AstWalkContext context) {
-        // a binary expression consisting of a left and right operand and binary operator (see
-        // the BinaryExpr.Operator enum)
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(CastExpr expr, AstWalkContext context) {
-        // a cast expression consisting of a type and operand
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(ClassExpr expr, AstWalkContext context) {
-        // any access of type class, eg. ClassExpr.class
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(ConditionalExpr expr, AstWalkContext context) {
-        // a ternary expression consisting of a condition, a "then" expression and an "else" expression
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(EnclosedExpr expr, AstWalkContext context) {
-        // an expression between brackets
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(FieldAccessExpr expr, AstWalkContext context) {
-        // access of a named field in an object or class (the scope)
-        // TODO: how do we know if this is an instance or static access?
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(InstanceOfExpr expr, AstWalkContext context) {
-        // a use of the instanceof operator with a type and expression
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(LambdaExpr expr, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(MethodCallExpr expr, AstWalkContext context) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(MethodReferenceExpr expr, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(NameExpr expr, AstWalkContext context) {
-        // a wrapper for simple names (ie. variables) used in expressions
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(ObjectCreationExpr expr, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(SuperExpr expr, AstWalkContext context) {
-        // any occurrence of the super keyword (with a possible type name)
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(SwitchExpr expr, AstWalkContext context) {
-        // only supported in Java 12
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(ThisExpr expr, AstWalkContext context) {
-        // any occurrence of the this keyword (with a possible type name)
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(TypeExpr expr, AstWalkContext context) {
-        // TODO: description (used w/ MethodReferenceExpr)
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(UnaryExpr expr, AstWalkContext context) {
-        // a unary expression consisting of a single operand and a unary operator (see the
-        // UnaryExpr.Operator enum)
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(VariableDeclarationExpr expr, AstWalkContext context) {
-        // an expression containing a list of variable declarations and modifiers
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    // ********************************************************************************************
-    // literals
-    // ********************************************************************************************
-
-    @Override
-    public void visit(BooleanLiteralExpr literal, AstWalkContext context) {
-        // a boolean literal
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(CharLiteralExpr literal, AstWalkContext context) {
-        // a char literal
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(DoubleLiteralExpr literal, AstWalkContext context) {
-        // a float or double constant
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(IntegerLiteralExpr literal, AstWalkContext context) {
-        // an integer constant
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(LongLiteralExpr literal, AstWalkContext context) {
-        // a long constant
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(NullLiteralExpr literal, AstWalkContext context) {
-        // a literal null value
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(StringLiteralExpr literal, AstWalkContext context) {
-        // a string literal
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    // ********************************************************************************************
-    // types
-    // ********************************************************************************************
-
-    @Override
-    public void visit(ArrayType type, AstWalkContext context) {
-        log.trace("Visiting ArrayType");
-    }
-
-    @Override
-    public void visit(ClassOrInterfaceType type, AstWalkContext context) {
-        log.trace("Visiting ClassOrInterfaceType");
-    }
-
-    @Override
-    public void visit(PrimitiveType type, AstWalkContext context) {
-        // a primitive type (see the PrimitiveType.Primitive enum)
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(UnknownType type, AstWalkContext context) {
-        // the type of a lambda parameter with now explicit type declared
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(VarType type, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(VoidType type, AstWalkContext context) {
-        log.trace("Visiting VoidType");
-    }
-
-    @Override
-    public void visit(WildcardType type, AstWalkContext context) {
-        // a wildcard type argument, ie. <?> with an optional extended or super type
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    // ********************************************************************************************
     // declarations
     // ********************************************************************************************
 
@@ -508,11 +269,246 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
         context.update(decl);
     }
 
-    @Override
-    public void visit(VariableDeclarator decl, AstWalkContext context) {
-        // the declaration of a variable consisting of a type, name, and optional initializer
-        // expression
-        throw new UnsupportedOperationException("Not implemented yet");
+    // TODO: some serious refactoring necessary here
+    // recursive handling seems to be easier than visiting nodes without context
+
+    private List<Vertex> genExprNode(Expression expr, AstWalkContext context) {
+        // TODO: handle all subclasses
+        // https://static.javadoc.io/com.github.javaparser/javaparser-core/3.14.7/com/github/javaparser/ast/expr/Expression.html
+
+        List<Vertex> vertices = new ArrayList<>();
+        if (expr instanceof AssignExpr) {
+            vertices.add(genAssignExprNode((AssignExpr) expr, context));
+        } else if (expr instanceof BinaryExpr) {
+            vertices.add(genBinaryExprNode((BinaryExpr) expr, context));
+        } else if (expr instanceof UnaryExpr) {
+            vertices.add(genUnaryExprNode((UnaryExpr) expr, context));
+        } else if (expr instanceof LiteralExpr) {
+            vertices.add(genLiteralExprNode((LiteralExpr) expr, context));
+        } else if (expr instanceof MethodCallExpr) {
+            vertices.add(genMethodCallExprNode((MethodCallExpr) expr, context));
+        } else if (expr instanceof NameExpr) {
+            vertices.add(genNameExprNode((NameExpr) expr, context));
+        } else if (expr instanceof VariableDeclarationExpr) {
+            GraphTraversalSource g = graph().traversal(CpgTraversalSource.class);
+            VariableDeclarationExpr varDeclExpr = (VariableDeclarationExpr) expr;
+            for (VariableDeclarator varDecl : varDeclExpr.getVariables()) {
+                Optional<Expression> initOpt = varDecl.getInitializer();
+                if (!initOpt.isPresent()) {
+                    continue;
+                }
+                Vertex v = baseAstNode(varDecl, ASSIGN_EXPR, varDecl.getNameAsString(), context);
+                // TODO: operator
+
+                String targetTextLabel = varDecl.getType().asString() + " " + varDecl.getNameAsString();
+                Vertex target = baseAstNode(varDecl.getName(), LOCAL_VAR, targetTextLabel, context);
+                g.V(target)
+                        .property(JAVA_TYPE, varDecl.getType().asString())
+                        .property(NAME, varDecl.getNameAsString())
+                        .iterate();
+                g.addE(AST_EDGE)
+                        .from(v).to(target)
+                        .property(EDGE_TYPE, TARGET)
+                        .property(TEXT_LABEL, TARGET)
+                        .iterate();
+
+                List<Vertex> values = genExprNode(initOpt.get(), context);
+                for (Vertex value : values) {
+                    g.addE(AST_EDGE)
+                            .from(v).to(value)
+                            .property(EDGE_TYPE, VALUE)
+                            .property(TEXT_LABEL, VALUE)
+                            .iterate();
+                }
+                vertices.add(v);
+            }
+        } else {
+            log.warn("Unhandled expression type '{}', no node generated", expr.getClass());
+        }
+
+        return vertices;
+    }
+
+    private Vertex genAnnotationExprNode(AnnotationExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genArrayAccessExprNode(ArrayAccessExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genArrayCreationExprNode(ArrayCreationExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genArrayInitializerExprNode(ArrayInitializerExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genAssignExprNode(AssignExpr expr, AstWalkContext context) {
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        Vertex v;
+        String textLabel = expr.toString();
+        v = baseAstNode(expr, ASSIGN_EXPR, textLabel, context);
+        // TODO: operator
+
+        Vertex target = genExprNode(expr.getTarget(), context).get(0);
+        Vertex value = genExprNode(expr.getValue(), context).get(0);
+
+        g.addE(AST_EDGE)
+                .from(v).to(target)
+                .property(EDGE_TYPE, TARGET)
+                .property(TEXT_LABEL, TARGET)
+                .iterate();
+
+        g.addE(AST_EDGE)
+                .from(v).to(value)
+                .property(EDGE_TYPE, VALUE)
+                .property(TEXT_LABEL, VALUE)
+                .iterate();
+        return v;
+    }
+
+    private Vertex genBinaryExprNode(BinaryExpr expr, AstWalkContext context) {
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        Vertex v;
+        String textLabel = expr.toString();
+        v = baseAstNode(expr, BINARY_EXPR, textLabel, context);
+
+        Vertex lop = genExprNode(expr.getLeft(), context).get(0);
+        Vertex rop = genExprNode(expr.getRight(), context).get(0);
+
+        g.addE(AST_EDGE)
+                .from(v).to(lop)
+                .property(EDGE_TYPE, LEFT_OPERAND)
+                .property(TEXT_LABEL, LEFT_OPERAND)
+                .iterate();
+
+        g.addE(AST_EDGE)
+                .from(v).to(rop)
+                .property(EDGE_TYPE, RIGHT_OPERAND)
+                .property(TEXT_LABEL, RIGHT_OPERAND)
+                .iterate();
+        return v;
+    }
+
+    private Vertex genCastExprNode(CastExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genClassExprNode(ClassExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genConditionalExprNode(ConditionalExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genEnclosedExprNode(EnclosedExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genFieldAccessExprNode(FieldAccessExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genInstanceOfExprNode(InstanceOfExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genLambdaExprNode(LambdaExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genLiteralExprNode(LiteralExpr expr, AstWalkContext context) {
+        // TODO: handle all subclasses
+
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        Vertex v;
+        if (expr instanceof IntegerLiteralExpr) {
+            IntegerLiteralExpr intExpr = (IntegerLiteralExpr) expr;
+            v = baseAstNode(intExpr, LITERAL, intExpr.toString(), context);
+            g.V(v)
+                    .property(JAVA_TYPE, INT)
+                    .property(VALUE, intExpr.asInt())
+                    .iterate();
+        } else if (expr instanceof StringLiteralExpr) {
+            StringLiteralExpr strExpr = (StringLiteralExpr) expr;
+            v = baseAstNode(strExpr, LITERAL, strExpr.toString(), context);
+            g.V(v)
+                    .property(JAVA_TYPE, INT)
+                    .property(VALUE, strExpr.asString())
+                    .iterate();
+        } else {
+            v = null;
+        }
+        return v;
+    }
+
+    private Vertex genMethodCallExprNode(MethodCallExpr expr, AstWalkContext context) {
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+
+        Vertex v = baseAstNode(expr, CALL_EXPR, expr.toString(), context);
+        g.V(v)
+                // TODO: scope
+                .property(CALLS, expr.getNameAsString())
+                .iterate();
+
+        int i = 0;
+        for (Expression arg : expr.getArguments()) {
+            Vertex argVertex = genExprNode(arg, context).get(0);
+            g.addE(AST_EDGE)
+                    .from(v).to(argVertex)
+                    .property(EDGE_TYPE, ARG)
+                    .property(TEXT_LABEL, ARG)
+                    .property(INDEX, i++)
+                    .iterate();
+        }
+
+        return v;
+    }
+
+    private Vertex genNameExprNode(NameExpr expr, AstWalkContext context) {
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+
+        Vertex v = baseAstNode(expr, LOCAL_VAR, expr.getNameAsString(), context);
+        // TODO: resolve type, value if known
+        g.V(v)
+                .property(NAME, expr.getNameAsString());
+
+        return v;
+    }
+
+    private Vertex genObjectCreationExprNode(ObjectCreationExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genSuperExprNode(SuperExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genSwitchExprNode(SwitchExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genThisExprNode(ThisExpr expr, AstWalkContext context) {
+        return null;    // TODO
+    }
+
+    private Vertex genUnaryExprNode(UnaryExpr expr, AstWalkContext context) {
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        Vertex v;
+        String textLabel = expr.toString();
+        v = baseAstNode(expr, UNARY_EXPR, textLabel, context);
+        UnaryExpr unaryExpr = (UnaryExpr) expr;
+
+        Vertex op = genExprNode(unaryExpr.getExpression(), context).get(0);
+        g.addE(AST_EDGE)
+                .from(v).to(op)
+                .property(EDGE_TYPE, OPERAND)
+                .property(TEXT_LABEL, OPERAND)
+                .iterate();
+        return v;
     }
 
     private int getLineNr(Node node) {

@@ -19,7 +19,7 @@ public class DotUtil {
     private static Logger log = LoggerFactory.getLogger(DotUtil.class);
 
     public static void cpgToDot(String dotfile, String graphName) {
-        // TODO: create file if nonexistent
+        log.info("Writing CPG to dotfile '{}'", dotfile);
         try {
             FileWriter out = new FileWriter(new File(dotfile));
             out.write("digraph " + graphName + "{\n");
