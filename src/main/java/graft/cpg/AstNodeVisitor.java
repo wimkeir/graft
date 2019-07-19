@@ -83,8 +83,7 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(AssertStmt stmt, AstWalkContext context) {
-        // an assert statement with a check condition and optional message
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("AssertStmt visitor not implemented yet");
     }
 
     @Override
@@ -94,38 +93,27 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(BreakStmt stmt, AstWalkContext context) {
-        // a break statement with an optional label or value
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("BreakStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(CatchClause clause, AstWalkContext context) {
-        // the catch part of a try-catch-finally construct
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("CatchClause visitor not implemented yet");
     }
 
     @Override
     public void visit(ContinueStmt stmt, AstWalkContext context) {
-        // a continue statement with an optional label
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("ContinueStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(DoStmt stmt, AstWalkContext context) {
-        // a do-while loop with a condition and a body
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public void visit(EmptyStmt stmt, AstWalkContext context) {
-        // a semicolon where a statement was expected
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("DoStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(ExplicitConstructorInvocationStmt stmt, AstWalkContext context) {
-        // a call to super or this in a constructor
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("ExplicitConstructorInvocationStmt visitor not implemented yet");
     }
 
     @Override
@@ -158,74 +146,135 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(ForEachStmt stmt, AstWalkContext context) {
-        // a for-each loop with a body and variable declaration
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("ForEachStmt visitor ot implemented yet");
     }
 
     @Override
     public void visit(ForStmt stmt, AstWalkContext context) {
-        // a for-loop with an initialization, comparison, update and body
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("ForStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(IfStmt stmt, AstWalkContext context) {
-        // an if-then statement with an optional else statement
-        throw new UnsupportedOperationException("Not implemented yet");
+        // TODO NB: true/false edges!
+        log.trace("Visiting IfStmt");
+
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+
+        BlockStmt thenBlock;
+        if (stmt.hasThenBlock()) {
+            thenBlock = stmt.getThenStmt().asBlockStmt();
+        } else {
+            NodeList<Statement> stmts = new NodeList<>();
+            stmts.add(stmt.getThenStmt());
+            thenBlock = new BlockStmt(stmts);
+        }
+        stmt.remove(stmt.getThenStmt());
+
+        String textLabel = "if " + "(" + stmt.getCondition().toString() + ")";
+        Vertex v = baseCfgNode(stmt, IF_STMT, textLabel, context);
+        g.addE(CFG_EDGE)
+                .from(context.cfgTail()).to(v)
+                .property(EDGE_TYPE, EMPTY)
+                .property(TEXT_LABEL, EMPTY)
+                .iterate();
+
+        Vertex predVertex = genExprNode(stmt.getCondition(), context).get(0);
+        g.addE(AST_EDGE)
+                .from(v).to(predVertex)
+                .property(EDGE_TYPE, PRED)
+                .property(TEXT_LABEL, PRED)
+                .iterate();
+
+        context.setCfgTail(v);
+        for (Statement thenStmt : thenBlock.getStatements()) {
+            thenStmt.accept(this, context);
+        }
+        Vertex thenTail = context.cfgTail();
+
+        BlockStmt elseBlock;
+        if (stmt.hasElseBranch() && stmt.hasElseBlock()) {
+            elseBlock = stmt.getElseStmt().get().asBlockStmt();
+            stmt.remove(stmt.getElseStmt().get());
+        } else if (stmt.hasElseBranch()) {
+            NodeList<Statement> stmts = new NodeList<>();
+            stmts.add(stmt.getElseStmt().get());
+            elseBlock = new BlockStmt(stmts);
+            stmt.remove(stmt.getElseStmt().get());
+        } else {
+            elseBlock = null;
+        }
+
+        context.setCfgTail(v);
+        if (elseBlock != null) {
+            for (Statement elseStmt : elseBlock.getStatements()) {
+                elseStmt.accept(this, context);
+            }
+        }
+        Vertex elseTail = context.cfgTail();
+
+        Vertex phi = g.addV(CFG_NODE)
+                .property(NODE_TYPE, PHI)
+                .property(TEXT_LABEL, PHI)
+                .next();
+
+        g.addE(CFG_EDGE)
+                .from(thenTail).to(phi)
+                .property(EDGE_TYPE, EMPTY)
+                .property(TEXT_LABEL, EMPTY)
+                .iterate();
+        g.addE(CFG_EDGE)
+                .from(elseTail).to(phi)
+                .property(EDGE_TYPE, EMPTY)
+                .property(TEXT_LABEL, EMPTY)
+                .iterate();
+
+        context.setCfgTail(phi);
     }
 
     @Override
     public void visit(LocalClassDeclarationStmt stmt, AstWalkContext context) {
-        // a class declaration inside a method body
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("LocalClassDeclarationStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(ReturnStmt stmt, AstWalkContext context) {
-        // a return statement with an optional return expression
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("ReturnStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(SwitchEntry entry, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("SwitchEntry visitor not implemented yet");
     }
 
     @Override
     public void visit(SwitchStmt stmt, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("SwitchStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(SynchronizedStmt stmt, AstWalkContext context) {
-        // a usage of the synchronized keyword with an expression and a body
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("SynchronizedStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(ThrowStmt stmt, AstWalkContext context) {
-        // a usage of the throw statement
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("ThrowStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(TryStmt stmt, AstWalkContext context) {
-        // TODO: description
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("TryStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(UnparsableStmt stmt, AstWalkContext context) {
-        // a statement that caused parser errors
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("UnparsableStmt visitor not implemented yet");
     }
 
     @Override
     public void visit(WhileStmt stmt, AstWalkContext context) {
-        // a while loop with a condition and body
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("WhileStmt visitor implemented yet");
     }
 
     // ********************************************************************************************
@@ -241,14 +290,12 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(ConstructorDeclaration decl, AstWalkContext context) {
-        // a declaration of a constructor
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("ConstructorDeclaration visitor implemented yet");
     }
 
     @Override
     public void visit(FieldDeclaration decl, AstWalkContext context) {
-        // a declaration of a class field, with a list of modifiers and variable declarations
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("FieldDeclaration visitor implemented yet");
     }
 
     @Override
@@ -270,11 +317,8 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
     }
 
     // TODO: some serious refactoring necessary here
-    // recursive handling seems to be easier than visiting nodes without context
 
     private List<Vertex> genExprNode(Expression expr, AstWalkContext context) {
-        // TODO: handle all subclasses
-        // https://static.javadoc.io/com.github.javaparser/javaparser-core/3.14.7/com/github/javaparser/ast/expr/Expression.html
 
         List<Vertex> vertices = new ArrayList<>();
         if (expr instanceof AssignExpr) {

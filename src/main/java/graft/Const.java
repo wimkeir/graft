@@ -38,9 +38,12 @@ public class Const {
     // CFG node types
     public static final String ENTRY = "entry";
     public static final String EXPR_STMT = "expr-stmt";
+    public static final String IF_STMT = "if-stmt";
+    public static final String PHI = "phi";
 
     // CFG edge types
     public static final String EMPTY = "E";
+    public static final String BRANCH = "branch";
 
     // AST node types
     public static final String ASSIGN_EXPR = "var-assign";
@@ -55,6 +58,7 @@ public class Const {
     // AST edge types
     public static final String EXPR = "expr";
     public static final String ARG = "arg";
+    public static final String PRED = "pred";
     public static final String TARGET = "target";
     public static final String VALUE = "value";
     public static final String LEFT_OPERAND = "left-op";
@@ -95,6 +99,8 @@ public class Const {
     // miscellaneous constants
     public static final String NONE = "<none>";
     public static final String UNKNOWN = "<unknown>";
+    public static final String TRUE = "true";
+    public static final String FALSE = "false";
 
     // primitive types
     public static final String BOOLEAN = "boolean";
