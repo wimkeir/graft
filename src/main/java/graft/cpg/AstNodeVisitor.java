@@ -61,7 +61,7 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
                 .property(JAVA_TYPE, param.getType().asString())
                 .property(NAME, param.getNameAsString())
                 .iterate();
-        Edge paramEdge = genAstEdge(context.astTail(), paramVertex, PARAM, PARAM);
+        Edge paramEdge = genAstEdge(context.cfgTail(), paramVertex, PARAM, PARAM);
         g.V(paramEdge).property(INDEX, context.getParamIndex()).iterate();
         context.incrementParamIndex();
     }
@@ -78,7 +78,11 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(AssertStmt stmt, AstWalkContext context) {
-        throw new UnsupportedOperationException("AssertStmt visitor not implemented yet");
+        log.trace("Visiting AssertStmt");
+        Vertex stmtVertex = genCfgNode(context, stmt.getBegin(), ASSERT_STMT, stmt.toString());
+        Vertex condVertex = genExprNode(stmt.getCheck(), context).get(0);
+        genAstEdge(stmtVertex, condVertex, EXPR, EXPR);
+        context.exitStmt(stmt, stmtVertex);
     }
 
     @Override
@@ -115,16 +119,12 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
     public void visit(ExpressionStmt stmt, AstWalkContext context) {
         log.trace("Visiting ExpressionStmt");
         Vertex stmtVertex = genCfgNode(context, stmt.getBegin(), EXPR_STMT, stmt.toString());
-        context.enterStmt(stmt, stmtVertex);
-        genCfgEdge(context.cfgTail(), stmtVertex, EMPTY, EMPTY);
 
         Vertex expr = genExprNode(stmt.getExpression(), context).get(0);
-
         if (expr != null) {
             genAstEdge(stmtVertex, expr, EXPR, EXPR);
         }
 
-        context.setAstTail(stmtVertex);
         context.exitStmt(stmt, stmtVertex);
     }
 
@@ -135,7 +135,27 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
     @Override
     public void visit(ForStmt stmt, AstWalkContext context) {
-        throw new UnsupportedOperationException("ForStmt visitor not implemented yet");
+        log.trace("Visiting ForStmt");
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+
+        String textLabel = "for (" + stmt.getInitialization() + "; " + stmt.getCompare() + "; " + stmt.getUpdate() + ")";
+        Vertex stmtVertex = genCfgNode(context, stmt.getBegin(), FOR_STMT, textLabel);
+        context.enterStmt(stmt, stmtVertex);
+
+        for (Expression init : stmt.getInitialization()) {
+            Vertex initVertex = genExprNode(init, context).get(0);
+            genAstEdge(stmtVertex, initVertex, INIT, INIT);
+        }
+        stmt.getCompare().ifPresent(comp -> {
+            Vertex compVertex = genExprNode(comp, context).get(0);
+            genAstEdge(stmtVertex, compVertex, PRED, PRED);
+        });
+        for (Expression update : stmt.getUpdate()) {
+            Vertex updateVertex = genExprNode(update, context).get(0);
+            genAstEdge(stmtVertex, updateVertex, UPDATE, UPDATE);
+        }
+
+        context.exitStmt(stmt, stmtVertex);
     }
 
     @Override
@@ -147,7 +167,6 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
         String textLabel = "if " + "(" + stmt.getCondition().toString() + ")";
         Vertex stmtVertex = genCfgNode(context, stmt.getBegin(), IF_STMT, textLabel);
         context.enterStmt(stmt, stmtVertex);
-        genCfgEdge(context.cfgTail(), stmtVertex, EMPTY, EMPTY);
 
         Vertex predVertex = genExprNode(stmt.getCondition(), context).get(0);
         genAstEdge(stmtVertex, predVertex, PRED, PRED);
@@ -164,7 +183,6 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
         log.trace("Visiting ReturnStmt");
         CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
         Vertex stmtVertex = genCfgNode(context, stmt.getBegin(), RETURN_STMT, stmt.toString());
-        context.enterStmt(stmt, stmtVertex);
 
         Optional<Expression> exprOpt = stmt.getExpression();
         if (exprOpt.isPresent()) {
@@ -175,7 +193,6 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
             g.V(stmtVertex).property(VOID, TRUE);
         }
 
-        genCfgEdge(context.cfgTail(), stmtVertex, EMPTY, EMPTY);
         context.exitStmt(stmt, stmtVertex);
     }
 
@@ -218,12 +235,10 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
         String textLabel = "while (" + stmt.getCondition().toString() + ")";
         Vertex stmtVertex = genCfgNode(context, stmt.getBegin(), WHILE_STMT, textLabel);
         context.enterStmt(stmt, stmtVertex);
-        genAstEdge(context.cfgTail(), stmtVertex, EMPTY, EMPTY);
 
         Vertex guard = genExprNode(stmt.getCondition(), context).get(0);
         genAstEdge(stmtVertex, guard, GUARD, GUARD);
 
-        genCfgEdge(context.cfgTail(), stmtVertex, EMPTY, EMPTY);
         context.exitStmt(stmt, stmtVertex);
     }
 
@@ -256,7 +271,6 @@ public class AstNodeVisitor extends VoidVisitorWithDefaults<AstWalkContext> {
 
         String textLabel = decl.getDeclarationAsString(true, false, true);
         Vertex entryNode = genCfgNode(context, decl.getBegin(), ENTRY, textLabel);
-        context.setAstTail(entryNode);
         context.setCfgTail(entryNode);
     }
 

@@ -25,7 +25,6 @@ class AstWalkContext {
     private String currentClass;
     private String currentMethod;
     private int paramIndex;
-    private Vertex astTail;
     private Vertex cfgTail;
     private Stack<EnclosingStmtContext> enclosingStmtContexts;
 
@@ -66,16 +65,8 @@ class AstWalkContext {
         paramIndex++;
     }
 
-    Vertex astTail() {
-        return astTail;
-    }
-
     Vertex cfgTail() {
         return cfgTail;
-    }
-
-    void setAstTail(Vertex tail) {
-        astTail = tail;
     }
 
     // TODO: get rid of this (use enter/exit methods)
@@ -110,90 +101,87 @@ class AstWalkContext {
         paramIndex = 0;
     }
 
-    void enterStmt(Statement stmt, Vertex stmtVertex) {
+    void enterStmt(WhileStmt whileStmt, Vertex stmtVertex) {
+        EnclosingStmtContext context = new EnclosingStmtContext();
+        context.enclosingStmtHead = stmtVertex;
+        context.enclosingStmtType = WHILE_STMT;
+        context.stmtsRemaining = nrStmts(whileStmt.getBody());
+        enclosingStmtContexts.push(context);
+    }
 
-        if (stmt instanceof WhileStmt) {
-            EnclosingStmtContext context = new EnclosingStmtContext();
-            context.enclosingStmtHead = stmtVertex;
-            context.enclosingStmtType = WHILE_STMT;
-            WhileStmt whileStmt = (WhileStmt) stmt;
+    void enterStmt(IfStmt ifStmt, Vertex stmtVertex) {
+        EnclosingStmtContext context = new EnclosingStmtContext();
+        context.enclosingStmtHead = stmtVertex;
+        context.enclosingStmtType = IF_STMT;
+        context.inThenBlock = true;
+        context.stmtsRemaining = nrStmts(ifStmt.getThenStmt());
 
-            if (whileStmt.getBody() instanceof BlockStmt) {
-                BlockStmt whileBlock = whileStmt.getBody().asBlockStmt();
-                context.stmtsRemaining = whileBlock.getStatements().size();
-            } else if (whileStmt.hasEmptyBody()) {
-                context.stmtsRemaining = 0;
-            } else {
-                context.stmtsRemaining = 1;
-            }
-            enclosingStmtContexts.push(context);
-
-        } else if (stmt instanceof IfStmt) {
-            EnclosingStmtContext context = new EnclosingStmtContext();
-            context.enclosingStmtHead = stmtVertex;
-            context.enclosingStmtType = IF_STMT;
-            context.inThenBlock = true;
-            IfStmt ifStmt = (IfStmt) stmt;
-
-            if (ifStmt.getThenStmt() instanceof BlockStmt) {
-                BlockStmt thenBlock = ifStmt.getThenStmt().asBlockStmt();
-                context.stmtsRemaining = thenBlock.getStatements().size();
-            } else if (ifStmt.getThenStmt() instanceof EmptyStmt) {
-                context.stmtsRemaining = 0;
-            } else {
-                context.stmtsRemaining = 1;
-            }
-
-            // TODO: explain this
-            if (ifStmt.hasElseBranch()) {
-                context.hasElseBlock = true;
-                EnclosingStmtContext elseContext = new EnclosingStmtContext();
-                elseContext.enclosingStmtHead = stmtVertex;
-                elseContext.enclosingStmtType = IF_STMT;
-                elseContext.inThenBlock = false;
-                Statement elseBranch = ifStmt.getElseStmt().get();
-
-                if (elseBranch instanceof BlockStmt) {
-                    BlockStmt elseBlock = elseBranch.asBlockStmt();
-                    elseContext.stmtsRemaining = elseBlock.getStatements().size();
-                } else if (elseBranch instanceof EmptyStmt) {
-                    elseContext.stmtsRemaining = 0;
-                } else {
-                    elseContext.stmtsRemaining = 1;
-                }
-                enclosingStmtContexts.push(elseContext);
-            }
-            enclosingStmtContexts.push(context);
+        if (ifStmt.hasElseBranch()) {
+            context.hasElseBlock = true;
+            EnclosingStmtContext elseContext = new EnclosingStmtContext();
+            elseContext.enclosingStmtHead = stmtVertex;
+            elseContext.enclosingStmtType = IF_STMT;
+            elseContext.inThenBlock = false;
+            elseContext.stmtsRemaining = nrStmts(ifStmt.getElseStmt().get());
+            enclosingStmtContexts.push(elseContext);
         }
+        enclosingStmtContexts.push(context);
+    }
+
+    void enterStmt(ForStmt forStmt, Vertex stmtVertex) {
+        EnclosingStmtContext context = new EnclosingStmtContext();
+        context.enclosingStmtHead = stmtVertex;
+        context.enclosingStmtType = FOR_STMT;
+        context.stmtsRemaining = nrStmts(forStmt.getBody());
+        enclosingStmtContexts.push(context);
     }
 
     void exitStmt(Statement stmt, Vertex stmtVertex) {
+        // no enclosing statement - simply draw edge from tail to current vertex and update tail
         if (enclosingStmtContexts.isEmpty()) {
+            CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
             cfgTail = stmtVertex;
             return;
         }
 
         EnclosingStmtContext context = enclosingStmtContexts.pop();
+
+        // enclosing statement but statements remaining - update enclosing context, draw edge from
+        // tail to current vertex and update tail
         if (context.stmtsRemaining > 0) {
             context.stmtsRemaining--;
             enclosingStmtContexts.push(context);
+            CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
             cfgTail = stmtVertex;
             return;
         }
+
+        // no statements remaining (we're at the end of an enclosing statement)
         assert context.stmtsRemaining == 0;
 
-        if (context.enclosingStmtType.equals(IF_STMT)) {
-            if (context.inThenBlock) {
+        switch (context.enclosingStmtType) {
+            case IF_STMT:
+                // leaving a then block, we set the tail to the statement head (the if condition)
+                // so that the next edge to either the phi node or else block is drawn from there
+                if (context.inThenBlock) {
+                    CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+                    cfgTail = context.enclosingStmtHead;
+                }
+                break;
+            case WHILE_STMT:
+                // leaving a while block, draw an edge back to the guard condition and set that as
+                // the tail (after drawing a standard edge from the current tail to current vertex)
+                CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+                CpgUtil.genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
                 cfgTail = context.enclosingStmtHead;
-                return;
-            }
-        } else if (context.enclosingStmtType.equals(WHILE_STMT)) {
-            CpgUtil.genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
-            cfgTail = context.enclosingStmtHead;
-            return;
+                break;
+            case FOR_STMT:
+                // leaving a for statement (handled the same as while statements)
+                CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+                CpgUtil.genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
+                cfgTail = context.enclosingStmtHead;
+                break;
         }
-
-        cfgTail = stmtVertex;
     }
 
     private static class EnclosingStmtContext {
@@ -204,6 +192,20 @@ class AstWalkContext {
         // if statements
         boolean inThenBlock;
         boolean hasElseBlock;
+    }
+
+    // if the statement is a block statement, returns the number of statements in the block
+    // if the statement is a single statement, returns 1
+    // if the statement is empty, returns 0
+    private int nrStmts(Statement stmt) {
+        if (stmt instanceof BlockStmt) {
+            BlockStmt block = stmt.asBlockStmt();
+            return block.getStatements().size();
+        } else if (stmt instanceof EmptyStmt) {
+            return 0;
+        } else {
+            return 1;
+        }
     }
 
 }

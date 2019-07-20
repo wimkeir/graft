@@ -40,6 +40,8 @@ public class Const {
     public static final String EXPR_STMT = "expr-stmt";
     public static final String IF_STMT = "if-stmt";
     public static final String PHI = "phi";
+    public static final String ASSERT_STMT = "assert-stmt";
+    public static final String FOR_STMT = "for-stmt";
     public static final String WHILE_STMT = "while-stmt";
     public static final String RETURN_STMT = "return-stmt";
 
@@ -70,6 +72,8 @@ public class Const {
     public static final String OPERAND = "operand";
     public static final String GUARD = "guard";
     public static final String RETURNS = "returns";
+    public static final String INIT = "init";
+    public static final String UPDATE = "update";
 
     // AST node property keys
     public static final String JAVA_TYPE = "java-type";
