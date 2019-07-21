@@ -24,7 +24,6 @@ class AstWalkContext {
     private String currentPackage;
     private String currentClass;
     private String currentMethod;
-    private int paramIndex;
     private Vertex cfgTail;
     private Stack<EnclosingStmtContext> enclosingStmtContexts;
 
@@ -57,18 +56,6 @@ class AstWalkContext {
         return currentMethod;
     }
 
-    int getParamIndex() {
-        return paramIndex;
-    }
-
-    void incrementParamIndex() {
-        paramIndex++;
-    }
-
-    Vertex cfgTail() {
-        return cfgTail;
-    }
-
     // TODO: get rid of this (use enter/exit methods)
     void setCfgTail(Vertex tail) {
         cfgTail = tail;
@@ -98,7 +85,6 @@ class AstWalkContext {
 
     void update(MethodDeclaration decl) {
         currentMethod = decl.getNameAsString();
-        paramIndex = 0;
     }
 
     void enterStmt(WhileStmt whileStmt, Vertex stmtVertex) {
@@ -122,7 +108,8 @@ class AstWalkContext {
             elseContext.enclosingStmtHead = stmtVertex;
             elseContext.enclosingStmtType = IF_STMT;
             elseContext.inThenBlock = false;
-            elseContext.stmtsRemaining = nrStmts(ifStmt.getElseStmt().get());
+            // TODO: why the -1 here?
+            elseContext.stmtsRemaining = nrStmts(ifStmt.getElseStmt().get()) - 1;
             enclosingStmtContexts.push(elseContext);
         }
         enclosingStmtContexts.push(context);
@@ -161,11 +148,31 @@ class AstWalkContext {
 
         switch (context.enclosingStmtType) {
             case IF_STMT:
-                // leaving a then block, we set the tail to the statement head (the if condition)
-                // so that the next edge to either the phi node or else block is drawn from there
                 if (context.inThenBlock) {
+                    // leaving a then block, we set the tail to the statement head (the if condition)
+                    // so that the next edge to either the phi node or else block is drawn from there
                     CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
-                    cfgTail = context.enclosingStmtHead;
+
+                    if (context.hasElseBlock) {
+                        System.out.println("Leaving then block");
+                        EnclosingStmtContext elseContext = enclosingStmtContexts.pop();
+                        elseContext.thenTail = stmtVertex;
+                        enclosingStmtContexts.push(elseContext);
+                        cfgTail = context.enclosingStmtHead;
+                    } else {
+                        Vertex phi = CpgUtil.genCfgNode(this, Optional.empty(), PHI, PHI);
+                        CpgUtil.genCfgEdge(stmtVertex, phi, EMPTY, EMPTY);
+                        CpgUtil.genCfgEdge(context.enclosingStmtHead, phi, EMPTY, EMPTY);
+                        cfgTail = phi;
+                    }
+                } else {
+                    // leaving an else block, TODO
+                    System.out.println("Leaving else block");
+                    CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+                    Vertex phi = CpgUtil.genCfgNode(this, Optional.empty(), PHI, PHI);
+                    CpgUtil.genCfgEdge(stmtVertex, phi, EMPTY, EMPTY);
+                    CpgUtil.genCfgEdge(context.thenTail, phi, EMPTY, EMPTY);
+                    cfgTail = phi;
                 }
                 break;
             case WHILE_STMT:
@@ -181,6 +188,8 @@ class AstWalkContext {
                 CpgUtil.genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
                 cfgTail = context.enclosingStmtHead;
                 break;
+            default:
+                // TODO
         }
     }
 
@@ -192,6 +201,7 @@ class AstWalkContext {
         // if statements
         boolean inThenBlock;
         boolean hasElseBlock;
+        Vertex thenTail;
     }
 
     // if the statement is a block statement, returns the number of statements in the block

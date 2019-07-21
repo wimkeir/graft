@@ -44,6 +44,12 @@ public class Const {
     public static final String FOR_STMT = "for-stmt";
     public static final String WHILE_STMT = "while-stmt";
     public static final String RETURN_STMT = "return-stmt";
+    public static final String BREAK_STMT = "break-stmt";
+    public static final String CONTINUE_STMT = "continue-stmt";
+    public static final String TRY_STMT = "try-stmt";
+
+    // CFG node property keys
+    public static final String LABEL = "label";
 
     // CFG edge types
     public static final String EMPTY = "E";
@@ -60,6 +66,8 @@ public class Const {
     public static final String INSTANCEOF_EXPR = "instanceof-expr";
     public static final String CALL_EXPR = "call-expr";
     public static final String LITERAL = "literal";
+    public static final String ARRAY_ACCESS_EXPR = "array-access-expr";
+    public static final String BASE = "base";
 
     // AST edge types
     public static final String EXPR = "expr";
