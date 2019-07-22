@@ -9,12 +9,27 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import graft.traversal.CpgTraversalSource;
 
+import static graft.Const.*;
 import static graft.db.GraphUtil.graph;
 
 /**
  * Utility methods for CPG construction.
  */
-public class CpgUtil {
+class CpgUtil {
+
+    static int lineNr(Optional<Position> pos) {
+        if (pos.isPresent()) {
+            return pos.get().line;
+        }
+        return -1;
+    }
+
+    static int colNr(Optional<Position> pos) {
+        if (pos.isPresent()) {
+            return pos.get().column;
+        }
+        return -1;
+    }
 
     /**
      * Adds a string property to the given node.
@@ -40,18 +55,10 @@ public class CpgUtil {
         g.E(edge).property(key, value).iterate();
     }
 
-    static int lineNr(Optional<Position> pos) {
-        if (pos.isPresent()) {
-            return pos.get().line;
-        }
-        return -1;
-    }
-
-    static int colNr(Optional<Position> pos) {
-        if (pos.isPresent()) {
-            return pos.get().column;
-        }
-        return -1;
+    static Vertex getNextCfgNode(Vertex node) {
+        assert node.label().equals(CFG_NODE);
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        return g.V(node).out(CFG_EDGE).next();
     }
 
 }

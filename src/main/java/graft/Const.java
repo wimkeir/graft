@@ -14,6 +14,7 @@ public class Const {
     private static Map<UnaryExpr.Operator, String> unaryOps;
 
     // node labels
+    public static final String LABEL = "label";
     public static final String CFG_NODE = "cfg-node";
     public static final String AST_NODE = "ast-node";
 
@@ -23,13 +24,6 @@ public class Const {
 
     // property keys common to all nodes
     public static final String NODE_TYPE = "type";
-    public static final String FILE_PATH = "file-path";
-    public static final String FILE_NAME = "file-name";
-    public static final String PACKAGE_NAME = "package-name";
-    public static final String CLASS_NAME = "class-name";
-    public static final String METHOD_NAME = "method-name";
-    public static final String LINE_NO = "line-no";
-    public static final String COL_NO = "col-no";
     public static final String TEXT_LABEL = "text-label";
 
     // property keys common to all edges
@@ -38,56 +32,50 @@ public class Const {
     // CFG node types
     public static final String ENTRY = "entry";
     public static final String EXPR_STMT = "expr-stmt";
-    public static final String IF_STMT = "if-stmt";
     public static final String PHI = "phi";
     public static final String ASSERT_STMT = "assert-stmt";
-    public static final String FOR_STMT = "for-stmt";
-    public static final String WHILE_STMT = "while-stmt";
     public static final String RETURN_STMT = "return-stmt";
-    public static final String BREAK_STMT = "break-stmt";
-    public static final String CONTINUE_STMT = "continue-stmt";
-    public static final String TRY_STMT = "try-stmt";
-
     public static final String THROW_STMT = "throw-stmt";
-    public static final String JUMP_STMT = "jump-stmt"; // break, continue
-    public static final String CONDITIONAL_STMT = "conditional-stmt";   // if, while / do-while / for conditions
-    public static final String CATCH = "cattch";
-
-    // CFG node property keys
-    public static final String LABEL = "label";
+    public static final String JUMP_STMT = "jump-stmt";
+    public static final String CONDITIONAL_STMT = "conditional-stmt";
 
     // CFG edge types
     public static final String EMPTY = "E";
     public static final String BRANCH = "branch";
+
+    // CFG node property keys
+    public static final String FILE_PATH = "file-path";
+    public static final String FILE_NAME = "file-name";
+    public static final String PACKAGE_NAME = "package-name";
+    public static final String CLASS_NAME = "class-name";
+    public static final String METHOD_NAME = "method-name";
+    public static final String LINE_NO = "line-no";
+    public static final String COL_NO = "col-no";
 
     // AST node types
     public static final String ASSIGN_EXPR = "var-assign";
     public static final String BINARY_EXPR = "binary-expr";
     public static final String UNARY_EXPR = "unary-expr";
     public static final String THIS_EXPR = "this-expr";
-    public static final String PARAM = "param";
     public static final String LOCAL_VAR = "local-var";
     public static final String SUPER_EXPR = "super-expr";
     public static final String INSTANCEOF_EXPR = "instanceof-expr";
     public static final String CALL_EXPR = "call-expr";
     public static final String LITERAL = "literal";
     public static final String ARRAY_ACCESS_EXPR = "array-access-expr";
-    public static final String BASE = "base";
     public static final String NEW_EXPR = "new-expr";
 
     // AST edge types
     public static final String EXPR = "expr";
     public static final String ARG = "arg";
-    public static final String PRED = "pred";
+    public static final String BASE = "base";
     public static final String TARGET = "target";
     public static final String VALUE = "value";
     public static final String LEFT_OPERAND = "left-op";
     public static final String RIGHT_OPERAND = "right-op";
     public static final String OPERAND = "operand";
-    public static final String GUARD = "guard";
+    public static final String PARAM = "param";
     public static final String RETURNS = "returns";
-    public static final String INIT = "init";
-    public static final String UPDATE = "update";
     public static final String THROWS = "throws";
 
     // AST node property keys
@@ -96,6 +84,17 @@ public class Const {
     public static final String CALLS = "calls";
     public static final String OPERATOR = "operator";
     public static final String CHECK_TYPE = "check-type";
+
+    // AST edge property keys
+    public static final String INDEX = "index";
+
+    // primitive types
+    public static final String BOOLEAN = "boolean";
+    public static final String CHAR = "char";
+    public static final String DOUBLE = "double";
+    public static final String INT = "int";
+    public static final String STRING = "string";
+    public static final String VOID = "void";
 
     // binary operators
     // TODO: rename some of these
@@ -119,22 +118,11 @@ public class Const {
     public static final String UNSIGNED_RIGHT_SHIFT = "unsigned-right-shift";
     public static final String XOR = "xor";
 
-    // AST edge property keys
-    public static final String INDEX = "index";
-
     // miscellaneous constants
     public static final String NONE = "<none>";
     public static final String UNKNOWN = "<unknown>";
     public static final String TRUE = "true";
     public static final String FALSE = "false";
-
-    // primitive types
-    public static final String BOOLEAN = "boolean";
-    public static final String CHAR = "char";
-    public static final String DOUBLE = "double";
-    public static final String INT = "int";
-    public static final String STRING = "string";
-    public static final String VOID = "void";
 
     public static String getAssignOp(AssignExpr.Operator op) {
         if (assignOps == null) {

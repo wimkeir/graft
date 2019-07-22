@@ -1,16 +1,24 @@
 package graft.cpg;
 
+import java.util.Optional;
+
 import com.github.javaparser.Position;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.stmt.*;
+
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
-import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import graft.cpg.context.*;
+import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
 import static graft.cpg.AstBuilder.*;
-import static graft.cpg.CpgBuilder.*;
+import static graft.cpg.CpgUtil.*;
+import static graft.db.GraphUtil.graph;
 
 /**
  * Generate the control flow graph.
@@ -19,114 +27,213 @@ import static graft.cpg.CpgBuilder.*;
  */
 class CfgBuilder {
 
-    static void labelNextStmt(AstWalkContext context, String label) {
-        // TODO
+    private static Logger log = LoggerFactory.getLogger(CfgBuilder.class);
+
+    static ContextStack labelNextStmt(String label, ContextStack contextStack) {
+        return contextStack;
     }
 
-    static void enterCatch(CatchClause clause, AstWalkContext context) {
-        String textLabel = "catch (" + clause.getParameter().toString() + ")";
-        Vertex catchVertex = genCfgNode(context, clause.getBegin(), CATCH, textLabel);
-        Vertex paramVertex = genParamNode(clause.getParameter(), context);
-        genAstEdge(catchVertex, paramVertex, PARAM, PARAM);
+    // ********************************************************************************************
+    // entering contexts
+    // ********************************************************************************************
+
+    static ContextStack enterCatch(CatchClause clause, ContextStack contextStack) {
+        return contextStack;
     }
 
-    static void enterDoWhile(DoStmt doWhile, AstWalkContext context) {
-
+    static ContextStack enterDoWhile(DoStmt doWhile, ContextStack contextStack) {
+        AstWalkContext context = contextStack.getCurrentContext();
+        DoContext doContext = new DoContext(context, doWhile);
+        contextStack.pushNewContext(doContext);
+        return contextStack;
     }
 
-    static void enterFor(ForStmt forLoop, AstWalkContext context) {
-        // TODO: initialisation, body stmts..., update, conditional
-        String textLabel = "for (" + forLoop.getInitialization() + "; " + forLoop.getCompare() + "; " + forLoop.getUpdate() + ")";
-        Vertex stmtVertex = genCfgNode(context, forLoop.getBegin(), FOR_STMT, textLabel);
-        context.enterStmt(forLoop, stmtVertex);
+    static ContextStack enterFor(ForStmt forLoop, ContextStack contextStack) {
+        log.trace("Entering FOR context");
+        AstWalkContext context = contextStack.getCurrentContext();
+        Vertex lastInit = context.cfgTail();
         for (Expression init : forLoop.getInitialization()) {
-            Vertex initVertex = genExprNode(init, context).get(0);
-            genAstEdge(stmtVertex, initVertex, INIT, INIT);
+            lastInit = genCfgNode(init.getBegin(), EXPR_STMT, init.toString(), contextStack.getCurrentContext());
+            Vertex exprVertex = genExprNode(init).get(0);
+            genAstEdge(lastInit, exprVertex, EXPR, EXPR);
+            genCfgEdge(context.cfgTail(), lastInit, EMPTY, EMPTY);
+            context.updateCfgTail(lastInit);
         }
-        forLoop.getCompare().ifPresent(comp -> {
-            Vertex compVertex = genExprNode(comp, context).get(0);
-            genAstEdge(stmtVertex, compVertex, PRED, PRED);
-        });
-        for (Expression update : forLoop.getUpdate()) {
-            Vertex updateVertex = genExprNode(update, context).get(0);
-            genAstEdge(stmtVertex, updateVertex, UPDATE, UPDATE);
-        }
-        context.exitStmt(forLoop, stmtVertex);
+        ForContext forContext = new ForContext(context, forLoop, lastInit);
+        contextStack.pushNewContext(forContext);
+        return contextStack;
     }
 
-    static void enterForEach(ForEachStmt forEach, AstWalkContext context) {
-
+    static ContextStack enterForEach(ForEachStmt forEach, ContextStack contextStack) {
+        return contextStack;
     }
 
-    static void enterIf(IfStmt ifStmt, AstWalkContext context) {
-        String textLabel = "if " + "(" + ifStmt.getCondition().toString() + ")";
-        Vertex stmtVertex = genCfgNode(context, ifStmt.getBegin(), IF_STMT, textLabel);
-        context.enterStmt(ifStmt, stmtVertex);
-        Vertex predVertex = genExprNode(ifStmt.getCondition(), context).get(0);
-        genAstEdge(stmtVertex, predVertex, PRED, PRED);
-        context.exitStmt(ifStmt, stmtVertex);
+    static ContextStack enterIf(IfStmt ifStmt, ContextStack contextStack) {
+        log.trace("Entering IF context");
+        Vertex conditional = genCfgNode(ifStmt.getBegin(),
+                                        CONDITIONAL_STMT,
+                                        ifStmt.getCondition().toString(),
+                                        contextStack.getCurrentContext());
+        Vertex exprVertex = genExprNode(ifStmt.getCondition()).get(0);
+        genAstEdge(conditional, exprVertex, EXPR, EXPR);
+        addStmtNode(conditional, contextStack);
+        IfContext ifContext = new IfContext(contextStack.getCurrentContext(), ifStmt, conditional);
+        contextStack.pushNewContext(ifContext);
+        return contextStack;
     }
 
-    static void enterSwitchCase(SwitchEntry switchCase, AstWalkContext context) {
-
+    static ContextStack enterSwitchCase(SwitchEntry switchCase, ContextStack contextStack) {
+        return contextStack;
     }
 
-    static void enterSwitch(SwitchStmt switchStmt, AstWalkContext context) {
-
+    static ContextStack enterSwitch(SwitchStmt switchStmt, ContextStack contextStack) {
+        return contextStack;
     }
 
-    static void enterSynchronized(SynchronizedStmt syncStmt, AstWalkContext context) {
-
+    static ContextStack enterSynchronized(SynchronizedStmt syncStmt, ContextStack contextStack) {
+        return contextStack;
     }
 
-    static void enterTry(TryStmt tryStmt, AstWalkContext context) {
-
+    static ContextStack enterTry(TryStmt tryStmt, ContextStack contextStack) {
+        return contextStack;
     }
 
-    static void enterWhile(WhileStmt whileStmt, AstWalkContext context) {
-        String textLabel = "while (" + whileStmt.getCondition().toString() + ")";
-        Vertex stmtVertex = genCfgNode(context, whileStmt.getBegin(), WHILE_STMT, textLabel);
-        context.enterStmt(whileStmt, stmtVertex);
-        Vertex guard = genExprNode(whileStmt.getCondition(), context).get(0);
-        genAstEdge(stmtVertex, guard, GUARD, GUARD);
-        context.exitStmt(whileStmt, stmtVertex);
+    static ContextStack enterWhile(WhileStmt whileStmt, ContextStack contextStack) {
+        AstWalkContext context = contextStack.getCurrentContext();
+        Vertex conditional = genCfgNode(whileStmt.getBegin(),
+                                        CONDITIONAL_STMT,
+                                        whileStmt.getCondition().toString(),
+                                        context);
+        genCfgEdge(context.cfgTail(), conditional, EMPTY, EMPTY);
+        context.updateCfgTail(conditional);
+        WhileContext whileContext = new WhileContext(context, whileStmt, conditional);
+        contextStack.pushNewContext(whileContext);
+        return contextStack;
     }
 
-    static void addAssertStmt(Statement stmt, Vertex stmtVertex, AstWalkContext context) {
-        addCfgNode(stmt, stmtVertex, context);
-    }
+    // ********************************************************************************************
+    // exiting contexts
+    // ********************************************************************************************
 
-    static void addExprStmt(Statement stmt, Vertex stmtVertex, AstWalkContext context) {
-        addCfgNode(stmt, stmtVertex, context);
-    }
+    private static ContextStack exitDoWhile(ContextStack contextStack) {
+        log.trace("Exiting DO context");
+        assert contextStack.getCurrentContext() instanceof DoContext;
+        DoContext context = (DoContext) contextStack.popCurrentContext();
 
-    static void addJumpStmt(Statement stmt, Vertex stmtVertex, AstWalkContext context) {
-        addCfgNode(stmt, stmtVertex, context);
-    }
+        // generate conditional node
+        Vertex conditional = genCfgNode(context.getConditionalExpr().getBegin(),
+                                        CONDITIONAL_STMT,
+                                        context.getConditionalExpr().toString(),
+                                        context);
 
-    static void addReturnStmt(Statement stmt, Vertex stmtVertex, AstWalkContext context) {
-        addCfgNode(stmt, stmtVertex, context);
-    }
-
-    static void addThrowStmt(Statement stmt, Vertex stmtVertex, AstWalkContext context) {
-
-    }
-
-    private static void addStmt(Statement stmt, Vertex stmtVertex, AstWalkContext context) {
-
-    }
-
-    private static void addCfgNode(Statement stmt, Vertex stmtVertex, AstWalkContext context) {
         // TODO
-        context.exitStmt(stmt, stmtVertex);
+        return contextStack;
     }
 
-    // TODO: this should be private
-    static Vertex genCfgNode(AstWalkContext context, Optional<Position> pos, String nodeType, String textLabel) {
-        return genCpgNode(context, CFG_NODE, pos, nodeType, textLabel);
+    private static ContextStack exitIfContext(ContextStack contextStack) {
+        log.trace("Exiting IF context");
+        assert contextStack.getCurrentContext() instanceof IfContext;
+        IfContext context = (IfContext) contextStack.popCurrentContext();
+
+        // generate phi node
+        Vertex phi = genCfgNode(Optional.empty(), PHI, PHI, contextStack.getCurrentContext());
+        genCfgEdge(context.thenTail(), phi, EMPTY, EMPTY);
+        genCfgEdge(context.elseTail(), phi, EMPTY, EMPTY);
+
+        // set outer context tail to phi node
+        AstWalkContext outerContext = contextStack.getCurrentContext();
+        outerContext.updateCfgTail(phi);
+        contextStack.setCurrentContext(outerContext);
+        return contextStack;
     }
 
-    static Edge genCfgEdge(Vertex from, Vertex to, String edgeType, String textLabel) {
-        return genCpgEdge(CFG_EDGE, from, to, edgeType, textLabel);
+    private static ContextStack exitWhileContext(ContextStack contextStack) {
+        log.trace("Exiting WHILE context");
+        assert contextStack.getCurrentContext() instanceof WhileContext;
+        WhileContext context = (WhileContext) contextStack.popCurrentContext();
+
+        // draw edge back to conditional
+        genCfgEdge(context.cfgTail(), context.getConditional(), EMPTY, EMPTY);
+
+        // set conditional as outer context CFG tail
+        AstWalkContext outerContext = contextStack.getCurrentContext();
+        outerContext.updateCfgTail(context.getConditional());
+        contextStack.setCurrentContext(outerContext);
+        return contextStack;
+
     }
+
+    private static ContextStack exitForContext(ContextStack contextStack) {
+        log.trace("Exiting FOR context");
+        assert contextStack.getCurrentContext() instanceof ForContext;
+        ForContext context = (ForContext) contextStack.popCurrentContext();
+
+        // generate update and check nodes
+        for (Expression update : context.getUpdates()) {
+            Vertex updateVertex = genCfgNode(Optional.empty(), EXPR_STMT, update.toString(), context);
+            Vertex exprVertex = genExprNode(update).get(0);
+            genAstEdge(updateVertex, exprVertex, EXPR, EXPR);
+            genCfgEdge(context.cfgTail(), updateVertex, EMPTY, EMPTY);
+            context.updateCfgTail(updateVertex);
+        }
+        Expression check = context.getCheck();
+        if (check != null) {
+            Vertex checkVertex = genCfgNode(Optional.empty(), CONDITIONAL_STMT, check.toString(), context);
+            genCfgEdge(context.cfgTail(), checkVertex, EMPTY, EMPTY);
+            genCfgEdge(checkVertex, getNextCfgNode(context.getLastInit()), TRUE, TRUE);
+            AstWalkContext outerContext = contextStack.getCurrentContext();
+            outerContext.updateCfgTail(checkVertex);
+            contextStack.setCurrentContext(outerContext);
+            return contextStack;
+        } else {
+            genCfgEdge(context.cfgTail(), context.getLastInit(), EMPTY, EMPTY);
+            // TODO: this is an infinite loop, what should we do here?
+            return contextStack;
+        }
+    }
+
+    static ContextStack addStmtNode(Vertex stmtVertex, ContextStack contextStack) {
+        AstWalkContext context = contextStack.getCurrentContext();
+        if (context.inBlock() && context.getStmtsRemaining() == 0) {
+            if (context instanceof IfContext) {
+                context = exitIfContext(contextStack).getCurrentContext();
+            } else if (context instanceof WhileContext) {
+                context = exitWhileContext(contextStack).getCurrentContext();
+            } else if (context instanceof ForContext) {
+                context = exitForContext(contextStack).getCurrentContext();
+            }
+        } else if (context.inBlock()) {
+            context.decrStmtsRemaining();
+        }
+        genCfgEdge(context.cfgTail(), stmtVertex, EMPTY, EMPTY);
+        context.updateCfgTail(stmtVertex);
+        contextStack.setCurrentContext(context);
+        return contextStack;
+    }
+
+    // TODO: make this private
+    public static Vertex genCfgNode(Optional<Position> pos, String nodeType, String textLabel, AstWalkContext context) {
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        return g.addV(CFG_NODE)
+                .property(NODE_TYPE, nodeType)
+                .property(TEXT_LABEL, textLabel)
+                .property(FILE_PATH, context.currentFilePath())
+                .property(FILE_NAME, context.currentFileName())
+                .property(PACKAGE_NAME, context.currentPackage())
+                .property(CLASS_NAME, context.currentClass())
+                .property(METHOD_NAME, context.currentMethod())
+                .property(LINE_NO, lineNr(pos))
+                .property(COL_NO, colNr(pos))
+                .next();
+    }
+
+    private static Edge genCfgEdge(Vertex from, Vertex to, String edgeType, String textLabel) {
+        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        return g.addE(CFG_EDGE)
+                .from(from).to(to)
+                .property(EDGE_TYPE, edgeType)
+                .property(TEXT_LABEL, textLabel)
+                .next();
+    }
+
 }
