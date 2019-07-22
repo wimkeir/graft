@@ -48,6 +48,11 @@ public class Const {
     public static final String CONTINUE_STMT = "continue-stmt";
     public static final String TRY_STMT = "try-stmt";
 
+    public static final String THROW_STMT = "throw-stmt";
+    public static final String JUMP_STMT = "jump-stmt"; // break, continue
+    public static final String CONDITIONAL_STMT = "conditional-stmt";   // if, while / do-while / for conditions
+    public static final String CATCH = "cattch";
+
     // CFG node property keys
     public static final String LABEL = "label";
 
@@ -68,6 +73,7 @@ public class Const {
     public static final String LITERAL = "literal";
     public static final String ARRAY_ACCESS_EXPR = "array-access-expr";
     public static final String BASE = "base";
+    public static final String NEW_EXPR = "new-expr";
 
     // AST edge types
     public static final String EXPR = "expr";
@@ -82,12 +88,14 @@ public class Const {
     public static final String RETURNS = "returns";
     public static final String INIT = "init";
     public static final String UPDATE = "update";
+    public static final String THROWS = "throws";
 
     // AST node property keys
     public static final String JAVA_TYPE = "java-type";
     public static final String NAME = "name";
     public static final String CALLS = "calls";
     public static final String OPERATOR = "operator";
+    public static final String CHECK_TYPE = "check-type";
 
     // binary operators
     // TODO: rename some of these
@@ -127,11 +135,6 @@ public class Const {
     public static final String INT = "int";
     public static final String STRING = "string";
     public static final String VOID = "void";
-
-    public enum Direction {
-        LEFT,
-        RIGHT;
-    }
 
     public static String getAssignOp(AssignExpr.Operator op) {
         if (assignOps == null) {

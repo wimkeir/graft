@@ -4,40 +4,54 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.github.javaparser.Position;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.traversal.CpgTraversalSource;
-
 import static graft.Const.*;
+import static graft.cpg.CpgBuilder.*;
 import static graft.cpg.CpgUtil.*;
-import static graft.db.GraphUtil.graph;
 
+/**
+ * Generate AST nodes and subtrees.
+ *
+ * @author Wim Keirsgieter
+ */
 class AstBuilder {
 
     private static Logger log = LoggerFactory.getLogger(AstBuilder.class);
 
+    /**
+     * Generate an AST node for the given parameter.
+     *
+     * @param param the parameter node
+     * @param context the current context
+     * @return the generated AST node
+     */
     static Vertex genParamNode(Parameter param, AstWalkContext context) {
-        // TODO: varargs, annotations
-        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        // TODO: varargs, annotations, modifiers
         String textLabel = param.getType().asString() + " " + param.getNameAsString();
         Vertex paramVertex = genAstNode(context, param.getBegin(), PARAM, textLabel);
-        return g.V(paramVertex)
-                .property(JAVA_TYPE, param.getType().asString())
-                .property(NAME, param.getNameAsString())
-                .next();
+        addNodeProperty(paramVertex, JAVA_TYPE, param.getType().asString());
+        addNodeProperty(paramVertex, NAME, param.getNameAsString());
+        return paramVertex;
     }
 
+    /**
+     * Generate one or more AST nodes (possibly a subtree) for the given expression.
+     *
+     * @param expr the expression node
+     * @param context the current context
+     * @return the generated AST node or subtree
+     */
     static List<Vertex> genExprNode(Expression expr, AstWalkContext context) {
-
         List<Vertex> vertices = new ArrayList<>();
         if (expr instanceof ArrayAccessExpr) {
             vertices.add(genArrayAccessExprNode((ArrayAccessExpr) expr, context));
@@ -55,48 +69,43 @@ class AstBuilder {
             vertices.add(genMethodCallExprNode((MethodCallExpr) expr, context));
         } else if (expr instanceof NameExpr) {
             vertices.add(genNameExprNode((NameExpr) expr, context));
+        } else if (expr instanceof ObjectCreationExpr) {
+            vertices.add(genObjectCreationExprNode((ObjectCreationExpr) expr, context));
         } else if (expr instanceof SuperExpr) {
             vertices.add(genSuperExprNode((SuperExpr) expr, context));
         } else if (expr instanceof ThisExpr) {
             vertices.add(genThisExprNode((ThisExpr) expr, context));
         } else if (expr instanceof VariableDeclarationExpr) {
-            GraphTraversalSource g = graph().traversal(CpgTraversalSource.class);
+            // TODO: factor this out and return single vertex
             VariableDeclarationExpr varDeclExpr = (VariableDeclarationExpr) expr;
             for (VariableDeclarator varDecl : varDeclExpr.getVariables()) {
-                Optional<Expression> initOpt = varDecl.getInitializer();
-                if (!initOpt.isPresent()) {
+                if (!varDecl.getInitializer().isPresent()) {
                     continue;
                 }
                 Vertex exprVertex = genAstNode(context, varDecl.getBegin(), ASSIGN_EXPR, varDecl.getNameAsString());
-                // TODO: operator
-
+                addNodeProperty(exprVertex, OPERATOR, EQUALS);
                 String targetTextLabel = varDecl.getType().asString() + " " + varDecl.getNameAsString();
                 Vertex target = genAstNode(context, varDecl.getName().getBegin(), LOCAL_VAR, targetTextLabel);
-                g.V(target)
-                        .property(JAVA_TYPE, varDecl.getType().asString())
-                        .property(NAME, varDecl.getNameAsString())
-                        .iterate();
-                g.addE(AST_EDGE)
-                        .from(exprVertex).to(target)
-                        .property(EDGE_TYPE, TARGET)
-                        .property(TEXT_LABEL, TARGET)
-                        .iterate();
-
-                List<Vertex> values = genExprNode(initOpt.get(), context);
-                for (Vertex value : values) {
-                    genAstEdge(exprVertex, value, VALUE, VALUE);
-                }
+                addNodeProperty(target, JAVA_TYPE, varDecl.getType().asString());
+                addNodeProperty(target, NAME, varDecl.getNameAsString());
+                genAstEdge(exprVertex, target, TARGET, TARGET);
+                Vertex value = genExprNode(varDecl.getInitializer().get(), context).get(0);
+                genAstEdge(exprVertex, value, VALUE, VALUE);
                 vertices.add(exprVertex);
             }
         } else {
-            log.warn("Unhandled expression type '{}', no node generated", expr.getClass());
+            log.warn("Unhandled expression type '{}', no AST node generated", expr.getClass());
         }
 
         return vertices;
     }
 
+    // ********************************************************************************************
+    // expressions
+    // ********************************************************************************************
+
     private static Vertex genAnnotationExprNode(AnnotationExpr expr, AstWalkContext context) {
-        return null;    // TODO
+        return null;    // TODO: annotations switch in config
     }
 
     private static Vertex genArrayAccessExprNode(ArrayAccessExpr expr, AstWalkContext context) {
@@ -117,8 +126,8 @@ class AstBuilder {
     }
 
     private static Vertex genAssignExprNode(AssignExpr expr, AstWalkContext context) {
-        // TODO: operator
         Vertex exprVertex = genAstNode(context, expr.getBegin(), ASSIGN_EXPR, expr.toString());
+        // addNodeProperty(exprVertex, OPERATOR, getAssignOp(expr.getOperator()));
         Vertex target = genExprNode(expr.getTarget(), context).get(0);
         Vertex value = genExprNode(expr.getValue(), context).get(0);
         genAstEdge(exprVertex, target, TARGET, TARGET);
@@ -128,6 +137,7 @@ class AstBuilder {
 
     private static Vertex genBinaryExprNode(BinaryExpr expr, AstWalkContext context) {
         Vertex exprVertex = genAstNode(context, expr.getBegin(), BINARY_EXPR, expr.toString());
+        addNodeProperty(exprVertex, OPERATOR, getBinaryOp(expr.getOperator()));
         Vertex lop = genExprNode(expr.getLeft(), context).get(0);
         Vertex rop = genExprNode(expr.getRight(), context).get(0);
         genAstEdge(exprVertex, lop, LEFT_OPERAND, LEFT_OPERAND);
@@ -144,7 +154,7 @@ class AstBuilder {
     }
 
     private static Vertex genConditionalExprNode(ConditionalExpr expr, AstWalkContext context) {
-        return null;    // TODO
+        return null;    // TODO: transform to if/else
     }
 
     private static Vertex genEnclosedExprNode(EnclosedExpr expr, AstWalkContext context) {
@@ -157,7 +167,9 @@ class AstBuilder {
 
     private static Vertex genInstanceOfExprNode(InstanceOfExpr expr, AstWalkContext context) {
         Vertex exprVertex = genAstNode(context, expr.getBegin(), INSTANCEOF_EXPR, expr.toString());
-        // TODO: ref type and operand
+        addNodeProperty(exprVertex, CHECK_TYPE, expr.getTypeAsString());
+        Vertex opVertex = genExprNode(expr.getExpression(), context).get(0);
+        genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
         return exprVertex;
     }
 
@@ -168,22 +180,17 @@ class AstBuilder {
     private static Vertex genLiteralExprNode(LiteralExpr expr, AstWalkContext context) {
         // TODO: handle all subclasses
 
-        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
         Vertex exprVertex;
         if (expr instanceof IntegerLiteralExpr) {
             IntegerLiteralExpr intExpr = (IntegerLiteralExpr) expr;
             exprVertex = genAstNode(context, intExpr.getBegin(), LITERAL, intExpr.toString());
-            g.V(exprVertex)
-                    .property(JAVA_TYPE, INT)
-                    .property(VALUE, intExpr.asInt())
-                    .iterate();
+            addNodeProperty(exprVertex, JAVA_TYPE, INT);
+            addNodeProperty(exprVertex, VALUE, intExpr.getValue());
         } else if (expr instanceof StringLiteralExpr) {
             StringLiteralExpr strExpr = (StringLiteralExpr) expr;
             exprVertex = genAstNode(context, strExpr.getBegin(), LITERAL, strExpr.toString());
-            g.V(exprVertex)
-                    .property(JAVA_TYPE, INT)
-                    .property(VALUE, strExpr.asString())
-                    .iterate();
+            addNodeProperty(exprVertex, JAVA_TYPE, STRING);
+            addNodeProperty(exprVertex, VALUE, strExpr.asString());
         } else {
             exprVertex = null;
         }
@@ -191,61 +198,66 @@ class AstBuilder {
     }
 
     private static Vertex genMethodCallExprNode(MethodCallExpr expr, AstWalkContext context) {
-        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
-
         Vertex exprVertex = genAstNode(context, expr.getBegin(), CALL_EXPR, expr.toString());
         // TODO: scope
-        g.V(exprVertex).property(CALLS, expr.getNameAsString()).iterate();
-
+        addNodeProperty(exprVertex, CALLS, expr.getNameAsString());
         int i = 0;
         for (Expression arg : expr.getArguments()) {
             Vertex argVertex = genExprNode(arg, context).get(0);
             Edge argEdge = genAstEdge(exprVertex, argVertex, ARG, ARG);
-            g.E(argEdge).property(INDEX, i++).iterate();
+            addEdgeProperty(argEdge, INDEX, "" + i++);
         }
-
         return exprVertex;
     }
 
     private static Vertex genNameExprNode(NameExpr expr, AstWalkContext context) {
-        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
-
         Vertex exprVertex = genAstNode(context, expr.getBegin(), LOCAL_VAR, expr.getNameAsString());
         // TODO: resolve type, value if known
-        g.V(exprVertex).property(NAME, expr.getNameAsString());
-
+        addNodeProperty(exprVertex, NAME, expr.getNameAsString());
         return exprVertex;
     }
 
     private static Vertex genObjectCreationExprNode(ObjectCreationExpr expr, AstWalkContext context) {
-        return null;    // TODO
-    }
-
-    private static Vertex genSuperExprNode(SuperExpr expr, AstWalkContext context) {
-        String textLabel = expr.toString();
-        Vertex exprVertex = genAstNode(context, expr.getBegin(), SUPER_EXPR, textLabel);
-        // TODO: type
-        // TODO: link w/ super constructor in interproc
+        Vertex exprVertex = genAstNode(context, expr.getBegin(), NEW_EXPR, expr.toString());
+        // TODO: scope
+        addNodeProperty(exprVertex, JAVA_TYPE, expr.getTypeAsString());
+        int i = 0;
+        for (Expression arg : expr.getArguments()) {
+            Vertex argVertex = genExprNode(arg, context).get(0);
+            Edge argEdge = genAstEdge(exprVertex, argVertex, ARG, ARG);
+            addEdgeProperty(argEdge, INDEX, "" + i++);
+        }
         return exprVertex;
     }
 
-    private static Vertex genSwitchExprNode(SwitchExpr expr, AstWalkContext context) {
-        return null;    // TODO
+    private static Vertex genSuperExprNode(SuperExpr expr, AstWalkContext context) {
+        Vertex exprVertex = genAstNode(context, expr.getBegin(), SUPER_EXPR, expr.toString());
+        expr.getTypeName().ifPresent(type -> addNodeProperty(exprVertex, JAVA_TYPE, type.asString()));
+        return exprVertex;
     }
 
     private static Vertex genThisExprNode(ThisExpr expr, AstWalkContext context) {
-        String textLabel = expr.toString();
-        Vertex exprVertex = genAstNode(context, expr.getBegin(), THIS_EXPR, textLabel);
-        // TODO: type
+        Vertex exprVertex = genAstNode(context, expr.getBegin(), THIS_EXPR, expr.toString());
+        expr.getTypeName().ifPresent(type -> addNodeProperty(exprVertex, JAVA_TYPE, type.asString()));
         return exprVertex;
     }
 
     private static Vertex genUnaryExprNode(UnaryExpr expr, AstWalkContext context) {
-        String textLabel = expr.toString();
-        Vertex exprVertex = genAstNode(context, expr.getBegin(), UNARY_EXPR, textLabel);
+        Vertex exprVertex = genAstNode(context, expr.getBegin(), UNARY_EXPR, expr.toString());
         Vertex opVertex = genExprNode(expr.getExpression(), context).get(0);
         genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
         return exprVertex;
     }
+
+    // TODO: these should be private
+
+    static Vertex genAstNode(AstWalkContext context, Optional<Position> pos, String nodeType, String textLabel) {
+        return genCpgNode(context, AST_NODE, pos, nodeType, textLabel);
+    }
+
+    static Edge genAstEdge(Vertex from, Vertex to, String edgeType, String textLabel) {
+        return genCpgEdge(AST_EDGE, from, to, edgeType, textLabel);
+    }
+
 
 }

@@ -13,6 +13,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import static graft.Const.*;
+import static graft.cpg.CfgBuilder.*;
 
 /**
  * TODO: javadoc
@@ -87,46 +88,42 @@ class AstWalkContext {
         currentMethod = decl.getNameAsString();
     }
 
-    void enterStmt(WhileStmt whileStmt, Vertex stmtVertex) {
+    private EnclosingStmtContext getEnclosingContext (String type, Vertex head, int nrStmts) {
         EnclosingStmtContext context = new EnclosingStmtContext();
-        context.enclosingStmtHead = stmtVertex;
-        context.enclosingStmtType = WHILE_STMT;
-        context.stmtsRemaining = nrStmts(whileStmt.getBody());
+        context.enclosingStmtType = type;
+        context.enclosingStmtHead = head;
+        context.stmtsRemaining = nrStmts;
+        return context;
+    }
+
+    void enterStmt(WhileStmt whileStmt, Vertex stmtVertex) {
+        EnclosingStmtContext context = getEnclosingContext(WHILE_STMT, stmtVertex, nrStmts(whileStmt.getBody()));
         enclosingStmtContexts.push(context);
     }
 
     void enterStmt(IfStmt ifStmt, Vertex stmtVertex) {
-        EnclosingStmtContext context = new EnclosingStmtContext();
-        context.enclosingStmtHead = stmtVertex;
-        context.enclosingStmtType = IF_STMT;
+        EnclosingStmtContext context = getEnclosingContext(IF_STMT, stmtVertex, nrStmts(ifStmt.getThenStmt()));
         context.inThenBlock = true;
-        context.stmtsRemaining = nrStmts(ifStmt.getThenStmt());
 
-        if (ifStmt.hasElseBranch()) {
+        ifStmt.getElseStmt().ifPresent(elseBody -> {
+            EnclosingStmtContext elseContext = getEnclosingContext(IF_STMT, stmtVertex, nrStmts(elseBody) - 1);
             context.hasElseBlock = true;
-            EnclosingStmtContext elseContext = new EnclosingStmtContext();
-            elseContext.enclosingStmtHead = stmtVertex;
-            elseContext.enclosingStmtType = IF_STMT;
-            elseContext.inThenBlock = false;
-            // TODO: why the -1 here?
-            elseContext.stmtsRemaining = nrStmts(ifStmt.getElseStmt().get()) - 1;
+            context.inThenBlock = false;
             enclosingStmtContexts.push(elseContext);
-        }
+        });
+
         enclosingStmtContexts.push(context);
     }
 
     void enterStmt(ForStmt forStmt, Vertex stmtVertex) {
-        EnclosingStmtContext context = new EnclosingStmtContext();
-        context.enclosingStmtHead = stmtVertex;
-        context.enclosingStmtType = FOR_STMT;
-        context.stmtsRemaining = nrStmts(forStmt.getBody());
+        EnclosingStmtContext context = getEnclosingContext(FOR_STMT, stmtVertex, nrStmts(forStmt.getBody()));
         enclosingStmtContexts.push(context);
     }
 
     void exitStmt(Statement stmt, Vertex stmtVertex) {
         // no enclosing statement - simply draw edge from tail to current vertex and update tail
         if (enclosingStmtContexts.isEmpty()) {
-            CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+            genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
             cfgTail = stmtVertex;
             return;
         }
@@ -138,7 +135,7 @@ class AstWalkContext {
         if (context.stmtsRemaining > 0) {
             context.stmtsRemaining--;
             enclosingStmtContexts.push(context);
-            CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+            genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
             cfgTail = stmtVertex;
             return;
         }
@@ -151,7 +148,7 @@ class AstWalkContext {
                 if (context.inThenBlock) {
                     // leaving a then block, we set the tail to the statement head (the if condition)
                     // so that the next edge to either the phi node or else block is drawn from there
-                    CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+                    genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
 
                     if (context.hasElseBlock) {
                         System.out.println("Leaving then block");
@@ -160,32 +157,32 @@ class AstWalkContext {
                         enclosingStmtContexts.push(elseContext);
                         cfgTail = context.enclosingStmtHead;
                     } else {
-                        Vertex phi = CpgUtil.genCfgNode(this, Optional.empty(), PHI, PHI);
-                        CpgUtil.genCfgEdge(stmtVertex, phi, EMPTY, EMPTY);
-                        CpgUtil.genCfgEdge(context.enclosingStmtHead, phi, EMPTY, EMPTY);
+                        Vertex phi = genCfgNode(this, Optional.empty(), PHI, PHI);
+                        genCfgEdge(stmtVertex, phi, EMPTY, EMPTY);
+                        genCfgEdge(context.enclosingStmtHead, phi, EMPTY, EMPTY);
                         cfgTail = phi;
                     }
                 } else {
                     // leaving an else block, TODO
                     System.out.println("Leaving else block");
-                    CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
-                    Vertex phi = CpgUtil.genCfgNode(this, Optional.empty(), PHI, PHI);
-                    CpgUtil.genCfgEdge(stmtVertex, phi, EMPTY, EMPTY);
-                    CpgUtil.genCfgEdge(context.thenTail, phi, EMPTY, EMPTY);
+                    genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+                    Vertex phi = genCfgNode(this, Optional.empty(), PHI, PHI);
+                    genCfgEdge(stmtVertex, phi, EMPTY, EMPTY);
+                    genCfgEdge(context.thenTail, phi, EMPTY, EMPTY);
                     cfgTail = phi;
                 }
                 break;
             case WHILE_STMT:
                 // leaving a while block, draw an edge back to the guard condition and set that as
                 // the tail (after drawing a standard edge from the current tail to current vertex)
-                CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
-                CpgUtil.genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
+                genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+                genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
                 cfgTail = context.enclosingStmtHead;
                 break;
             case FOR_STMT:
                 // leaving a for statement (handled the same as while statements)
-                CpgUtil.genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
-                CpgUtil.genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
+                genCfgEdge(cfgTail, stmtVertex, EMPTY, EMPTY);
+                genCfgEdge(stmtVertex, context.enclosingStmtHead, EMPTY, EMPTY);
                 cfgTail = context.enclosingStmtHead;
                 break;
             default:
