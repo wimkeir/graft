@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.EmptyStmt;
@@ -28,6 +29,7 @@ public class AstWalkContext {
     private String currentClass;
     private String currentMethod;
 
+    private Vertex classNode;
     private Vertex cfgTail;
     boolean inBlock;
 
@@ -85,6 +87,10 @@ public class AstWalkContext {
         cfgTail = tail;
     }
 
+    public Vertex getClassNode() {
+        return classNode;
+    }
+
     public void update(CompilationUnit cu) {
         Optional<CompilationUnit.Storage> optStorage = cu.getStorage();
         if (optStorage.isPresent()) {
@@ -103,8 +109,14 @@ public class AstWalkContext {
         currentPackage = decl.getNameAsString();
     }
 
-    public void update(ClassOrInterfaceDeclaration decl) {
+    public void update(ClassOrInterfaceDeclaration decl, Vertex classNode) {
+        this.classNode = classNode;
         currentClass = decl.getNameAsString();
+    }
+
+    public void update(ConstructorDeclaration decl, Vertex entryNode) {
+        currentMethod = decl.getNameAsString();
+        cfgTail = entryNode;
     }
 
     public void update(MethodDeclaration decl, Vertex entryNode) {

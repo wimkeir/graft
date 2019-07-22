@@ -53,6 +53,7 @@ public class Const {
     public static final String COL_NO = "col-no";
 
     // AST node types
+    public static final String CLASS = "class";
     public static final String ASSIGN_EXPR = "var-assign";
     public static final String BINARY_EXPR = "binary-expr";
     public static final String UNARY_EXPR = "unary-expr";
@@ -77,6 +78,8 @@ public class Const {
     public static final String PARAM = "param";
     public static final String RETURNS = "returns";
     public static final String THROWS = "throws";
+    public static final String METHOD = "method";
+    public static final String CONSTRUCTOR = "constructor";
 
     // AST node property keys
     public static final String JAVA_TYPE = "java-type";
