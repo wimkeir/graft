@@ -1,11 +1,11 @@
 package graft;
 
+import graft.phases.CpgBuildPhase;
+import graft.phases.DotPhase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.cpg.CpgBuilder;
 import graft.db.GraphUtil;
-import graft.utils.DotUtil;
 import graft.utils.LogUtil;
 
 /**
@@ -22,6 +22,7 @@ public class Graft {
      */
     public static void main(String[] args) {
         validateArgs(args);
+        String srcRoot = args[0];
 
         GraftConfig config = null;
         try {
@@ -39,14 +40,16 @@ public class Graft {
         log.debug("Running with configuration {}", config.toString());
 
         GraphUtil.initGraph();
-        CpgBuilder cpgBuilder = new CpgBuilder(args[0]);
 
-        try {
-            cpgBuilder.buildCpg();
-            DotUtil.cpgToDot("etc/dot/cpg.dot", "cpg");
-        } catch (GraftException e) {
-            log.error("Unable to build CFG: {}", e.getMessage(), e);
-        }
+        GraftRun graftRun = new GraftRun(config);
+        graftRun.register(
+                new CpgBuildPhase(srcRoot, CpgBuildPhase.getOptions(config)),
+                new DotPhase(DotPhase.getOptions(config))
+        );
+
+        log.info("Running Graft on source root {}", srcRoot);
+        GraftResult result = graftRun.run();
+        output(result.toString());
     }
 
     private static void validateArgs(String[] args) {
@@ -61,6 +64,10 @@ public class Graft {
             }
             log.debug("Running with command line arguments: {}", sb.toString());
         }
+    }
+
+    private static void output(String s) {
+        System.out.println(s);
     }
 
 }

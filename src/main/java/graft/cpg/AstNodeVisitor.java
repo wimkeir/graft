@@ -20,7 +20,10 @@ import static graft.cpg.CfgBuilder.*;
 import static graft.cpg.CpgUtil.*;
 
 /**
- * TODO: javadoc
+ * This visitor visits statement and declaration nodes in the parser-provided AST and handles them
+ * accordingly, by creating CPG nodes and updating the context.
+ *
+ * @author Wim Keirsgieter
  */
 public class AstNodeVisitor extends GenericVisitorWithDefaults<ContextStack, ContextStack> {
 

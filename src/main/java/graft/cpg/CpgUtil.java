@@ -14,9 +14,17 @@ import static graft.db.GraphUtil.graph;
 
 /**
  * Utility methods for CPG construction.
+ *
+ * @author Wim Keirsgieter
  */
 class CpgUtil {
 
+    /**
+     * Returns the line number of a position if present (else returns -1).
+     *
+     * @param pos the position
+     * @return the line number, or -1 if not present
+     */
     static int lineNr(Optional<Position> pos) {
         if (pos.isPresent()) {
             return pos.get().line;
@@ -24,6 +32,12 @@ class CpgUtil {
         return -1;
     }
 
+    /**
+     * Returns the column number of a position if present (else returns -1).
+     *
+     * @param pos the position
+     * @return the column number, or -1 if not present
+     */
     static int colNr(Optional<Position> pos) {
         if (pos.isPresent()) {
             return pos.get().column;
@@ -55,10 +69,17 @@ class CpgUtil {
         g.E(edge).property(key, value).iterate();
     }
 
+    /**
+     * Returns the direct successor of the given CFG node in the CPG.
+     *
+     * @param node the node whose successor to find
+     * @return the successor of the given node
+     */
     static Vertex getNextCfgNode(Vertex node) {
         assert node.label().equals(CFG_NODE);
         CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
         return g.V(node).out(CFG_EDGE).next();
+        // TODO: what if this node doesn't exist?
     }
 
 }

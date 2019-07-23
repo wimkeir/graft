@@ -247,7 +247,10 @@ class AstBuilder {
         return exprVertex;
     }
 
-    // TODO: these should be private
+    // ********************************************************************************************
+    // utility methods
+    // TODO: these should be private (find outside uses and refactor)
+    // ********************************************************************************************
 
     static Vertex genAstNode(String nodeType, String textLabel) {
         CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
