@@ -1,13 +1,14 @@
 <configuration>
 
+    <logger name="org.apache.commons" level="OFF"/>
+
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss} %-5level [%logger{50}] => %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- TODO: change back to info! -->
-    <root level="debug">
+    <root level="info">
         <appender-ref ref="stdout" />
     </root>
 

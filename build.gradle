@@ -25,5 +25,9 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.6.6'
     implementation 'ch.qos.logback:logback-classic:1.0.13'
 
+    // configuration
+    implementation 'org.apache.commons:commons-configuration2:2.4'
+    implementation 'commons-beanutils:commons-beanutils:1.9.3'
+
     testImplementation 'junit:junit:4.12'
 }

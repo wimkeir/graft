@@ -13,6 +13,14 @@ public class Const {
     private static Map<BinaryExpr.Operator, String> binaryOps;
     private static Map<UnaryExpr.Operator, String> unaryOps;
 
+    // log levels
+    public static final String TRACE = "trace";
+    public static final String DEBUG = "debug";
+    public static final String INFO = "info";
+    public static final String WARN = "warn";
+    public static final String ERROR = "error";
+    public static final String ALL = "all";
+
     // node labels
     public static final String LABEL = "label";
     public static final String CFG_NODE = "cfg-node";

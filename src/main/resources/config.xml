@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE configuration>
+
+<configuration>
+
+    <general>
+        <log-level>info</log-level>
+    </general>
+
+    <db>
+        <implementation>tinkergraph</implementation>
+    </db>
+
+    <cpg>
+        <interproc>true</interproc>
+    </cpg>
+
+</configuration>
