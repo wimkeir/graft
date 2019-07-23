@@ -64,7 +64,8 @@ public class AstNodeVisitor extends GenericVisitorWithDefaults<ContextStack, Con
     public ContextStack visit(ClassOrInterfaceDeclaration decl, ContextStack contextStack) {
         log.trace("Visiting ClassOrInterfaceDeclaration");
         AstWalkContext context = contextStack.getCurrentContext();
-        context.update(decl);
+        Vertex classVertex = genAstNode(CLASS, decl.getNameAsString());
+        context.update(decl, classVertex);
         contextStack.setCurrentContext(context);
         log.debug("Walking AST of class '{}'", context.currentClass());
         return contextStack;
@@ -72,12 +73,27 @@ public class AstNodeVisitor extends GenericVisitorWithDefaults<ContextStack, Con
 
     @Override
     public ContextStack visit(ConstructorDeclaration decl, ContextStack contextStack) {
-        throw new UnsupportedOperationException("ConstructorDeclaration visitor implemented yet");
+        log.trace("Visiting ConstructorDeclaration");
+        AstWalkContext context = contextStack.getCurrentContext();
+        String textLabel = decl.getDeclarationAsString(true, false, true);
+        Vertex entryNode = genCfgNode(decl.getBegin(), ENTRY, textLabel, contextStack.getCurrentContext());
+        int index = 0;
+        for (Parameter param : decl.getParameters()) {
+            Vertex paramVertex = genParamNode(param);
+            Edge paramEdge = genAstEdge(entryNode, paramVertex, PARAM, PARAM);
+            addEdgeProperty(paramEdge, INDEX, "" + index);
+        }
+        genAstEdge(context.getClassNode(), entryNode, CONSTRUCTOR, CONSTRUCTOR);
+        context.update(decl, entryNode);
+        contextStack.setCurrentContext(context);
+        log.debug("Walking AST of constructor '{}'", context.currentMethod());
+        return contextStack;
+
     }
 
     @Override
     public ContextStack visit(FieldDeclaration decl, ContextStack contextStack) {
-        throw new UnsupportedOperationException("FieldDeclaration visitor implemented yet");
+        throw new UnsupportedOperationException("FieldDeclaration visitor not implemented yet");
     }
 
     @Override
@@ -92,6 +108,7 @@ public class AstNodeVisitor extends GenericVisitorWithDefaults<ContextStack, Con
             Edge paramEdge = genAstEdge(entryNode, paramVertex, PARAM, PARAM);
             addEdgeProperty(paramEdge, INDEX, "" + index);
         }
+        genAstEdge(context.getClassNode(), entryNode, METHOD, METHOD);
         context.update(decl, entryNode);
         contextStack.setCurrentContext(context);
         log.debug("Walking AST of method '{}'", context.currentMethod());
