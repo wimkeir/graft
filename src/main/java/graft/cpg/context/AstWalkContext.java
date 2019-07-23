@@ -52,6 +52,7 @@ public class AstWalkContext {
         currentClass = outerContext.currentClass();
         currentMethod = outerContext.currentMethod();
         inBlock = false;
+        classNode = outerContext.getClassNode();
         cfgTail = outerContext.cfgTail();
     }
 
