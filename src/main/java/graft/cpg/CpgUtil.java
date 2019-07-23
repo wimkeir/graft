@@ -52,7 +52,7 @@ class CpgUtil {
      * @param key the property key
      * @param value the property value
      */
-    static void addNodeProperty(Vertex node, String key, String value) {
+    static void addNodeProperty(Vertex node, String key, Object value) {
         CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
         g.V(node).property(key, value).iterate();
     }
@@ -64,7 +64,7 @@ class CpgUtil {
      * @param key the property key
      * @param value the property value
      */
-    static void addEdgeProperty(Edge edge, String key, String value) {
+    static void addEdgeProperty(Edge edge, String key, Object value) {
         CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
         g.E(edge).property(key, value).iterate();
     }

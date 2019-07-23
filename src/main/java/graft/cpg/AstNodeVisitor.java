@@ -106,7 +106,7 @@ public class AstNodeVisitor extends GenericVisitorWithDefaults<ContextStack, Con
         for (Parameter param : decl.getParameters()) {
             Vertex paramVertex = genParamNode(param);
             Edge paramEdge = genAstEdge(entryNode, paramVertex, PARAM, PARAM);
-            addEdgeProperty(paramEdge, INDEX, "" + index);
+            addEdgeProperty(paramEdge, INDEX, index);
         }
         genAstEdge(context.getClassNode(), entryNode, METHOD, METHOD);
         context.update(decl, entryNode);

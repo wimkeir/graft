@@ -203,7 +203,7 @@ class AstBuilder {
         for (Expression arg : expr.getArguments()) {
             Vertex argVertex = genExprNode(arg).get(0);
             Edge argEdge = genAstEdge(exprVertex, argVertex, ARG, ARG);
-            addEdgeProperty(argEdge, INDEX, "" + i++);
+            addEdgeProperty(argEdge, INDEX, i++);
         }
         return exprVertex;
     }
@@ -257,7 +257,8 @@ class AstBuilder {
         return g.addV(AST_NODE)
                 .property(NODE_TYPE, nodeType)
                 .property(TEXT_LABEL, textLabel)
-                .next();    }
+                .next();
+    }
 
     static Edge genAstEdge(Vertex from, Vertex to, String edgeType, String textLabel) {
         CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
