@@ -176,22 +176,38 @@ class AstBuilder {
     }
 
     private static Vertex genLiteralExprNode(LiteralExpr expr) {
-        // TODO: handle all subclasses
-
-        Vertex exprVertex;
-        if (expr instanceof IntegerLiteralExpr) {
-            IntegerLiteralExpr intExpr = (IntegerLiteralExpr) expr;
-            exprVertex = genAstNode(LITERAL, intExpr.toString());
-            addNodeProperty(exprVertex, JAVA_TYPE, INT);
-            addNodeProperty(exprVertex, VALUE, intExpr.getValue());
-        } else if (expr instanceof StringLiteralExpr) {
-            StringLiteralExpr strExpr = (StringLiteralExpr) expr;
-            exprVertex = genAstNode(LITERAL, strExpr.toString());
-            addNodeProperty(exprVertex, JAVA_TYPE, STRING);
-            addNodeProperty(exprVertex, VALUE, strExpr.asString());
+        Vertex exprVertex = genAstNode(LITERAL, expr.toString());
+        String type;
+        Object value;
+        if (expr.isBooleanLiteralExpr()) {
+            type = BOOLEAN;
+            value = ((BooleanLiteralExpr) expr).getValue();
+        } else if (expr.isCharLiteralExpr()) {
+            type = CHAR;
+            value = ((CharLiteralExpr) expr).getValue();
+        } else if (expr.isDoubleLiteralExpr()) {
+            type = DOUBLE;
+            value = ((DoubleLiteralExpr) expr).getValue();
+        } else if (expr.isIntegerLiteralExpr()) {
+            type = INT;
+            value = Integer.parseInt(((IntegerLiteralExpr) expr).getValue());
+        } else if (expr.isLongLiteralExpr()) {
+            type = LONG;
+            value = ((LongLiteralExpr) expr).getValue();
+        } else if (expr.isNullLiteralExpr()) {
+            type = NULL;
+            value = NULL;
+        } else if (expr.isStringLiteralExpr()) {
+            type = STRING;
+            value = ((StringLiteralExpr) expr).getValue();
         } else {
-            exprVertex = null;
+            log.warn("Unrecognised literal expression '{}'", expr.toString());
+            type = UNKNOWN;
+            value = NONE;
         }
+        addNodeProperty(exprVertex, JAVA_TYPE, type);
+        addNodeProperty(exprVertex, VALUE, value);
+
         return exprVertex;
     }
 

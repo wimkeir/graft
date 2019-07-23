@@ -99,13 +99,15 @@ public class Const {
     // AST edge property keys
     public static final String INDEX = "index";
 
-    // primitive types
+    // primitive types and literals
     public static final String BOOLEAN = "boolean";
     public static final String CHAR = "char";
     public static final String DOUBLE = "double";
     public static final String INT = "int";
-    public static final String STRING = "string";
+    public static final String LONG = "long";
+    public static final String STRING = "java.lang.String";
     public static final String VOID = "void";
+    public static final String NULL = "null";
 
     // binary operators
     // TODO: rename some of these
