@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
 import graft.GraftException;
 
 /**
- * TODO: javadoc
+ * Handles the actual construction of the CPG.
+ *
+ * @author Wim Keirsgieter
  */
 public class CpgBuilder {
 
@@ -25,11 +27,10 @@ public class CpgBuilder {
 
     public CpgBuilder(String srcRoot) {
         this.srcRoot = new SourceRoot(Paths.get(srcRoot));
-        log.debug("New CpgBuilder (srcRoot=" + srcRoot + ")");
     }
 
     /**
-     * TODO: javadoc
+     * Generate and store the CPG in the graph database.
      */
     public void buildCpg() throws GraftException {
         log.info("Building CPG");
@@ -38,8 +39,8 @@ public class CpgBuilder {
         try {
             results = srcRoot.tryToParse();
         } catch (IOException e) {
-            log.error("IOException in <CpgBuilder>.buildCpg", e);
-            return;
+            log.debug("IOException in <CpgBuilder>.buildCpg", e);
+            throw new GraftException("Unable to parse source root (see debug logs)");
         }
 
         for (ParseResult<CompilationUnit> result : results) {
@@ -47,11 +48,12 @@ public class CpgBuilder {
                 CompilationUnit cu = result.getResult().get();
                 cu.findRootNode().walk(new AstWalker());
             } else {
-                log.error("Problems with parse");
+                log.debug("Problems with parse");
                 List<Problem> problems = result.getProblems();
                 for (Problem problem : problems) {
-                    log.error(problem.getVerboseMessage());
+                    log.debug(problem.getVerboseMessage());
                 }
+                throw new GraftException("Problems encountered while parsing source root (see debug logs)");
             }
         }
     }
