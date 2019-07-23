@@ -1,9 +1,11 @@
 package graft.phases;
 
+import org.apache.commons.configuration2.BaseConfiguration;
+import org.apache.commons.configuration2.Configuration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.GraftConfig;
 import graft.utils.DotUtil;
 
 /**
@@ -17,8 +19,8 @@ public class DotPhase implements GraftPhase {
 
     private String dotFile;
 
-    public DotPhase(PhaseOptions options) {
-        dotFile = options.getOption("dot-file");
+    public DotPhase(Configuration options) {
+        dotFile = options.getString("dot-file");
     }
 
     @Override
@@ -30,9 +32,9 @@ public class DotPhase implements GraftPhase {
         return new PhaseResult(this, true);
     }
 
-    public static PhaseOptions getOptions(GraftConfig config) {
-        PhaseOptions options = new PhaseOptions();
-        options.setOption("dot-file", config.getString("general.dot-file"));
+    public static Configuration getOptions(Configuration config) {
+        Configuration options = new BaseConfiguration();
+        options.setProperty("dot-file", config.getString("general.dot-file"));
         return options;
     }
 

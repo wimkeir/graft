@@ -1,12 +1,14 @@
 package graft;
 
-import graft.phases.CpgBuildPhase;
-import graft.phases.DotPhase;
+import org.apache.commons.configuration2.Configuration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import graft.db.GraphUtil;
 import graft.utils.LogUtil;
+import graft.phases.CpgBuildPhase;
+import graft.phases.DotPhase;
 
 /**
  * TODO: javadoc
@@ -24,13 +26,13 @@ public class Graft {
         validateArgs(args);
         String srcRoot = args[0];
 
-        GraftConfig config = null;
+        Configuration config = null;
         try {
             if (args.length == 2) {
-                config = GraftConfig.fromFile(args[1]);
+                config = ConfigHelper.getFromFile(args[1]);
             } else {
                 log.info("No config file specified, using default config");
-                config = GraftConfig.defaultConfig();
+                config = ConfigHelper.getDefaultConfig();
             }
         } catch (GraftException e) {
             log.error("Unable to configure Graft", e);

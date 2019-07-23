@@ -1,9 +1,11 @@
 package graft.phases;
 
+import org.apache.commons.configuration2.BaseConfiguration;
+import org.apache.commons.configuration2.Configuration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.GraftConfig;
 import graft.GraftException;
 import graft.cpg.CpgBuilder;
 
@@ -18,8 +20,8 @@ public class CpgBuildPhase implements GraftPhase {
 
     private CpgBuilder cpgBuilder;
 
-    public CpgBuildPhase(String srcRoot, PhaseOptions options) {
-        cpgBuilder = new CpgBuilder(srcRoot);
+    public CpgBuildPhase(String srcRoot, Configuration options) {
+        cpgBuilder = new CpgBuilder(srcRoot, options);
     }
 
     @Override
@@ -36,9 +38,10 @@ public class CpgBuildPhase implements GraftPhase {
         return result;
     }
 
-    public static PhaseOptions getOptions(GraftConfig config) {
-        // TODO
-        return new PhaseOptions();
+    public static Configuration getOptions(Configuration config) {
+        Configuration options = new BaseConfiguration();
+        options.setProperty("exclusions", config.getList("cpg.exlusions"));
+        return options;
     }
 
 }

@@ -9,6 +9,8 @@ import com.github.javaparser.Problem;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.utils.SourceRoot;
 
+import org.apache.commons.configuration2.Configuration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +26,11 @@ public class CpgBuilder {
     private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);
 
     private SourceRoot srcRoot;
+    private Configuration options;
 
-    public CpgBuilder(String srcRoot) {
+    public CpgBuilder(String srcRoot, Configuration options) {
         this.srcRoot = new SourceRoot(Paths.get(srcRoot));
+        this.options = options;
     }
 
     /**

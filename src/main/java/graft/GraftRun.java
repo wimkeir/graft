@@ -3,6 +3,8 @@ package graft;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.configuration2.Configuration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,10 +23,10 @@ public class GraftRun {
 
     private static Logger log = LoggerFactory.getLogger(GraftRun.class);
 
-    private GraftConfig config;
+    private Configuration config;
     private List<GraftPhase> phases;
 
-    public GraftRun(GraftConfig config) {
+    public GraftRun(Configuration config) {
         this.config = config;
         phases = new ArrayList<>();
     }
