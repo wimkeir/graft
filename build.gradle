@@ -13,6 +13,9 @@ repositories {
 
 dependencies {
 
+    // Soot
+    implementation 'ca.mcgill.sable:soot:3.3.0'
+
     // source code parsing
     implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.14.7'
 

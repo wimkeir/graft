@@ -9,6 +9,7 @@ import graft.db.GraphUtil;
 import graft.utils.LogUtil;
 import graft.phases.CpgBuildPhase;
 import graft.phases.DotPhase;
+import graft.phases.SootPhase;
 
 /**
  * TODO: javadoc
@@ -45,8 +46,9 @@ public class Graft {
 
         GraftRun graftRun = new GraftRun(config);
         graftRun.register(
-                new CpgBuildPhase(srcRoot, CpgBuildPhase.getOptions(config)),
-                new DotPhase(DotPhase.getOptions(config))
+                // new CpgBuildPhase(srcRoot, CpgBuildPhase.getOptions(config)),
+                new SootPhase(SootPhase.getOptions(config))
+                // new DotPhase(DotPhase.getOptions(config))
         );
 
         log.info("Running Graft on source root {}", srcRoot);
