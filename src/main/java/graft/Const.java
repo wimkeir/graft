@@ -121,6 +121,9 @@ public class Const {
     // binary operators
     public static final String AND = "and";
     public static final String DIVIDE = "div";
+    public static final String CMP = "cmpr";
+    public static final String CMPL = "cmpl";
+    public static final String CMPG = "cmpg";
     public static final String EQUALS = "eq";
     public static final String GREATER = "gt";
     public static final String GREATER_EQUALS = "ge";

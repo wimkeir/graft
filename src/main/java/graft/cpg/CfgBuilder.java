@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import soot.Body;
 import soot.Unit;
+import soot.jimple.IfStmt;
 import soot.jimple.Stmt;
 import soot.tagkit.*;
 import soot.toolkits.graph.BriefUnitGraph;
@@ -35,16 +36,18 @@ public class CfgBuilder {
      * @param body the method body
      */
     public static void buildCfg(Vertex classNode, Body body) {
-        UnitGraph unitGraph = new BriefUnitGraph(body);
+        log.debug("Building CFG for method '{}'", body.getMethod().getName());
 
-        Vertex entryNode = genCfgNode(ENTRY, body.getMethod().getName());
-
+        // generate entry node and attach to class AST node
+        Vertex entryNode = genCfgNode(null, ENTRY, body.getMethod().getName());
         if (body.getMethod().isConstructor()) {
             AstBuilder.genAstEdge(classNode, entryNode, CONSTRUCTOR, CONSTRUCTOR);
         } else {
             AstBuilder.genAstEdge(classNode, entryNode, METHOD, METHOD);
         }
 
+        // generate control flow graph and add nodes recursively
+        UnitGraph unitGraph = new BriefUnitGraph(body);
         for (Unit head : unitGraph.getHeads()) {
             Vertex headVertex = genCfgNodeAndSuccs(unitGraph, head);
             if (headVertex == null) {
@@ -57,21 +60,19 @@ public class CfgBuilder {
     /**
      * Generate a CFG node with the given node type and text label properties.
      *
+     * @param stmt the statement to generate a node for (contains source file info)
      * @param nodeType the node type of the CFG node
      * @param textLabel the text label of the CFG node
      * @return the generated CFG node
      */
-    public static Vertex genCfgNode(String nodeType, String textLabel) {
+    public static Vertex genCfgNode(Stmt stmt, String nodeType, String textLabel) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         return g.addV(CFG_NODE)
                 .property(NODE_TYPE, nodeType)
                 .property(TEXT_LABEL, textLabel)
-//                .property(FILE_PATH, context.currentFilePath())
-//                .property(FILE_NAME, context.currentFileName())
-//                .property(CLASS_NAME, context.currentClass())
-//                .property(METHOD_NAME, context.currentMethod())
-//                .property(LINE_NO, lineNr(pos))
-//                .property(COL_NO, colNr(pos))
+                .property(FILE_PATH, getSourcePath(stmt))
+                .property(FILE_NAME, getSourceFile(stmt))
+                .property(LINE_NO, getLineNr(stmt))
                 .next();
     }
 
@@ -95,12 +96,14 @@ public class CfgBuilder {
 
     // Recursively generate CFG nodes for a given unit and its children, with CFG edges between them
     private static Vertex genCfgNodeAndSuccs(UnitGraph unitGraph, Unit unit) {
+        log.trace("Generating node and succs for unit '{}'", unit.toString());
         Stmt stmt = (Stmt) unit;
         StmtVisitor visitor = new StmtVisitor();
         stmt.apply(visitor);
         Vertex stmtVertex = (Vertex) visitor.getResult();
 
         if (stmtVertex == null) {
+            log.trace("Stmt vertex is NULL");
             return null;
         }
 
@@ -110,22 +113,42 @@ public class CfgBuilder {
                 continue;
             }
             // TODO: conditional edges
-            genCfgEdge(stmtVertex, succVertex, EMPTY, EMPTY);
+            if (stmt instanceof IfStmt) {
+                IfStmt ifStmt = (IfStmt) stmt;
+                if (succ.equals(ifStmt.getTarget())) {
+                    genCfgEdge(stmtVertex, succVertex, TRUE, TRUE);
+                } else {
+                    genCfgEdge(stmtVertex, succVertex, FALSE, FALSE);
+                }
+            } else {
+                genCfgEdge(stmtVertex, succVertex, EMPTY, EMPTY);
+            }
         }
 
         return stmtVertex;
     }
 
-    // Get the source file of a given Jimple statement from the statement tags
+    private static String getSourcePath(Stmt stmt) {
+        if (stmt == null) {
+            return UNKNOWN;
+        }
+        return UNKNOWN; // TODO
+    }
+
     private static String getSourceFile(Stmt stmt) {
+        if (stmt == null) {
+            return UNKNOWN;
+        }
         if (stmt.getTag("SourceFileTag") != null) {
             return ((SourceFileTag) stmt.getTag("SourceFileTag")).getSourceFile();
         }
         return UNKNOWN;
     }
 
-    // Get the line number of a given Jimple statement from the statement tags
     private static int getLineNr(Stmt stmt) {
+        if (stmt == null) {
+            return -1;
+        }
         if (stmt.getTag("SourceLnPosTag") != null) {
             return ((SourceLnPosTag) stmt.getTag("SourceLnPosTag")).startLn();
         } else if (stmt.getTag("JimpleLineNumberTag") != null) {

@@ -79,18 +79,17 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseCmpExpr(CmpExpr expr) {
-        // TODO: what is this?
-        throw new UnsupportedOperationException("Not implemented");
+        setResult(binaryExpr(CMP, expr.getOp1(), expr.getOp2(), expr.toString()));
     }
 
     @Override
     public void caseCmpgExpr(CmpgExpr expr) {
-        throw new UnsupportedOperationException("Not implemented");
+        setResult(binaryExpr(CMPG, expr.getOp1(), expr.getOp2(), expr.toString()));
     }
 
     @Override
     public void caseCmplExpr(CmplExpr expr) {
-        throw new UnsupportedOperationException("Not implemented");
+        setResult(binaryExpr(CMPL, expr.getOp1(), expr.getOp2(), expr.toString()));
     }
 
     @Override
@@ -253,9 +252,8 @@ public class ExprVisitor extends AbstractExprSwitch {
     // ********************************************************************************************
 
     @Override
-    public void defaultCase(Object object) {
-        log.warn("Unrecognised Expr type '{}'", object.getClass());
-        // TODO
+    public void defaultCase(Object obj) {
+        throw new UnsupportedOperationException("Unrecognised Expr type '" + obj.getClass().getSimpleName() + "'");
     }
 
 }
