@@ -1,20 +1,18 @@
 package graft.cpg;
 
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.List;
-
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.Problem;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.utils.SourceRoot;
-
-import org.apache.commons.configuration2.Configuration;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.GraftException;
+import soot.Body;
+import soot.SootClass;
+
+import graft.db.GraphUtil;
+import graft.traversal.CpgTraversal;
+import graft.traversal.CpgTraversalSource;
+
+import static graft.Const.*;
 
 /**
  * Handles the actual construction of the CPG.
@@ -25,41 +23,30 @@ public class CpgBuilder {
 
     private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);
 
-    private SourceRoot srcRoot;
-    private Configuration options;
-
-    public CpgBuilder(String srcRoot, Configuration options) {
-        this.srcRoot = new SourceRoot(Paths.get(srcRoot));
-        this.options = options;
-    }
-
     /**
-     * Generate and store the CPG in the graph database.
+     * Build a CPG for the given method body.
+     *
+     * @param body the method body
      */
-    public void buildCpg() throws GraftException {
-        log.info("Building CPG");
+    public static void buildCpg(Body body) {
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        SootClass cls = body.getMethod().getDeclaringClass();
 
-        List<ParseResult<CompilationUnit>> results;
-        try {
-            results = srcRoot.tryToParse();
-        } catch (IOException e) {
-            log.debug("IOException in <CpgBuilder>.buildCpg", e);
-            throw new GraftException("Unable to parse source root (see debug logs)");
+        // get the class node if it already exists in the graph
+        Vertex classNode;
+        CpgTraversal classNodeTraversal = g.V()
+                .hasLabel(AST_NODE)
+                .has(NODE_TYPE, CLASS)
+                .has(FULL_NAME, cls.getName());
+        if (classNodeTraversal.hasNext()) {
+            classNode = (Vertex) classNodeTraversal.next();
+        } else {
+            classNode = AstBuilder.genAstNode(CLASS, cls.getShortName());
+            CpgUtil.addNodeProperty(classNode, SHORT_NAME, cls.getShortName());
+            CpgUtil.addNodeProperty(classNode, FULL_NAME, cls.getName());
         }
 
-        for (ParseResult<CompilationUnit> result : results) {
-            if (result.isSuccessful()) {
-                CompilationUnit cu = result.getResult().get();
-                cu.findRootNode().walk(new AstWalker());
-            } else {
-                log.debug("Problems with parse");
-                List<Problem> problems = result.getProblems();
-                for (Problem problem : problems) {
-                    log.debug(problem.getVerboseMessage());
-                }
-                throw new GraftException("Problems encountered while parsing source root (see debug logs)");
-            }
-        }
+        CfgBuilder.buildCfg(classNode, body);
     }
 
 }

@@ -16,9 +16,6 @@ dependencies {
     // Soot
     implementation 'ca.mcgill.sable:soot:3.3.0'
 
-    // source code parsing
-    implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.14.7'
-
     // graph db drivers
     implementation 'org.apache.tinkerpop:gremlin-core:3.4.2'
     implementation 'org.apache.tinkerpop:tinkergraph-gremlin:3.4.2'
@@ -33,4 +30,14 @@ dependencies {
     implementation 'commons-beanutils:commons-beanutils:1.9.3'
 
     testImplementation 'junit:junit:4.12'
+}
+
+// package the program as jar file with all dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Version': version, 'Main-Class': 'graft.Graft'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }

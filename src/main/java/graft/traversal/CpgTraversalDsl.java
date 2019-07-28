@@ -6,6 +6,11 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import static graft.Const.*;
 
+/**
+ * TODO: javadoc
+ *
+ * @author Wim Keirsgieter
+ */
 @GremlinDsl(traversalSource = "graft.traversal.CpgTraversalSourceDsl")
 public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
 
@@ -31,7 +36,7 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
      */
     default GraphTraversal<S, Vertex> ithArg(int i) {
         // TODO: call expressions aren't the only expressions with args
-        return hasLabel(AST_NODE).has(NODE_TYPE, CALL_EXPR)
+        return hasLabel(AST_NODE).has(NODE_TYPE, INVOKE_EXPR)
                 .outE(AST_EDGE)
                 .has(EDGE_TYPE, ARG)
                 .has(INDEX, i)

@@ -1,17 +1,11 @@
 package graft;
 
-import com.github.javaparser.ast.expr.AssignExpr;
-import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.UnaryExpr;
-
-import java.util.HashMap;
-import java.util.Map;
-
+/**
+ * Various constants used throughout the program.
+ *
+ * @author Wim Keirsgieter
+ */
 public class Const {
-
-    private static Map<AssignExpr.Operator, String> assignOps;
-    private static Map<BinaryExpr.Operator, String> binaryOps;
-    private static Map<UnaryExpr.Operator, String> unaryOps;
 
     // log levels
     public static final String TRACE = "trace";
@@ -21,8 +15,14 @@ public class Const {
     public static final String ERROR = "error";
     public static final String ALL = "all";
 
+    // invoke types
+    public static final String INTERFACE = "interface";
+    public static final String SPECIAL = "special";
+    public static final String DYNAMIC = "dynamic";
+    public static final String STATIC = "static";
+    public static final String VIRTUAL = "virtual";
+
     // node labels
-    public static final String LABEL = "label";
     public static final String CFG_NODE = "cfg-node";
     public static final String AST_NODE = "ast-node";
 
@@ -39,12 +39,11 @@ public class Const {
 
     // CFG node types
     public static final String ENTRY = "entry";
-    public static final String EXPR_STMT = "expr-stmt";
+    public static final String ASSIGN_STMT = "assign-stmt";
+    public static final String INVOKE_STMT = "invoke-stmt";
     public static final String PHI = "phi";
-    public static final String ASSERT_STMT = "assert-stmt";
     public static final String RETURN_STMT = "return-stmt";
     public static final String THROW_STMT = "throw-stmt";
-    public static final String JUMP_STMT = "jump-stmt";
     public static final String CONDITIONAL_STMT = "conditional-stmt";
 
     // CFG edge types
@@ -62,14 +61,13 @@ public class Const {
 
     // AST node types
     public static final String CLASS = "class";
-    public static final String ASSIGN_EXPR = "var-assign";
     public static final String BINARY_EXPR = "binary-expr";
     public static final String UNARY_EXPR = "unary-expr";
     public static final String THIS_EXPR = "this-expr";
     public static final String LOCAL_VAR = "local-var";
     public static final String SUPER_EXPR = "super-expr";
     public static final String INSTANCEOF_EXPR = "instanceof-expr";
-    public static final String CALL_EXPR = "call-expr";
+    public static final String INVOKE_EXPR = "invoke-expr";
     public static final String LITERAL = "literal";
     public static final String ARRAY_ACCESS_EXPR = "array-access-expr";
     public static final String NEW_EXPR = "new-expr";
@@ -92,28 +90,36 @@ public class Const {
     // AST node property keys
     public static final String JAVA_TYPE = "java-type";
     public static final String NAME = "name";
-    public static final String CALLS = "calls";
+    public static final String INVOKES = "invokes";
     public static final String OPERATOR = "operator";
     public static final String CHECK_TYPE = "check-type";
+    public static final String SHORT_NAME = "short-name";
+    public static final String FULL_NAME = "full-name";
+    public static final String CAST_TYPE = "cast-type";
+    public static final String INVOKE_TYPE = "invoke-type";
 
     // AST edge property keys
     public static final String INDEX = "index";
 
     // primitive types and literals
     public static final String BOOLEAN = "boolean";
+    public static final String BYTE = "byte";
     public static final String CHAR = "char";
     public static final String DOUBLE = "double";
+    public static final String FLOAT = "float";
     public static final String INT = "int";
     public static final String LONG = "long";
     public static final String STRING = "java.lang.String";
     public static final String VOID = "void";
     public static final String NULL = "null";
 
+    // reference types
+    public static final String ARRAY_REF = "array-ref";
+    public static final String PARAM_REF = "param-ref";
+    public static final String THIS_REF = "this-ref";
+
     // binary operators
-    // TODO: rename some of these
     public static final String AND = "and";
-    public static final String BINARY_AND = "binary-and";
-    public static final String BINARY_OR = "binary-or";
     public static final String DIVIDE = "div";
     public static final String EQUALS = "eq";
     public static final String GREATER = "gt";
@@ -131,52 +137,15 @@ public class Const {
     public static final String UNSIGNED_RIGHT_SHIFT = "unsigned-right-shift";
     public static final String XOR = "xor";
 
+    // unary operators
+    public static final String CAST = "cast";
+    public static final String NEGATION = "neg";
+    public static final String LENGTH = "length";
+
     // miscellaneous constants
     public static final String NONE = "<none>";
     public static final String UNKNOWN = "<unknown>";
     public static final String TRUE = "true";
     public static final String FALSE = "false";
-
-    public static String getAssignOp(AssignExpr.Operator op) {
-        if (assignOps == null) {
-            initAssignOps();
-        }
-        return assignOps.get(op);
-    }
-
-    public static String getBinaryOp(BinaryExpr.Operator op) {
-        if (binaryOps == null) {
-            initBinaryOps();
-        }
-        return binaryOps.get(op);
-    }
-
-    private static void initAssignOps() {
-        assignOps = new HashMap<>();
-        // TODO
-    }
-
-    private static void initBinaryOps() {
-        binaryOps = new HashMap<>();
-        binaryOps.put(BinaryExpr.Operator.AND, AND);
-        binaryOps.put(BinaryExpr.Operator.BINARY_AND, BINARY_AND);
-        binaryOps.put(BinaryExpr.Operator.BINARY_OR, BINARY_OR);
-        binaryOps.put(BinaryExpr.Operator.DIVIDE, DIVIDE);
-        binaryOps.put(BinaryExpr.Operator.EQUALS, EQUALS);
-        binaryOps.put(BinaryExpr.Operator.GREATER, GREATER);
-        binaryOps.put(BinaryExpr.Operator.GREATER_EQUALS, GREATER_EQUALS);
-        binaryOps.put(BinaryExpr.Operator.LEFT_SHIFT, LEFT_SHIFT);
-        binaryOps.put(BinaryExpr.Operator.LESS, LESS);
-        binaryOps.put(BinaryExpr.Operator.LESS_EQUALS, LESS_EQUALS);
-        binaryOps.put(BinaryExpr.Operator.MINUS, MINUS);
-        binaryOps.put(BinaryExpr.Operator.MULTIPLY, MULTIPLY);
-        binaryOps.put(BinaryExpr.Operator.NOT_EQUALS, NOT_EQUALS);
-        binaryOps.put(BinaryExpr.Operator.OR, OR);
-        binaryOps.put(BinaryExpr.Operator.PLUS, PLUS);
-        binaryOps.put(BinaryExpr.Operator.REMAINDER, REMAINDER);
-        binaryOps.put(BinaryExpr.Operator.SIGNED_RIGHT_SHIFT, SIGNED_RIGHT_SHIFT);
-        binaryOps.put(BinaryExpr.Operator.UNSIGNED_RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT);
-        binaryOps.put(BinaryExpr.Operator.XOR, XOR);
-    }
 
 }
