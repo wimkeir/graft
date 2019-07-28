@@ -205,7 +205,13 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseNewExpr(NewExpr expr) {
-        throw new UnsupportedOperationException("Not implemented");
+        Vertex exprVertex = AstBuilder.genAstNode(NEW_EXPR, expr.toString());
+
+        TypeVisitor typeVisitor = new TypeVisitor();
+        expr.getBaseType().apply(typeVisitor);
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, typeVisitor.getResult().toString());
+
+        setResult(exprVertex);
     }
 
     @Override
@@ -224,13 +230,21 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseInterfaceInvokeExpr(InterfaceInvokeExpr invokeExpr) {
-        setResult(invokeExpr(INTERFACE, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString()));
-    }
+        Vertex invokeVertex = invokeExpr(INTERFACE, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString());
+
+        Vertex baseVertex = AstBuilder.genValueNode(invokeExpr.getBase());
+        AstBuilder.genAstEdge(invokeVertex, baseVertex, BASE, BASE);
+
+        setResult(invokeVertex);    }
 
     @Override
     public void caseSpecialInvokeExpr(SpecialInvokeExpr invokeExpr) {
-        setResult(invokeExpr(SPECIAL, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString()));
-    }
+        Vertex invokeVertex = invokeExpr(SPECIAL, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString());
+
+        Vertex baseVertex = AstBuilder.genValueNode(invokeExpr.getBase());
+        AstBuilder.genAstEdge(invokeVertex, baseVertex, BASE, BASE);
+
+        setResult(invokeVertex);    }
 
     @Override
     public void caseStaticInvokeExpr(StaticInvokeExpr invokeExpr) {
@@ -239,7 +253,12 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseVirtualInvokeExpr(VirtualInvokeExpr invokeExpr) {
-        setResult(invokeExpr(VIRTUAL, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString()));
+        Vertex invokeVertex = invokeExpr(VIRTUAL, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString());
+
+        Vertex baseVertex = AstBuilder.genValueNode(invokeExpr.getBase());
+        AstBuilder.genAstEdge(invokeVertex, baseVertex, BASE, BASE);
+
+        setResult(invokeVertex);
     }
 
     @Override

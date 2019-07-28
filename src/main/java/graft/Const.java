@@ -29,6 +29,7 @@ public class Const {
     // edge labels
     public static final String AST_EDGE = "ast-edge";
     public static final String CFG_EDGE = "cfg-edge";
+    public static final String PDG_EDGE = "pdg-edge";
 
     // property keys common to all nodes
     public static final String NODE_TYPE = "type";
@@ -117,6 +118,8 @@ public class Const {
     public static final String ARRAY_REF = "array-ref";
     public static final String PARAM_REF = "param-ref";
     public static final String THIS_REF = "this-ref";
+    public static final String STATIC_FIELD_REF = "field-ref";
+    public static final String INSTANCE_FIELD_REF = "inst-field-ref";
 
     // binary operators
     public static final String AND = "and";
@@ -144,6 +147,13 @@ public class Const {
     public static final String CAST = "cast";
     public static final String NEGATION = "neg";
     public static final String LENGTH = "length";
+
+    // PDG edge types
+    public static final String DATA_DEP = "data-dep";
+    public static final String CONTROL_DEP = "control-dep";
+
+    // PDG edge property keys
+    public static final String VAR_NAME = "var-name";
 
     // miscellaneous constants
     public static final String NONE = "<none>";

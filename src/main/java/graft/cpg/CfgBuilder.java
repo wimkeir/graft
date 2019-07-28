@@ -97,6 +97,7 @@ public class CfgBuilder {
     // Recursively generate CFG nodes for a given unit and its children, with CFG edges between them
     private static Vertex genCfgNodeAndSuccs(UnitGraph unitGraph, Unit unit) {
         log.trace("Generating node and succs for unit '{}'", unit.toString());
+
         Stmt stmt = (Stmt) unit;
         StmtVisitor visitor = new StmtVisitor();
         stmt.apply(visitor);
@@ -106,6 +107,8 @@ public class CfgBuilder {
             log.trace("Stmt vertex is NULL");
             return null;
         }
+
+        PdgBuilder.handleCfgNode(unit, stmtVertex);
 
         for (Unit succ : unitGraph.getSuccsOf(unit)) {
             Vertex succVertex = genCfgNodeAndSuccs(unitGraph, succ);

@@ -40,12 +40,29 @@ public class RefVisitor extends AbstractRefSwitch {
 
     @Override
     public void caseStaticFieldRef(StaticFieldRef ref) {
-        throw new UnsupportedOperationException("Not implemented");
+        // TODO: decide how to treat these in PDG
+        Vertex refVertex = AstBuilder.genAstNode(STATIC_FIELD_REF, ref.toString());
+
+        TypeVisitor typeVisitor = new TypeVisitor();
+        ref.getType().apply(typeVisitor);
+        CpgUtil.addNodeProperty(refVertex, JAVA_TYPE, typeVisitor.getResult());
+        CpgUtil.addNodeProperty(refVertex, CLASS, ref.getField().getDeclaringClass().getName());
+
+        setResult(refVertex);
     }
 
     @Override
     public void caseInstanceFieldRef(InstanceFieldRef ref) {
-        throw new UnsupportedOperationException("Not implemented");
+        Vertex refVertex = AstBuilder.genAstNode(INSTANCE_FIELD_REF, ref.toString());
+
+        TypeVisitor typeVisitor = new TypeVisitor();
+        ref.getType().apply(typeVisitor);
+        CpgUtil.addNodeProperty(refVertex, JAVA_TYPE, typeVisitor.getResult());
+
+        Vertex baseVertex = AstBuilder.genValueNode(ref.getBase());
+        AstBuilder.genAstEdge(refVertex, baseVertex, BASE, BASE);
+
+        setResult(refVertex);
     }
 
     @Override

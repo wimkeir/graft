@@ -71,6 +71,10 @@ public class DotUtil {
                 astEdgeToDot(e, out);
                 break;
 
+            case PDG_EDGE:
+                pdgEdgeToDot(e, out);
+                break;
+
             default:
                 log.warn("There are edges with unrecognized labels in the CPG: '{}'", e.label());
         }
@@ -95,8 +99,11 @@ public class DotUtil {
     }
 
     private static void astEdgeToDot(Edge e, FileWriter out) throws IOException {
-        String type = e.value(EDGE_TYPE).toString();
-        out.write(", color=green, label=\"" + type + "\"];\n");
+        out.write(", color=green, label=\"" + e.value(TEXT_LABEL) + "\"];\n");
+    }
+
+    private static void pdgEdgeToDot(Edge e, FileWriter out) throws IOException {
+        out.write(", color=red, label=\"" + e.value(TEXT_LABEL) + "\"];\n");
     }
 
 }
