@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import graft.db.GraphUtil;
 import graft.phases.DotPhase;
 import graft.phases.BuildCpgPhase;
+import graft.phases.InterprocPhase;
 import graft.utils.LogUtil;
 
 /**
@@ -46,6 +47,7 @@ public class Graft {
         GraftRun graftRun = new GraftRun(config);
         graftRun.register(
                 new BuildCpgPhase(BuildCpgPhase.getOptions(config)),
+                new InterprocPhase(InterprocPhase.getOptions(config)),
                 new DotPhase(DotPhase.getOptions(config))
         );
 

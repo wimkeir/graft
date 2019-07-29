@@ -40,6 +40,8 @@ public class CfgBuilder {
 
         // generate entry node and attach to class AST node
         Vertex entryNode = genCfgNode(null, ENTRY, body.getMethod().getName());
+        // TODO: scope, signature
+        CpgUtil.addNodeProperty(entryNode, NAME, body.getMethod().getName());
         if (body.getMethod().isConstructor()) {
             AstBuilder.genAstEdge(classNode, entryNode, CONSTRUCTOR, CONSTRUCTOR);
         } else {

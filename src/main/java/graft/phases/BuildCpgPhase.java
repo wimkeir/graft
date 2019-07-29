@@ -42,7 +42,7 @@ public class BuildCpgPhase implements GraftPhase {
 //        Options.v().set_unfriendly_mode(true);
 
         PackManager.v().getPack("jtp").add(new Transform("jtp.cfg", new CpgTransformer()));
-        soot.Main.main(new String[]{"-keep-line-number", "-cp", "etc/examples/simple:etc/jars/jce.jar", "-pp", "-process-dir", "etc/examples/simple", "-app"});
+        soot.Main.main(new String[]{"-keep-line-number", "-cp", "etc/examples/interproc:etc/jars/jce.jar", "-pp", "-process-dir", "etc/examples/interproc", "-app"});
 
         return new PhaseResult(this, true);
     }

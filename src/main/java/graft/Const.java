@@ -50,6 +50,8 @@ public class Const {
     // CFG edge types
     public static final String EMPTY = "E";
     public static final String BRANCH = "branch";
+    public static final String CALL = "call";
+    public static final String RET = "ret";
 
     // CFG node property keys
     public static final String FILE_PATH = "file-path";
