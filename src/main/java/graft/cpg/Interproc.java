@@ -21,7 +21,6 @@ public class Interproc {
      * Generate interprocedural call and return edges between call sites and method entries / returns.
      */
     public static void genInterprocCfgEdges() {
-        // TODO: invoke expressions should have scope, signature (match on signature - unique in scope)
         GraphTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         GraphTraversal invokeExprs = g.V()
                 .hasLabel(AST_NODE)
@@ -29,7 +28,7 @@ public class Interproc {
 
         while (invokeExprs.hasNext()) {
             Vertex invokeExpr = (Vertex) invokeExprs.next();
-            String methodName = invokeExpr.value(INVOKES).toString();
+            String methodSig = invokeExpr.value(METHOD_SIG).toString();
 
             // find CFG root of invoke expression
             Vertex callSite = g.V(invokeExpr)
@@ -42,7 +41,7 @@ public class Interproc {
             GraphTraversal methodEntries = g.V()
                     .hasLabel(CFG_NODE)
                     .has(NODE_TYPE, ENTRY)
-                    .has(NAME, methodName);
+                    .has(METHOD_SIG, methodSig);
 
             if (methodEntries.hasNext()) {
                 Vertex methodEntry = (Vertex) methodEntries.next();

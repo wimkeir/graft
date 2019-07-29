@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import soot.Body;
+import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.IfStmt;
 import soot.jimple.Stmt;
@@ -43,9 +44,11 @@ public class CfgBuilder {
         log.debug("Building CFG for method '{}'", body.getMethod().getName());
 
         // generate entry node and attach to class AST node
-        Vertex entryNode = genCfgNode(null, ENTRY, body.getMethod().getName());
-        // TODO: scope, signature
-        CpgUtil.addNodeProperty(entryNode, NAME, body.getMethod().getName());
+        SootMethod method = body.getMethod();
+        Vertex entryNode = genCfgNode(null, ENTRY, method.getName());
+        CpgUtil.addNodeProperty(entryNode, METHOD_SIG, method.getSignature());
+        CpgUtil.addNodeProperty(entryNode, METHOD_NAME, method.getName());
+        CpgUtil.addNodeProperty(entryNode, METHOD_SCOPE, method.getDeclaringClass().getName());
         if (body.getMethod().isConstructor()) {
             AstBuilder.genAstEdge(classNode, entryNode, CONSTRUCTOR, CONSTRUCTOR);
         } else {

@@ -5,6 +5,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import soot.Value;
 import soot.jimple.*;
 
 import graft.cpg.AstBuilder;
@@ -62,23 +63,13 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseIfStmt(IfStmt stmt) {
         log.trace("Visiting IfStmt");
-        Vertex ifVertex = CfgBuilder.genCfgNode(stmt, CONDITIONAL_STMT, stmt.toString());
-
-        Vertex condVertex = AstBuilder.genValueNode(stmt.getCondition());
-        AstBuilder.genAstEdge(ifVertex, condVertex, EXPR, EXPR);
-
-        setResult(ifVertex);
+        caseStmtWithOp(stmt, CONDITIONAL_STMT, stmt.getCondition(), EXPR);
     }
 
     @Override
     public void caseInvokeStmt(InvokeStmt stmt) {
         log.trace("Visiting InvokeStmt");
-        Vertex invokeVertex = CfgBuilder.genCfgNode(stmt, INVOKE_STMT, stmt.toString());
-
-        Vertex exprVertex = AstBuilder.genValueNode(stmt.getInvokeExpr());
-        AstBuilder.genAstEdge(invokeVertex, exprVertex, EXPR, EXPR);
-
-        setResult(invokeVertex);
+        caseStmtWithOp(stmt, INVOKE_STMT, stmt.getInvokeExpr(), EXPR);
     }
 
     @Override
@@ -104,12 +95,7 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseReturnStmt(ReturnStmt stmt) {
         log.trace("Visiting ReturnStmt");
-        Vertex retVertex = CfgBuilder.genCfgNode(stmt, RETURN_STMT, stmt.toString());
-
-        Vertex opVertex = AstBuilder.genValueNode(stmt.getOp());
-        AstBuilder.genAstEdge(retVertex, opVertex, RETURNS, RETURNS);
-
-        setResult(retVertex);
+        caseStmtWithOp(stmt, RETURN_STMT, stmt.getOp(), RETURNS);
     }
 
     @Override
@@ -129,8 +115,7 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseThrowStmt(ThrowStmt stmt) {
         log.trace("Visiting ThrowStmt");
-        // TODO
-        throw new UnsupportedOperationException("Not implemented");
+        caseStmtWithOp(stmt, THROW_STMT, stmt.getOp(), THROWS);
     }
 
     @Override
@@ -149,6 +134,14 @@ public class StmtVisitor extends AbstractStmtSwitch {
         AstBuilder.genAstEdge(assignVertex, rightOpVertex, VALUE, VALUE);
 
         setResult(assignVertex);
+    }
+
+    // Generates a CFG node for a statement of the given type with an operand of the given type
+    private void caseStmtWithOp(Stmt stmt, String stmtType, Value op, String opType) {
+        Vertex stmtVertex = CfgBuilder.genCfgNode(stmt, stmtType, stmt.toString());
+        Vertex opVertex = AstBuilder.genValueNode(op);
+        AstBuilder.genAstEdge(stmtVertex, opVertex, opType, opType);
+        setResult(stmtVertex);
     }
 
 }

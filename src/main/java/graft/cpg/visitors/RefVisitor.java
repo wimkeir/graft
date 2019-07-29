@@ -5,6 +5,8 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import soot.SootField;
+import soot.Value;
 import soot.jimple.*;
 
 import graft.cpg.CpgUtil;
@@ -29,7 +31,6 @@ public class RefVisitor extends AbstractRefSwitch {
 
     @Override
     public void caseArrayRef(ArrayRef ref) {
-        // TODO: what happens if array is referenced without an index?
         Vertex refVertex = AstBuilder.genAstNode(ARRAY_REF, ref.toString());
 
         Vertex baseVertex = AstBuilder.genValueNode(ref.getBase());
@@ -41,25 +42,15 @@ public class RefVisitor extends AbstractRefSwitch {
     }
 
     @Override
-    public void caseStaticFieldRef(StaticFieldRef ref) {
-        // TODO: decide how to treat these in PDG
-        // TODO: scope, modifiers
-        Vertex refVertex = AstBuilder.genAstNode(STATIC_FIELD_REF, ref.toString());
+    public void caseCaughtExceptionRef(CaughtExceptionRef ref) {
+        Vertex refVertex = AstBuilder.genAstNode(EXCEPTION_REF, ref.toString());
         CpgUtil.addNodeProperty(refVertex, JAVA_TYPE, CpgUtil.getTypeString(ref.getType()));
-        CpgUtil.addNodeProperty(refVertex, CLASS, ref.getField().getDeclaringClass().getName());
         setResult(refVertex);
     }
 
     @Override
     public void caseInstanceFieldRef(InstanceFieldRef ref) {
-        // TODO: scope, modifiers
-        Vertex refVertex = AstBuilder.genAstNode(INSTANCE_FIELD_REF, ref.toString());
-        CpgUtil.addNodeProperty(refVertex, JAVA_TYPE, CpgUtil.getTypeString(ref.getType()));
-
-        Vertex baseVertex = AstBuilder.genValueNode(ref.getBase());
-        AstBuilder.genAstEdge(refVertex, baseVertex, BASE, BASE);
-
-        setResult(refVertex);
+        caseFieldRef(ref.getField(), ref.getBase());
     }
 
     @Override
@@ -71,9 +62,8 @@ public class RefVisitor extends AbstractRefSwitch {
     }
 
     @Override
-    public void caseCaughtExceptionRef(CaughtExceptionRef ref) {
-        // TODO
-        throw new UnsupportedOperationException("Not implemented");
+    public void caseStaticFieldRef(StaticFieldRef ref) {
+        caseFieldRef(ref.getField(), null);
     }
 
     @Override
@@ -86,6 +76,26 @@ public class RefVisitor extends AbstractRefSwitch {
     @Override
     public void defaultCase(Object obj) {
         log.warn("Unrecognised Ref type '{}', no AST node generated", obj.getClass());
+    }
+
+    // Generates an AST node for a field reference (and the base object for instance field refs)
+    private void caseFieldRef(SootField field, Value base) {
+        Vertex refVertex;
+        if (field.isStatic()) {
+            refVertex = AstBuilder.genAstNode(STATIC_FIELD_REF, field.toString());
+        } else {
+            refVertex = AstBuilder.genAstNode(INSTANCE_FIELD_REF, field.toString());
+        }
+        CpgUtil.addNodeProperty(refVertex, JAVA_TYPE, CpgUtil.getTypeString(field.getType()));
+        CpgUtil.addNodeProperty(refVertex, FIELD_NAME, field.getName());
+        CpgUtil.addNodeProperty(refVertex, FIELD_SIG, field.getSignature());
+
+        if (base != null) {
+            Vertex baseVertex = AstBuilder.genValueNode(base);
+            AstBuilder.genAstEdge(refVertex, baseVertex, BASE, BASE);
+        }
+
+        setResult(refVertex);
     }
 
     private void setResult(Object object) {

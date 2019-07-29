@@ -61,6 +61,7 @@ public class Const {
     public static final String FILE_PATH = "file-path";
     public static final String FILE_NAME = "file-name";
     public static final String METHOD_NAME = "method-name";
+    public static final String METHOD_SIG = "method-sig";
     public static final String LINE_NO = "line-no";
 
     // ********************************************************************************************
@@ -78,6 +79,7 @@ public class Const {
     public static final String BINARY_EXPR = "binary-expr";
     public static final String INSTANCEOF_EXPR = "instanceof";
     public static final String INVOKE_EXPR = "invoke-expr";
+    public static final String NEW_ARRAY_EXPR = "new-array-expr";
     public static final String NEW_EXPR = "new-expr";
     public static final String UNARY_EXPR = "unary-expr";
 
@@ -92,13 +94,17 @@ public class Const {
     public static final String PARAM = "param";
     public static final String RIGHT_OPERAND = "right-op";
     public static final String RETURNS = "returns";
+    public static final String SIZE = "size";
     public static final String TARGET = "target";
     public static final String THROWS = "throws";
     public static final String VALUE = "value";
 
     // AST node property keys
+    public static final String BASE_TYPE = "base-type";
     public static final String CAST_TYPE = "cast-type";
     public static final String CHECK_TYPE = "check-type";
+    public static final String FIELD_NAME = "field-name";
+    public static final String FIELD_SIG = "field-sig";
     public static final String FULL_NAME = "full-name";
     public static final String INVOKE_TYPE = "invoke-type";
     public static final String INVOKES = "invokes";
@@ -110,6 +116,7 @@ public class Const {
 
     // AST edge property keys
     public static final String INDEX = "index";
+    public static final String DIM = "dim";
 
     // primitive types and literals
     public static final String BOOLEAN = "boolean";
@@ -124,6 +131,7 @@ public class Const {
 
     // reference types
     public static final String ARRAY_REF = "array-ref";
+    public static final String EXCEPTION_REF = "exception-ref";
     public static final String INSTANCE_FIELD_REF = "inst-field-ref";
     public static final String PARAM_REF = "param-ref";
     public static final String STATIC_FIELD_REF = "field-ref";

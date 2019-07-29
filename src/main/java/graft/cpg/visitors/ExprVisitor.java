@@ -176,22 +176,39 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseNewExpr(NewExpr expr) {
-        // TODO: difference between type and baseType?
         Vertex exprVertex = AstBuilder.genAstNode(NEW_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getBaseType()));
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+        CpgUtil.addNodeProperty(exprVertex, BASE_TYPE, CpgUtil.getTypeString(expr.getBaseType()));
         setResult(exprVertex);
     }
 
     @Override
     public void caseNewArrayExpr(NewArrayExpr expr) {
-        // TODO
-        throw new UnsupportedOperationException("Not implemented");
+        Vertex exprVertex = AstBuilder.genAstNode(NEW_ARRAY_EXPR, expr.toString());
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+        CpgUtil.addNodeProperty(exprVertex, BASE_TYPE, CpgUtil.getTypeString(expr.getBaseType()));
+
+        Vertex sizeVertex = AstBuilder.genValueNode(expr.getSize());
+        Edge sizeEdge = AstBuilder.genAstEdge(exprVertex, sizeVertex, SIZE, SIZE);
+        CpgUtil.addEdgeProperty(sizeEdge, DIM, 0);
+
+        setResult(exprVertex);
     }
 
     @Override
     public void caseNewMultiArrayExpr(NewMultiArrayExpr expr) {
-        // TODO
-        throw new UnsupportedOperationException("Not implemented");
+        Vertex exprVertex = AstBuilder.genAstNode(NEW_ARRAY_EXPR, expr.toString());
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+        CpgUtil.addNodeProperty(exprVertex, BASE_TYPE, CpgUtil.getTypeString(expr.getBaseType()));
+
+        int i = 0;
+        for (Value size : expr.getSizes()) {
+            Vertex sizeVertex = AstBuilder.genValueNode(size);
+            Edge sizeEdge = AstBuilder.genAstEdge(exprVertex, sizeVertex, SIZE, SIZE);
+            CpgUtil.addEdgeProperty(sizeEdge, DIM, i++);
+        }
+
+        setResult(exprVertex);
     }
 
     @Override
@@ -262,6 +279,7 @@ public class ExprVisitor extends AbstractExprSwitch {
         Vertex exprVertex = AstBuilder.genAstNode(INVOKE_EXPR, expr.toString());
         CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
         CpgUtil.addNodeProperty(exprVertex, INVOKE_TYPE, invokeType);
+        CpgUtil.addNodeProperty(exprVertex, METHOD_SIG, expr.getMethod().getSignature());
         CpgUtil.addNodeProperty(exprVertex, METHOD_NAME, expr.getMethod().getName());
         CpgUtil.addNodeProperty(exprVertex, METHOD_SCOPE, expr.getMethod().getDeclaringClass().getName());
 
