@@ -42,6 +42,8 @@ public class BuildCpgPhase implements GraftPhase {
 //        Options.v().set_unfriendly_mode(true);
 
         PackManager.v().getPack("jtp").add(new Transform("jtp.cfg", new CpgTransformer()));
+        PhaseOptions.v().setPhaseOption("jb", "use-original-names:true");
+        // TODO NB: get this from config / args, stop committing hard coded options!
         soot.Main.main(new String[]{"-keep-line-number", "-cp", "etc/examples/interproc:etc/jars/jce.jar", "-pp", "-process-dir", "etc/examples/interproc", "-app"});
 
         return new PhaseResult(this, true);
