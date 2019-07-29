@@ -15,7 +15,6 @@ import soot.jimple.Ref;
 import graft.cpg.visitors.ConstantVisitor;
 import graft.cpg.visitors.ExprVisitor;
 import graft.cpg.visitors.RefVisitor;
-import graft.cpg.visitors.TypeVisitor;
 import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
 
@@ -30,8 +29,13 @@ public class AstBuilder {
 
     private static Logger log = LoggerFactory.getLogger(AstBuilder.class);
 
+    // ********************************************************************************************
+    // public methods
+    // ********************************************************************************************
+
     /**
-     * Generate an AST node for the given Soot value.
+     * Generate an AST node (possibly a subtree) for the given Soot value.
+     *
      * @param value the Soot value
      * @return the generated AST node
      */
@@ -51,7 +55,7 @@ public class AstBuilder {
     }
 
     /**
-     * Generate an AST node with the given node type and text label properties.
+     * Generate a base AST node with the given node type and text label properties.
      *
      * @param nodeType the type of the AST node
      * @param textLabel the text label of the AST node
@@ -66,7 +70,7 @@ public class AstBuilder {
     }
 
     /**
-     * Generate an AST edge between the two given nodes, with the given edge type and text label properties.
+     * Generate a base AST edge between the two given nodes, with the given edge type and text label properties.
      *
      * @param from the out-vertex of the AST edge
      * @param to the in-vertex of the AST edge
@@ -83,16 +87,15 @@ public class AstBuilder {
                 .next();
     }
 
+    // ********************************************************************************************
+    // private methods
+    // ********************************************************************************************
+
     // Generates an AST node for a local variable
     private static Vertex genLocalNode(Local local) {
         Vertex localNode = genAstNode(LOCAL_VAR, local.getName());
         CpgUtil.addNodeProperty(localNode, NAME, local.getName());
-
-        TypeVisitor visitor = new TypeVisitor();
-        local.getType().apply(visitor);
-        String type = visitor.getResult().toString();
-        CpgUtil.addNodeProperty(localNode, JAVA_TYPE, type);
-
+        CpgUtil.addNodeProperty(localNode, JAVA_TYPE, CpgUtil.getTypeString(local.getType()));
         return localNode;
     }
 

@@ -21,60 +21,54 @@ public class ConstantVisitor extends AbstractConstantSwitch {
 
     private static Logger log = LoggerFactory.getLogger(ConstantVisitor.class);
 
-    // Helper method to create AST nodes for literal constant values
-    private void literalConstant(String type, String textLabel, Object value) {
-        Vertex constVertex = AstBuilder.genAstNode(LITERAL, textLabel);
-        CpgUtil.addNodeProperty(constVertex, JAVA_TYPE, type);
-        CpgUtil.addNodeProperty(constVertex, VALUE, value);
-        setResult(constVertex);
-    }
-
     @Override
     public void caseDoubleConstant(DoubleConstant constant) {
-        literalConstant(DOUBLE, constant.toString(), constant.value);
+        caseConstant(DOUBLE, constant.value);
     }
 
     @Override
     public void caseFloatConstant(FloatConstant constant) {
-        literalConstant(FLOAT, constant.toString(), constant.value);
+        caseConstant(FLOAT, constant.value);
     }
 
     @Override
     public void caseIntConstant(IntConstant constant) {
-        literalConstant(INT, constant.toString(), constant.value);
+        caseConstant(INT, constant.value);
     }
 
     @Override
     public void caseLongConstant(LongConstant constant) {
-        literalConstant(LONG, constant.toString(), constant.value);
+        caseConstant(LONG, constant.value);
     }
 
     @Override
     public void caseNullConstant(NullConstant constant) {
-        TypeVisitor typeVisitor = new TypeVisitor();
-        constant.getType().apply(typeVisitor);
-        String type = typeVisitor.getResult().toString();
-        literalConstant(type, NULL, NULL);
+        caseConstant(CpgUtil.getTypeString(constant.getType()), NULL);
     }
 
     @Override
     public void caseStringConstant(StringConstant constant) {
-        literalConstant(STRING, constant.toString(), constant.value);
+        caseConstant(CpgUtil.getTypeString(constant.getType()), constant.value);
     }
 
     @Override
     public void caseClassConstant(ClassConstant constant) {
-        TypeVisitor typeVisitor = new TypeVisitor();
-        constant.getType().apply(typeVisitor);
-        String type = typeVisitor.getResult().toString();
-        literalConstant(type, constant.toString(), constant.value);
+        caseConstant(CpgUtil.getTypeString(constant.getType()), constant.getValue());
     }
 
     @Override
-    public void defaultCase(Object object) {
-        log.warn("Unrecognised Constant type '{}'", object.getClass());
-        Constant constant = (Constant) object;
-        literalConstant(UNKNOWN, constant.toString(), UNKNOWN);
+    public void defaultCase(Object obj) {
+        log.warn("Unrecognised Constant type '{}'", obj.getClass());
+        Constant constant = (Constant) obj;
+        caseConstant(CpgUtil.getTypeString(constant.getType()), UNKNOWN);
+    }
+
+    // Generate an AST node for a constant value
+    private void caseConstant(String type, Object value) {
+        Vertex constVertex = AstBuilder.genAstNode(CONSTANT, value.toString());
+        CpgUtil.addNodeProperty(constVertex, JAVA_TYPE, type);
+        CpgUtil.addNodeProperty(constVertex, VALUE, value);
+        setResult(constVertex);
     }
 
 }

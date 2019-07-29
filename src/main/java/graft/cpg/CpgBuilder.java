@@ -32,7 +32,7 @@ public class CpgBuilder {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         SootClass cls = body.getMethod().getDeclaringClass();
 
-        // get the class node if it already exists in the graph
+        // get the class node if it already exists in the graph, otherwise create it
         Vertex classNode;
         CpgTraversal classNodeTraversal = g.V()
                 .hasLabel(AST_NODE)

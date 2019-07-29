@@ -3,6 +3,9 @@ package graft.cpg;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+import soot.Type;
+
+import graft.cpg.visitors.TypeVisitor;
 import graft.traversal.CpgTraversalSource;
 
 import static graft.db.GraphUtil.graph;
@@ -36,6 +39,18 @@ public class CpgUtil {
     public static void addEdgeProperty(Edge edge, String key, Object value) {
         CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
         g.E(edge).property(key, value).iterate();
+    }
+
+    /**
+     * Get the string name of a Soot type using the type visitor.
+     *
+     * @param type the type to get the name of
+     * @return the string name of the given type
+     */
+    public static String getTypeString(Type type) {
+        TypeVisitor visitor = new TypeVisitor();
+        type.apply(visitor);
+        return visitor.getResult().toString();
     }
 
 }

@@ -14,45 +14,37 @@ import static graft.Const.*;
 
 /**
  * Visitor applied to Jimple statements to create CFG nodes for them.
+ *
+ * @author Wim Keirsgieter
  */
 public class StmtVisitor extends AbstractStmtSwitch {
 
     private static Logger log = LoggerFactory.getLogger(StmtVisitor.class);
 
-    // Helper method to create a CFG node for definition statements, with AST nodes for the target and value
-    private void definitionStmt(DefinitionStmt stmt) {
-        Vertex assignVertex = CfgBuilder.genCfgNode(stmt, ASSIGN_STMT, stmt.toString());
-
-        Vertex leftOpVertex = AstBuilder.genValueNode(stmt.getLeftOp());
-        Vertex rightOpVertex = AstBuilder.genValueNode(stmt.getRightOp());
-        AstBuilder.genAstEdge(assignVertex, leftOpVertex, TARGET, TARGET);
-        AstBuilder.genAstEdge(assignVertex, rightOpVertex, VALUE, VALUE);
-
-        setResult(assignVertex);
-    }
-
     @Override
     public void caseAssignStmt(AssignStmt stmt) {
         log.trace("Visiting AssignStmt");
-        definitionStmt(stmt);
+        caseDefinitionStmt(stmt);
     }
 
     @Override
     public void caseBreakpointStmt(BreakpointStmt stmt) {
         log.trace("Visiting BreakpointStmt");
+        // TODO
         throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void caseEnterMonitorStmt(EnterMonitorStmt stmt) {
-        // TODO: is this a synchronized block?
         log.trace("Visiting EnterMonitorStmt");
+        // TODO
         throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void caseExitMonitorStmt(ExitMonitorStmt stmt) {
         log.trace("Visiting ExitMonitorStmt");
+        // TODO
         throw new UnsupportedOperationException("Not implemented");
     }
 
@@ -64,7 +56,7 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseIdentityStmt(IdentityStmt stmt) {
         log.trace("Visiting IdentityStmt");
-        definitionStmt(stmt);
+        caseDefinitionStmt(stmt);
     }
 
     @Override
@@ -92,6 +84,7 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseLookupSwitchStmt(LookupSwitchStmt stmt) {
         log.trace("Visiting LookupSwitchStmt");
+        // TODO
         throw new UnsupportedOperationException("Not implemented");
     }
 
@@ -129,18 +122,33 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseTableSwitchStmt(TableSwitchStmt stmt) {
         log.trace("Visiting TableSwitchStmt");
+        // TODO
         throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void caseThrowStmt(ThrowStmt stmt) {
         log.trace("Visiting ThrowStmt");
+        // TODO
         throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void defaultCase(Object obj) {
         log.warn("Unrecognised Stmt class '{}'", obj.getClass());
-        throw new UnsupportedOperationException("Not implemented");
+        throw new RuntimeException("Unrecognised statement class (see logs for details)");
     }
+
+    // Generate CFG node for definition statements, with AST nodes for the target and value
+    private void caseDefinitionStmt(DefinitionStmt stmt) {
+        Vertex assignVertex = CfgBuilder.genCfgNode(stmt, ASSIGN_STMT, stmt.toString());
+
+        Vertex leftOpVertex = AstBuilder.genValueNode(stmt.getLeftOp());
+        Vertex rightOpVertex = AstBuilder.genValueNode(stmt.getRightOp());
+        AstBuilder.genAstEdge(assignVertex, leftOpVertex, TARGET, TARGET);
+        AstBuilder.genAstEdge(assignVertex, rightOpVertex, VALUE, VALUE);
+
+        setResult(assignVertex);
+    }
+
 }

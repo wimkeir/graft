@@ -1,5 +1,8 @@
 package graft.cpg.visitors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import soot.*;
 
 import static graft.Const.*;
@@ -11,13 +14,17 @@ import static graft.Const.*;
  */
 public class TypeVisitor extends TypeSwitch {
 
-    // TODO, see https://www.sable.mcgill.ca/soot/doc/soot/TypeSwitch.html
+    private static Logger log = LoggerFactory.getLogger(TypeVisitor.class);
 
     @Override
     public void caseArrayType(ArrayType type) {
         TypeVisitor typeVisitor = new TypeVisitor();
         type.baseType.apply(typeVisitor);
-        setResult(typeVisitor.getResult());
+        StringBuilder sb = new StringBuilder(typeVisitor.getResult().toString());
+        for (int i = 0; i < type.numDimensions; i++) {
+            sb.append("[]");
+        }
+        setResult(sb.toString());
     }
 
     @Override
@@ -72,6 +79,7 @@ public class TypeVisitor extends TypeSwitch {
 
     @Override
     public void defaultCase(Type type) {
+        log.warn("Unrecognised Type class '{}'", type.toString());
         setResult(type.toString());
     }
 

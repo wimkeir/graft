@@ -29,6 +29,10 @@ public class CfgBuilder {
 
     private static Logger log = LoggerFactory.getLogger(CfgBuilder.class);
 
+    // ********************************************************************************************
+    // public methods
+    // ********************************************************************************************
+
     /**
      * Build a CFG for the given method body, with an AST edge from the given class node.
      *
@@ -96,10 +100,16 @@ public class CfgBuilder {
                 .next();
     }
 
+    // ********************************************************************************************
+    // private methods
+    // ********************************************************************************************
+
     // Recursively generate CFG nodes for a given unit and its children, with CFG edges between them
+    // TODO NB: if statement branches not joining!
     private static Vertex genCfgNodeAndSuccs(UnitGraph unitGraph, Unit unit) {
         log.trace("Generating node and succs for unit '{}'", unit.toString());
 
+        // Generate a CFG node for the statement
         Stmt stmt = (Stmt) unit;
         StmtVisitor visitor = new StmtVisitor();
         stmt.apply(visitor);
@@ -110,6 +120,7 @@ public class CfgBuilder {
             return null;
         }
 
+        // TODO: should this be done here? we need access to the unit...
         PdgBuilder.handleCfgNode(unit, stmtVertex);
 
         for (Unit succ : unitGraph.getSuccsOf(unit)) {
@@ -117,7 +128,7 @@ public class CfgBuilder {
             if (succVertex == null) {
                 continue;
             }
-            // TODO: conditional edges
+            // Generate branch edges if conditional statement, otherwise empty edges
             if (stmt instanceof IfStmt) {
                 IfStmt ifStmt = (IfStmt) stmt;
                 if (succ.equals(ifStmt.getTarget())) {
@@ -133,6 +144,7 @@ public class CfgBuilder {
         return stmtVertex;
     }
 
+    // Get the source file path from the statement tags
     private static String getSourcePath(Stmt stmt) {
         if (stmt == null) {
             return UNKNOWN;
@@ -140,16 +152,19 @@ public class CfgBuilder {
         return UNKNOWN; // TODO
     }
 
+    // Get the source file name from the statement tags
     private static String getSourceFile(Stmt stmt) {
         if (stmt == null) {
             return UNKNOWN;
         }
         if (stmt.getTag("SourceFileTag") != null) {
             return ((SourceFileTag) stmt.getTag("SourceFileTag")).getSourceFile();
+        } else {
+            return UNKNOWN;
         }
-        return UNKNOWN;
     }
 
+    // Get the source line number from the statement tags
     private static int getLineNr(Stmt stmt) {
         if (stmt == null) {
             return -1;

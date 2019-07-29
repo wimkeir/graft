@@ -1,7 +1,5 @@
 package graft.cpg.visitors;
 
-import java.util.List;
-
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
@@ -18,50 +16,12 @@ import static graft.Const.*;
 
 /**
  * Visitor applied to expressions to create AST nodes (or subtrees) for them.
+ *
+ * @author Wim Keirsgieter
  */
 public class ExprVisitor extends AbstractExprSwitch {
 
     private static Logger log = LoggerFactory.getLogger(ExprVisitor.class);
-
-    // Helper method to create an AST node for binary expressions, with nodes for each operand
-    private Vertex binaryExpr(String operator, Value lop, Value rop, String textLabel) {
-        Vertex exprVertex = AstBuilder.genAstNode(BINARY_EXPR, textLabel);
-        CpgUtil.addNodeProperty(exprVertex, OPERATOR, operator);
-
-        Vertex lopVertex = AstBuilder.genValueNode(lop);
-        Vertex ropVertex = AstBuilder.genValueNode(rop);
-        AstBuilder.genAstEdge(exprVertex, lopVertex, LEFT_OPERAND, LEFT_OPERAND);
-        AstBuilder.genAstEdge(exprVertex, ropVertex, RIGHT_OPERAND, RIGHT_OPERAND);
-
-        return exprVertex;
-    }
-
-    // Helper method to create an AST node for unary expressions, with a node for the operand
-    private Vertex unaryExpr(String operator, Value op, String textLabel) {
-        Vertex exprVertex = AstBuilder.genAstNode(UNARY_EXPR, textLabel);
-        CpgUtil.addNodeProperty(exprVertex, OPERATOR, operator);
-
-        Vertex opVertex = AstBuilder.genValueNode(op);
-        AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
-
-        return exprVertex;
-    }
-
-    // Helper method to create an AST node for invoke expressions, with possible nodes for arguments
-    private Vertex invokeExpr(String invokeType, String method, List<Value> args, String textLabel) {
-        Vertex exprVertex = AstBuilder.genAstNode(INVOKE_EXPR, textLabel);
-        CpgUtil.addNodeProperty(exprVertex, INVOKES, method);
-        CpgUtil.addNodeProperty(exprVertex, INVOKE_TYPE, invokeType);
-
-        int i = 0;
-        for (Value arg : args) {
-            Vertex argVertex = AstBuilder.genValueNode(arg);
-            Edge argEdge = AstBuilder.genAstEdge(exprVertex, argVertex, ARG, ARG);
-            CpgUtil.addEdgeProperty(argEdge, INDEX, i);
-        }
-
-        return exprVertex;
-    }
 
     // ********************************************************************************************
     // binary expressions
@@ -69,102 +29,102 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseAddExpr(AddExpr expr) {
-        setResult(binaryExpr(PLUS, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, PLUS);
     }
 
     @Override
     public void caseAndExpr(AndExpr expr) {
-        setResult(binaryExpr(AND, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, AND);
     }
 
     @Override
     public void caseCmpExpr(CmpExpr expr) {
-        setResult(binaryExpr(CMP, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, CMP);
     }
 
     @Override
     public void caseCmpgExpr(CmpgExpr expr) {
-        setResult(binaryExpr(CMPG, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, CMPG);
     }
 
     @Override
     public void caseCmplExpr(CmplExpr expr) {
-        setResult(binaryExpr(CMPL, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, CMPL);
     }
 
     @Override
     public void caseDivExpr(DivExpr expr) {
-        setResult(binaryExpr(DIVIDE, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, DIVIDE);
     }
 
     @Override
     public void caseEqExpr(EqExpr expr) {
-        setResult(binaryExpr(EQUALS, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, EQUALS);
     }
 
     @Override
     public void caseNeExpr(NeExpr expr) {
-        setResult(binaryExpr(NOT_EQUALS, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, NOT_EQUALS);
     }
 
     @Override
     public void caseGeExpr(GeExpr expr) {
-        setResult(binaryExpr(GREATER_EQUALS, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, GREATER_EQUALS);
     }
 
     @Override
     public void caseGtExpr(GtExpr expr) {
-        setResult(binaryExpr(GREATER, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, GREATER);
     }
 
     @Override
     public void caseLeExpr(LeExpr expr) {
-        setResult(binaryExpr(LESS_EQUALS, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, LESS_EQUALS);
     }
 
     @Override
     public void caseLtExpr(LtExpr expr) {
-        setResult(binaryExpr(LESS, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, LESS);
     }
 
     @Override
     public void caseMulExpr(MulExpr expr) {
-        setResult(binaryExpr(MULTIPLY, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, MULTIPLY);
     }
 
     @Override
     public void caseOrExpr(OrExpr expr) {
-        setResult(binaryExpr(OR, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, OR);
     }
 
     @Override
     public void caseRemExpr(RemExpr expr) {
-        setResult(binaryExpr(REMAINDER, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, REMAINDER);
     }
 
     @Override
     public void caseShlExpr(ShlExpr expr) {
-        setResult(binaryExpr(LEFT_SHIFT, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, LEFT_SHIFT);
     }
 
     @Override
     public void caseShrExpr(ShrExpr expr) {
-        setResult(binaryExpr(SIGNED_RIGHT_SHIFT, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, SIGNED_RIGHT_SHIFT);
     }
 
     @Override
     public void caseUshrExpr(UshrExpr expr) {
-        setResult(binaryExpr(UNSIGNED_RIGHT_SHIFT, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, UNSIGNED_RIGHT_SHIFT);
     }
 
     @Override
     public void caseSubExpr(SubExpr expr) {
-        setResult(binaryExpr(MINUS, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, MINUS);
     }
 
     @Override
     public void caseXorExpr(XorExpr expr) {
-        setResult(binaryExpr(XOR, expr.getOp1(), expr.getOp2(), expr.toString()));
+        caseBinaryExpr(expr, XOR);
     }
 
     // ********************************************************************************************
@@ -172,56 +132,13 @@ public class ExprVisitor extends AbstractExprSwitch {
     // ********************************************************************************************
 
     @Override
-    public void caseCastExpr(CastExpr expr) {
-        Vertex exprVertex = unaryExpr(CAST, expr.getOp(), expr.toString());
-
-        TypeVisitor typeVisitor = new TypeVisitor();
-        expr.getCastType().apply(typeVisitor);
-        CpgUtil.addNodeProperty(exprVertex, CAST_TYPE, typeVisitor.getResult().toString());
-
-        setResult(exprVertex);
-    }
-
-    @Override
-    public void caseInstanceOfExpr(InstanceOfExpr expr) {
-        Vertex exprVertex = unaryExpr(INSTANCEOF_EXPR, expr.getOp(), expr.toString());
-
-        TypeVisitor typeVisitor = new TypeVisitor();
-        expr.getCheckType().apply(typeVisitor);
-        CpgUtil.addNodeProperty(exprVertex, CHECK_TYPE, typeVisitor.getResult().toString());
-
-        setResult(exprVertex);
-    }
-
-    @Override
-    public void caseNewArrayExpr(NewArrayExpr expr) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public void caseNewMultiArrayExpr(NewMultiArrayExpr expr) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public void caseNewExpr(NewExpr expr) {
-        Vertex exprVertex = AstBuilder.genAstNode(NEW_EXPR, expr.toString());
-
-        TypeVisitor typeVisitor = new TypeVisitor();
-        expr.getBaseType().apply(typeVisitor);
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, typeVisitor.getResult().toString());
-
-        setResult(exprVertex);
-    }
-
-    @Override
     public void caseLengthExpr(LengthExpr expr) {
-        setResult(unaryExpr(LENGTH, expr.getOp(), expr.toString()));
+        caseUnaryExpr(expr, LENGTH);
     }
 
     @Override
     public void caseNegExpr(NegExpr expr) {
-        setResult(unaryExpr(NEGATION, expr.getOp(), expr.toString()));
+        caseUnaryExpr(expr, NEGATION);
     }
 
     // ********************************************************************************************
@@ -230,40 +147,75 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseInterfaceInvokeExpr(InterfaceInvokeExpr invokeExpr) {
-        Vertex invokeVertex = invokeExpr(INTERFACE, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString());
+        caseInvokeExpr(invokeExpr, INTERFACE, invokeExpr.getBase());
+    }
 
-        Vertex baseVertex = AstBuilder.genValueNode(invokeExpr.getBase());
-        AstBuilder.genAstEdge(invokeVertex, baseVertex, BASE, BASE);
-
-        setResult(invokeVertex);    }
-
-    @Override
+        @Override
     public void caseSpecialInvokeExpr(SpecialInvokeExpr invokeExpr) {
-        Vertex invokeVertex = invokeExpr(SPECIAL, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString());
-
-        Vertex baseVertex = AstBuilder.genValueNode(invokeExpr.getBase());
-        AstBuilder.genAstEdge(invokeVertex, baseVertex, BASE, BASE);
-
-        setResult(invokeVertex);    }
+        caseInvokeExpr(invokeExpr, SPECIAL, invokeExpr.getBase());
+    }
 
     @Override
     public void caseStaticInvokeExpr(StaticInvokeExpr invokeExpr) {
-        setResult(invokeExpr(STATIC, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString()));
+        caseInvokeExpr(invokeExpr, STATIC, null);
     }
 
     @Override
     public void caseVirtualInvokeExpr(VirtualInvokeExpr invokeExpr) {
-        Vertex invokeVertex = invokeExpr(VIRTUAL, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString());
-
-        Vertex baseVertex = AstBuilder.genValueNode(invokeExpr.getBase());
-        AstBuilder.genAstEdge(invokeVertex, baseVertex, BASE, BASE);
-
-        setResult(invokeVertex);
+        caseInvokeExpr(invokeExpr, VIRTUAL, invokeExpr.getBase());
     }
 
     @Override
     public void caseDynamicInvokeExpr(DynamicInvokeExpr invokeExpr) {
-        setResult(invokeExpr(DYNAMIC, invokeExpr.getMethod().getName(), invokeExpr.getArgs(), invokeExpr.toString()));
+        caseInvokeExpr(invokeExpr, DYNAMIC, null);
+    }
+
+    // ********************************************************************************************
+    // other expressions
+    // ********************************************************************************************
+
+    @Override
+    public void caseNewExpr(NewExpr expr) {
+        // TODO: difference between type and baseType?
+        Vertex exprVertex = AstBuilder.genAstNode(NEW_EXPR, expr.toString());
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getBaseType()));
+        setResult(exprVertex);
+    }
+
+    @Override
+    public void caseNewArrayExpr(NewArrayExpr expr) {
+        // TODO
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void caseNewMultiArrayExpr(NewMultiArrayExpr expr) {
+        // TODO
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void caseInstanceOfExpr(InstanceOfExpr expr) {
+        Vertex exprVertex = AstBuilder.genAstNode(INSTANCEOF_EXPR, expr.toString());
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+        CpgUtil.addNodeProperty(exprVertex, CHECK_TYPE, CpgUtil.getTypeString(expr.getCheckType()));
+
+        Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
+        AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
+
+        setResult(exprVertex);
+    }
+
+    @Override
+    public void caseCastExpr(CastExpr expr) {
+        Vertex exprVertex = AstBuilder.genAstNode(CAST_EXPR, expr.toString());
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+        CpgUtil.addNodeProperty(exprVertex, CAST_TYPE, CpgUtil.getTypeString(expr.getCastType()));
+
+        Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
+        AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
+
+        setResult(exprVertex);
     }
 
     // ********************************************************************************************
@@ -272,7 +224,60 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void defaultCase(Object obj) {
-        throw new UnsupportedOperationException("Unrecognised Expr type '" + obj.getClass().getSimpleName() + "'");
+        log.warn("Unrecognised Expr type '{}', no AST node generated", obj.getClass());
+    }
+
+    // ********************************************************************************************
+    // private methods
+    // ********************************************************************************************
+
+    // Generates an AST subtree for a binary expression and its operands
+    private void caseBinaryExpr(BinopExpr expr, String operator) {
+        Vertex exprVertex = AstBuilder.genAstNode(BINARY_EXPR, expr.toString());
+        CpgUtil.addNodeProperty(exprVertex, OPERATOR, operator);
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+
+        Vertex lopVertex = AstBuilder.genValueNode(expr.getOp1());
+        Vertex ropVertex = AstBuilder.genValueNode(expr.getOp2());
+        AstBuilder.genAstEdge(exprVertex, lopVertex, LEFT_OPERAND, LEFT_OPERAND);
+        AstBuilder.genAstEdge(exprVertex, ropVertex, RIGHT_OPERAND, RIGHT_OPERAND);
+
+        setResult(exprVertex);
+    }
+
+    // Generates an AST subtree for a unary expression and its operand
+    private void caseUnaryExpr(UnopExpr expr, String operator) {
+        Vertex exprVertex = AstBuilder.genAstNode(UNARY_EXPR, expr.toString());
+        CpgUtil.addNodeProperty(exprVertex, OPERATOR, operator);
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+
+        Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
+        AstBuilder.genAstEdge(exprVertex, opVertex, LEFT_OPERAND, LEFT_OPERAND);
+
+        setResult(exprVertex);
+    }
+
+    // Generates an AST subtree for an invoke expression and possibly its base and args
+    private void caseInvokeExpr(InvokeExpr expr, String invokeType, Value base) {
+        Vertex exprVertex = AstBuilder.genAstNode(INVOKE_EXPR, expr.toString());
+        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+        CpgUtil.addNodeProperty(exprVertex, INVOKE_TYPE, invokeType);
+        CpgUtil.addNodeProperty(exprVertex, METHOD_NAME, expr.getMethod().getName());
+        CpgUtil.addNodeProperty(exprVertex, METHOD_SCOPE, expr.getMethod().getDeclaringClass().getName());
+
+        if (base != null) {
+            Vertex baseVertex = AstBuilder.genValueNode(base);
+            AstBuilder.genAstEdge(exprVertex, baseVertex, BASE, BASE);
+        }
+
+        int i = 0;
+        for (Value arg : expr.getArgs()) {
+            Vertex argVertex = AstBuilder.genValueNode(arg);
+            Edge argEdge = AstBuilder.genAstEdge(exprVertex, argVertex, ARG, ARG);
+            CpgUtil.addEdgeProperty(argEdge, INDEX, i++);
+        }
+
+        setResult(exprVertex);
     }
 
 }
