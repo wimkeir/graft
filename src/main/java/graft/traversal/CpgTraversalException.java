@@ -1,10 +1,10 @@
 package graft.traversal;
 
-public class CpgDslError extends Error {
+public class CpgTraversalException extends RuntimeException {
 
     private String message;
 
-    public CpgDslError(String message) {
+    public CpgTraversalException(String message) {
         this.message = message;
     }
 
