@@ -8,9 +8,9 @@ import org.slf4j.LoggerFactory;
 import soot.Body;
 import soot.SootClass;
 
-import graft.db.GraphUtil;
 import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
+import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 

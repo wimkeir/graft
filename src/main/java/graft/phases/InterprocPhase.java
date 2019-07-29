@@ -1,8 +1,9 @@
 package graft.phases;
 
-import graft.interproc.Interproc;
 import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.commons.configuration2.Configuration;
+
+import graft.cpg.Interproc;
 
 public class InterprocPhase implements GraftPhase {
 

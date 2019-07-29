@@ -1,8 +1,9 @@
-package graft.db;
+package graft.utils;
 
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 
+// TODO: flesh this out, use different graph implementations
 public class GraphUtil {
 
     private static Graph graph;

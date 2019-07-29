@@ -1,12 +1,11 @@
-package graft.interproc;
+package graft.cpg;
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
-import graft.cpg.CfgBuilder;
-import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
+import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 import static graft.traversal.__.*;

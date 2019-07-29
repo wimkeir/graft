@@ -15,8 +15,8 @@ import soot.jimple.Ref;
 import graft.cpg.visitors.ConstantVisitor;
 import graft.cpg.visitors.ExprVisitor;
 import graft.cpg.visitors.RefVisitor;
-import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
+import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 

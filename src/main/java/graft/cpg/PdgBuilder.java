@@ -14,8 +14,8 @@ import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
 
-import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
+import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 
@@ -66,6 +66,5 @@ public class PdgBuilder {
                 .property(TEXT_LABEL, textLabel)
                 .next();
     }
-
 
 }

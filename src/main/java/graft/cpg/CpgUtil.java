@@ -7,8 +7,7 @@ import soot.Type;
 
 import graft.cpg.visitors.TypeVisitor;
 import graft.traversal.CpgTraversalSource;
-
-import static graft.db.GraphUtil.graph;
+import graft.utils.GraphUtil;
 
 /**
  * Utility methods for CPG construction.
@@ -25,7 +24,7 @@ public class CpgUtil {
      * @param value the property value
      */
     public static void addNodeProperty(Vertex node, String key, Object value) {
-        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         g.V(node).property(key, value).iterate();
     }
 
@@ -37,7 +36,7 @@ public class CpgUtil {
      * @param value the property value
      */
     public static void addEdgeProperty(Edge edge, String key, Object value) {
-        CpgTraversalSource g = graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         g.E(edge).property(key, value).iterate();
     }
 
