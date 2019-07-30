@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import soot.Body;
 import soot.SootClass;
 
-import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
 import graft.utils.GraphUtil;
 
@@ -32,21 +31,19 @@ public class CpgBuilder {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         SootClass cls = body.getMethod().getDeclaringClass();
 
-        // get the class node if it already exists in the graph, otherwise create it
-        Vertex classNode;
-        CpgTraversal classNodeTraversal = g.V()
+        // create an AST node for the method's declaring class if it doesn't exist
+        long count = g.V()
                 .hasLabel(AST_NODE)
                 .has(NODE_TYPE, CLASS)
-                .has(FULL_NAME, cls.getName());
-        if (classNodeTraversal.hasNext()) {
-            classNode = (Vertex) classNodeTraversal.next();
-        } else {
-            classNode = AstBuilder.genAstNode(CLASS, cls.getShortName());
+                .has(FULL_NAME, cls.getName())
+                .count().next();
+        if (count == 0) {
+            Vertex classNode = AstBuilder.genAstNode(CLASS, cls.getShortName());
             CpgUtil.addNodeProperty(classNode, SHORT_NAME, cls.getShortName());
             CpgUtil.addNodeProperty(classNode, FULL_NAME, cls.getName());
         }
 
-        CfgBuilder.buildCfg(classNode, body);
+        CfgBuilder.buildCfg(body);
     }
 
 }

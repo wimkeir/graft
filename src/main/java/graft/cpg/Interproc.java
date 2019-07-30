@@ -21,6 +21,7 @@ public class Interproc {
      * Generate interprocedural call and return edges between call sites and method entries / returns.
      */
     public static void genInterprocCfgEdges() {
+        // TODO NB: context sensitivity
         GraphTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         GraphTraversal invokeExprs = g.V()
                 .hasLabel(AST_NODE)

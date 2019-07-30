@@ -1,5 +1,8 @@
 package graft.cpg;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
@@ -9,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import soot.Body;
 import soot.SootMethod;
 import soot.Unit;
+import soot.jimple.GotoStmt;
 import soot.jimple.IfStmt;
 import soot.jimple.Stmt;
 import soot.tagkit.*;
@@ -35,20 +39,31 @@ public class CfgBuilder {
     // ********************************************************************************************
 
     /**
-     * Build a CFG for the given method body, with an AST edge from the given class node.
+     * Build a CFG for the given method body.
      *
-     * @param classNode the node corresponding to the declaring class of the method
      * @param body the method body
      */
-    public static void buildCfg(Vertex classNode, Body body) {
+    public static void buildCfg(Body body) {
         log.debug("Building CFG for method '{}'", body.getMethod().getName());
 
-        // generate entry node and attach to class AST node
+        // a mapping from units in the unit graph to their node ids in the CPG
+        Map<Unit, Object> generatedNodes = new HashMap<>();
+
+        // generate method entry node
         SootMethod method = body.getMethod();
         Vertex entryNode = genCfgNode(null, ENTRY, method.getName());
         CpgUtil.addNodeProperty(entryNode, METHOD_SIG, method.getSignature());
         CpgUtil.addNodeProperty(entryNode, METHOD_NAME, method.getName());
         CpgUtil.addNodeProperty(entryNode, METHOD_SCOPE, method.getDeclaringClass().getName());
+
+        // get the class AST node
+        Vertex classNode = GraphUtil.graph().traversal(CpgTraversalSource.class)
+                .V().hasLabel(AST_NODE)
+                .has(NODE_TYPE, CLASS)
+                .has(FULL_NAME, body.getMethod().getDeclaringClass().getName())
+                .next();
+
+        // draw method or constructor edge from class to method node
         if (body.getMethod().isConstructor()) {
             AstBuilder.genAstEdge(classNode, entryNode, CONSTRUCTOR, CONSTRUCTOR);
         } else {
@@ -58,10 +73,7 @@ public class CfgBuilder {
         // generate control flow graph and add nodes recursively
         UnitGraph unitGraph = new BriefUnitGraph(body);
         for (Unit head : unitGraph.getHeads()) {
-            Vertex headVertex = genCfgNodeAndSuccs(unitGraph, head);
-            if (headVertex == null) {
-                continue;
-            }
+            Vertex headVertex = genUnitNode(head, unitGraph, generatedNodes);
             genCfgEdge(entryNode, headVertex, EMPTY, EMPTY);
         }
     }
@@ -107,44 +119,51 @@ public class CfgBuilder {
     // private methods
     // ********************************************************************************************
 
-    // Recursively generate CFG nodes for a given unit and its children, with CFG edges between them
-    // TODO NB: if statement branches not joining!
-    private static Vertex genCfgNodeAndSuccs(UnitGraph unitGraph, Unit unit) {
-        log.trace("Generating node and succs for unit '{}'", unit.toString());
+    private static Vertex genUnitNode(Unit unit, UnitGraph unitGraph, Map<Unit, Object> generated) {
+        if (unit instanceof GotoStmt) {
+            return genUnitNode(((GotoStmt) unit).getTarget(), unitGraph, generated);
+        }
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        log.debug("Generating Unit '{}'", unit.toString());
 
-        // Generate a CFG node for the statement
+        Vertex unitVertex;
+        if (generated.containsKey(unit)) {
+            unitVertex = g.V(generated.get(unit)).next();
+        } else {
+            unitVertex = genUnitNode(unit);
+            generated.put(unit, unitVertex);
+        }
+
+        for (Unit succ : unitGraph.getSuccsOf(unit)) {
+            Vertex succVertex;
+            if (generated.containsKey(succ)) {
+                succVertex = g.V(generated.get(succ)).next();
+            } else {
+                succVertex = genUnitNode(succ, unitGraph, generated);
+                if (succVertex == null) {
+                    log.warn("Could not generate CFG node for unit '{}'", succ.toString());
+                    continue;
+                }
+            }
+            if (unit instanceof IfStmt) {
+                if (succ.equals(((IfStmt) unit).getTarget())) {
+                    genCfgEdge(unitVertex, succVertex, TRUE, TRUE);
+                } else {
+                    genCfgEdge(unitVertex, succVertex, FALSE, FALSE);
+                }
+            } else {
+                genCfgEdge(unitVertex, succVertex, EMPTY, EMPTY);
+            }
+        }
+
+        return unitVertex;
+    }
+
+    private static Vertex genUnitNode(Unit unit) {
         Stmt stmt = (Stmt) unit;
         StmtVisitor visitor = new StmtVisitor();
         stmt.apply(visitor);
-        Vertex stmtVertex = (Vertex) visitor.getResult();
-
-        if (stmtVertex == null) {
-            log.trace("Stmt vertex is NULL");
-            return null;
-        }
-
-        // TODO: should this be done here? we need access to the unit...
-        PdgBuilder.handleCfgNode(unit, stmtVertex);
-
-        for (Unit succ : unitGraph.getSuccsOf(unit)) {
-            Vertex succVertex = genCfgNodeAndSuccs(unitGraph, succ);
-            if (succVertex == null) {
-                continue;
-            }
-            // Generate branch edges if conditional statement, otherwise empty edges
-            if (stmt instanceof IfStmt) {
-                IfStmt ifStmt = (IfStmt) stmt;
-                if (succ.equals(ifStmt.getTarget())) {
-                    genCfgEdge(stmtVertex, succVertex, TRUE, TRUE);
-                } else {
-                    genCfgEdge(stmtVertex, succVertex, FALSE, FALSE);
-                }
-            } else {
-                genCfgEdge(stmtVertex, succVertex, EMPTY, EMPTY);
-            }
-        }
-
-        return stmtVertex;
+        return (Vertex) visitor.getResult();
     }
 
     // Get the source file path from the statement tags
