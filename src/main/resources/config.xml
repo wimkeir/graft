@@ -15,4 +15,10 @@
         <interproc>true</interproc>
     </cpg>
 
+    <soot>
+        <options>
+            <src-prec>only-class</src-prec>
+        </options>
+    </soot>
+
 </configuration>

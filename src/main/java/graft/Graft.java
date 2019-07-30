@@ -25,12 +25,11 @@ public class Graft {
      */
     public static void main(String[] args) {
         validateArgs(args);
-        String srcRoot = args[0];
 
         Configuration config = null;
         try {
-            if (args.length == 2) {
-                config = ConfigHelper.getFromFile(args[1]);
+            if (args.length == 1) {
+                config = ConfigHelper.getFromFile(args[0]);
             } else {
                 log.info("No config file specified, using default config");
                 config = ConfigHelper.getDefaultConfig();
@@ -51,7 +50,6 @@ public class Graft {
                 new DotPhase(DotPhase.getOptions(config))
         );
 
-        log.info("Running Graft on source root {}", srcRoot);
         GraftResult result = graftRun.run();
         output(result.toString());
     }

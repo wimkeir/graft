@@ -1,7 +1,7 @@
 package graft.phases;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.configuration2.BaseConfiguration;
@@ -10,135 +10,132 @@ import org.apache.commons.configuration2.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import soot.*;
-import soot.options.Options;
+import soot.Body;
+import soot.BodyTransformer;
+import soot.PackManager;
+import soot.PhaseOptions;
+import soot.Transform;
 
 import graft.cpg.CpgBuilder;
 
 /**
- * TODO: this needs some serious work...
+ * TODO: javadoc
  */
 public class BuildCpgPhase implements GraftPhase {
 
     private static Logger log = LoggerFactory.getLogger(BuildCpgPhase.class);
 
+    private Configuration options;
+
     public BuildCpgPhase(Configuration options) {
-//        setSootOptions(options);
+        this.options = options;
     }
 
     @Override
     public PhaseResult run() {
         log.info("Running BuildCpgPhase");
 
-//        if (PackManager.v().onlyStandardPacks()) {
-//            for (Pack pack : PackManager.v().allPacks()) {
-//                Options.v().warnForeignPhase(pack.getPhaseName());
-//                for (Transform tr : pack) {
-//                    Options.v().warnForeignPhase(tr.getPhaseName());
-//                }
-//            }
-//        }
-//        Options.v().warnNonexistentPhase();
-//        Options.v().set_unfriendly_mode(true);
-
-        PackManager.v().getPack("jtp").add(new Transform("jtp.cfg", new CpgTransformer()));
+        PackManager.v().getPack("jtp").add(new Transform("jtp.cfg", new BodyTransformer() {
+            @Override
+            protected void internalTransform(Body body, String phaseName, Map<String, String> options) {
+                log.debug("{} phase: transforming body of method '{}'", phaseName, body.getMethod().getName());
+                CpgBuilder.buildCpg(body);
+            }
+        }));
         PhaseOptions.v().setPhaseOption("jb", "use-original-names:true");
-        // TODO NB: get this from config / args, stop committing hard coded options!
-        soot.Main.main(new String[]{"-keep-line-number", "-cp", "etc/examples/interproc:etc/jars/jce.jar", "-pp", "-process-dir", "etc/examples/interproc", "-app"});
+
+        List<String> sootOptions = getSootOptions(options);
+        String[] sootArgs = new String[(sootOptions).size()];
+
+        log.debug("Running soot with options: ");
+        int i = 0;
+        for (String option : sootOptions) {
+            log.debug(option);
+            sootArgs[i++] = option;
+        }
+        soot.Main.main(sootArgs);
 
         return new PhaseResult(this, true);
     }
 
     public static Configuration getOptions(Configuration config) {
-        // TODO: don't hardwire options!
         Configuration options = new BaseConfiguration();
-        options.setProperty("soot-classpath", "etc/examples/simple:etc/jars/jce.jar");
-//        options.setProperty("main-class", "Simple");
-        options.setProperty("verbose", true);
-        options.setProperty("debug", true);
-        options.setProperty("debug-resolver", true);
-        options.setProperty("ast-metrics", true);
-        options.setProperty("output-dir", "etc/sootOutput");
-//        options.setProperty("exclude-packages", Arrays.asList("java", "sun", "jdk"));
+        options.addProperty("process-dir", config.getStringArray("soot.options.process-dir"));
+        options.addProperty("src-prec", config.getString("soot.options.src-prec"));
+        options.addProperty("output-format", config.getString("soot.options.output-format"));
+        options.addProperty("main-class", config.getString("soot.options.main-class"));
+        options.addProperty("output-dir", config.getString("soot.options.output-dir"));
         return options;
     }
 
-    private void setSootOptions(Configuration options) {
-        // mandatory Soot options (we need these for our analyses)
-        Options.v().set_keep_line_number(true);
-        Options.v().set_app(true);
-        Options.v().set_prepend_classpath(true);
-        Options.v().set_src_prec(Options.src_prec_only_class);
-        Options.v().set_time(true);
-
-        // TODO: where to set this?
-        Options.v().set_process_dir(Collections.singletonList("etc/examples/simple"));
-
-        // TODO: confirm what these options do
-//        Options.v().set_no_bodies_for_excluded(true);
-
-        // TODO: this should be configurable, but we'd need to map output formats from string reprs
-        Options.v().set_output_format(Options.output_format_J);
-
-        // XXX: these options are for debugging and should be disabled in prod
-//        Options.v().set_print_tags_in_output(true);
-//        Options.v().set_dump_cfg(Collections.singletonList("ALL"));
-//        Options.v().set_show_exception_dests(true);
-
+    private List<String> getSootOptions(Configuration options) {
         // TODO (maybe useful):
         //  -phase-option key:val
-        //  -via-shimple
+        //  -via-shimple (stp phase)
         //  -throw-analysis
-        //  -omit-excepting-unit-edges
         //  -trim-cfgs
         //  -dynamic-dir/-class/-package
         //  -interactive-mode
         //   annotation options...
 
-        // configurable Soot options
+        // mandatory options
+        List<String> sootOptions = new ArrayList<>();
+        sootOptions.add("-keep-line-number");           // keep original line numbers in stmt tags
+        sootOptions.add("-app");                        // run in application mode (process all classes referenced)
+        sootOptions.add("-prepend-classpath");          // prepend the Soot classpath to the argument classpath
+
+        // debug options
+        if (log.isDebugEnabled()) {
+            sootOptions.add("-print-tags");             // show stmt tags in Jimple output
+            sootOptions.add("-verbose");                // enable Soot verbose mode
+        }
+
+        // configurable options
+
+        // TODO: get either process dirs or file from command line
+        if (options.containsKey("process-dir")) {
+            for (String dir : options.getStringArray("process-dir")) {
+                sootOptions.add("-process-dir");
+                sootOptions.add(options.getString("process-dir"));
+            }
+        }
+
+        if (options.containsKey("src-prec")) {
+            sootOptions.add("-src-prec");
+            sootOptions.add(options.getString("src-prec"));
+        }
+
         if (options.containsKey("soot-classpath")) {
-            log.trace("Setting soot-classpath to '{}'", options.getString("soot-classpath"));
-            Options.v().set_soot_classpath(options.getString("soot-classpath"));
+            sootOptions.add("-soot-classpath");
+            sootOptions.add(options.getString("soot-classpath"));
         }
-        if (options.containsKey("verbose")) {
-            log.trace("Setting verbose to '{}'", options.getBoolean("verbose"));
-            Options.v().set_verbose(options.getBoolean("verbose"));
+
+        if (options.containsKey("output-format")) {
+            sootOptions.add("-output-format");
+            sootOptions.add(options.getString("output-format"));
         }
-        if (options.containsKey("debug")) {
-            log.trace("Setting debug to '{}'", options.getBoolean("debug"));
-            Options.v().set_debug(options.getBoolean("debug"));
-        }
-        if (options.containsKey("debug-resolver")) {
-            log.trace("Setting debug-resolver to '{}'", options.getBoolean("debug-resolver"));
-            Options.v().set_debug(options.getBoolean("debug-resolver"));
-        }
-        if (options.containsKey("ast-metrics")) {
-            log.trace("Setting ast-metrics to '{}'", options.getBoolean("ast-metrics"));
-            Options.v().set_ast_metrics(options.getBoolean("ast-metrics"));
-        }
+
         if (options.containsKey("main-class")) {
-            log.trace("Setting main-class to '{}'", options.getString("main-class"));
-            Options.v().set_main_class(options.getString("main-class"));
+            sootOptions.add("-main-class");
+            sootOptions.add(options.getString("main-class"));
         }
+
         if (options.containsKey("output-dir")) {
-            log.trace("Setting output-dir to '{}'", options.getString("output-dir"));
-            Options.v().set_output_dir(options.getString("output-dir"));
+            sootOptions.add("-output-dir");
+            sootOptions.add(options.getString("output-dir"));
         }
-        if (options.containsKey("include-packages")) {
-            Options.v().set_include(options.getList(String.class, "include-packages"));
-        }
-        if (options.containsKey("exclude-packages")) {
-            Options.v().set_exclude(options.getList(String.class, "exclude-packages"));
-        }
-    }
 
-    private static class CpgTransformer extends BodyTransformer {
+//        if (options.containsKey("include-packages")) {
+//            sootOptions.add("-include-packages");
+//            sootOptions.add(options.getString("include-packages"));
+//        }
+//
+//        if (options.containsKey("exclude-packages")) {
+//            sootOptions.add("-exclude-packages");
+//            sootOptions.add(options.getString("exclude-packages"));
+//        }
 
-        @Override
-        protected void internalTransform(Body body, String phaseName, Map<String, String> options) {
-            log.debug("CpgTransformer transforming body of method '{}'", body.getMethod().getName());
-            CpgBuilder.buildCpg(body);
-        }
+        return sootOptions;
     }
 
 }

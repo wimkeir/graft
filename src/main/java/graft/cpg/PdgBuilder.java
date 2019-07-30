@@ -43,7 +43,6 @@ public class PdgBuilder {
             Value value = useBox.getValue();
             Vertex source = symbolTable.get(value);
             if (source == null) {
-                log.warn("Local value '{}' used without known definition", useBox.getValue().toString());
                 continue;
             }
             assert value instanceof Local;
