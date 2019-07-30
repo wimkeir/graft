@@ -1,6 +1,5 @@
 package graft.cpg;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -16,7 +15,6 @@ import soot.jimple.GotoStmt;
 import soot.jimple.IfStmt;
 import soot.jimple.Stmt;
 import soot.tagkit.*;
-import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
 import graft.cpg.visitors.StmtVisitor;
@@ -39,15 +37,15 @@ public class CfgBuilder {
     // ********************************************************************************************
 
     /**
-     * Build a CFG for the given method body.
+     * Build a CFG from the given unit graph, storing the generated nodes in a map with their
+     * corresponding units as keys.
      *
-     * @param body the method body
+     * @param unitGraph the unit graph
+     * @param generatedNodes the map to store the generated nodes in
      */
-    public static void buildCfg(Body body) {
+    public static void buildCfg(UnitGraph unitGraph, Map<Unit, Object> generatedNodes) {
+        Body body = unitGraph.getBody();
         log.debug("Building CFG for method '{}'", body.getMethod().getName());
-
-        // a mapping from units in the unit graph to their node ids in the CPG
-        Map<Unit, Object> generatedNodes = new HashMap<>();
 
         // generate method entry node
         SootMethod method = body.getMethod();
@@ -71,7 +69,6 @@ public class CfgBuilder {
         }
 
         // generate control flow graph and add nodes recursively
-        UnitGraph unitGraph = new BriefUnitGraph(body);
         for (Unit head : unitGraph.getHeads()) {
             Vertex headVertex = genUnitNode(head, unitGraph, generatedNodes);
             genCfgEdge(entryNode, headVertex, EMPTY, EMPTY);

@@ -1,5 +1,8 @@
 package graft.cpg;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -7,6 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import soot.Body;
 import soot.SootClass;
+import soot.Unit;
+import soot.toolkits.graph.BriefUnitGraph;
+import soot.toolkits.graph.UnitGraph;
 
 import graft.traversal.CpgTraversalSource;
 import graft.utils.GraphUtil;
@@ -43,7 +49,10 @@ public class CpgBuilder {
             CpgUtil.addNodeProperty(classNode, FULL_NAME, cls.getName());
         }
 
-        CfgBuilder.buildCfg(body);
+        UnitGraph unitGraph = new BriefUnitGraph(body);
+        Map<Unit, Object> unitNodes = new HashMap<>();
+        CfgBuilder.buildCfg(unitGraph, unitNodes);
+        PdgBuilder.buildPdg(unitGraph, unitNodes);
     }
 
 }

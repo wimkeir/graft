@@ -1,8 +1,10 @@
 package graft.cpg;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
@@ -13,6 +15,9 @@ import soot.Local;
 import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
+import soot.toolkits.graph.UnitGraph;
+import soot.toolkits.scalar.LocalDefs;
+import soot.toolkits.scalar.SimpleLocalDefs;
 
 import graft.traversal.CpgTraversalSource;
 import graft.utils.GraphUtil;
@@ -30,29 +35,35 @@ public class PdgBuilder {
     private static Map<Value, Vertex> symbolTable = new HashMap<>();
 
     /**
-     * Generate incoming PDG edges for the given vertex, and update the symbol table.
+     * Generate a PDG for the given unit graph, using Soot's local defs analysis.
      *
-     * @param unit the unit corresponding to the given vertex
-     * @param vertex the vertex to handle
+     * @param unitGraph the unit graph to generate the PDG for
+     * @param unitNodes a mapping of units to their vertices in the CPG
      */
-    public static void handleCfgNode(Unit unit, Vertex vertex) {
-        // TODO: test with redefined vars
+    public static void buildPdg(UnitGraph unitGraph, Map<Unit, Object> unitNodes) {
+        log.debug("Building PDG for method '{}'", unitGraph.getBody().getMethod().getName());
+        GraphTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
 
-        // For all local variable uses in the statement, draw PDG edges from their sources to the statement node
-        for (ValueBox useBox : unit.getUseBoxes()) {
-            Value value = useBox.getValue();
-            Vertex source = symbolTable.get(value);
-            if (source == null) {
+        LocalDefs localDefs = new SimpleLocalDefs(unitGraph);
+
+        Iterator<Unit> units = unitGraph.iterator();
+        while (units.hasNext()) {
+            Unit unit = units.next();
+            if (!unitNodes.containsKey(unit)) {
                 continue;
             }
-            assert value instanceof Local;
-            String varName = ((Local) value).getName();
-            genDataDepEdge(source, vertex, varName, varName);
-        }
-
-        // For all definitions in the statement, update the local variable entries in the symbol table
-        for (ValueBox defBox : unit.getDefBoxes()) {
-            symbolTable.put(defBox.getValue(), vertex);
+            Vertex unitVertex = g.V(unitNodes.get(unit)).next();
+            for (ValueBox valueBox : unit.getUseBoxes()) {
+                Value value = valueBox.getValue();
+                if (!(value instanceof Local)) {
+                    continue;
+                }
+                Local local = (Local) value;
+                for (Unit defSite : localDefs.getDefsOfAt(local, unit)) {
+                    Vertex defVertex = g.V(unitNodes.get(defSite)).next();
+                    genDataDepEdge(defVertex, unitVertex, local.getName(), local.getName());
+                }
+            }
         }
     }
 
