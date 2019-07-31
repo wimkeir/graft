@@ -61,10 +61,12 @@ public class BuildCpgPhase implements GraftPhase {
     public static Configuration getOptions(Configuration config) {
         Configuration options = new BaseConfiguration();
         options.addProperty("process-dir", config.getStringArray("soot.options.process-dir"));
+        options.addProperty("exclude", config.getStringArray("soot.options.exclude"));
         options.addProperty("src-prec", config.getString("soot.options.src-prec"));
         options.addProperty("output-format", config.getString("soot.options.output-format"));
         options.addProperty("main-class", config.getString("soot.options.main-class"));
         options.addProperty("output-dir", config.getString("soot.options.output-dir"));
+        options.addProperty("soot-classpath", config.getString("soot.options.soot-classpath"));
         return options;
     }
 
@@ -83,11 +85,15 @@ public class BuildCpgPhase implements GraftPhase {
         sootOptions.add("-keep-line-number");           // keep original line numbers in stmt tags
         sootOptions.add("-app");                        // run in application mode (process all classes referenced)
         sootOptions.add("-prepend-classpath");          // prepend the Soot classpath to the argument classpath
+        sootOptions.add("-no-bodies-for-excluded");     // don't generate Jimple bodies for excluded packages
 
         // debug options
         if (log.isDebugEnabled()) {
             sootOptions.add("-print-tags");             // show stmt tags in Jimple output
             sootOptions.add("-verbose");                // enable Soot verbose mode
+        }
+        if (log.isTraceEnabled()) {
+            sootOptions.add("-debug");
         }
 
         // configurable options
@@ -96,7 +102,14 @@ public class BuildCpgPhase implements GraftPhase {
         if (options.containsKey("process-dir")) {
             for (String dir : options.getStringArray("process-dir")) {
                 sootOptions.add("-process-dir");
-                sootOptions.add(options.getString("process-dir"));
+                sootOptions.add(dir);
+            }
+        }
+
+        if (options.containsKey("exclude")) {
+            for (String pkg : options.getStringArray("exclude")) {
+                sootOptions.add("-exclude");
+                sootOptions.add(pkg);
             }
         }
 
@@ -124,16 +137,6 @@ public class BuildCpgPhase implements GraftPhase {
             sootOptions.add("-output-dir");
             sootOptions.add(options.getString("output-dir"));
         }
-
-//        if (options.containsKey("include-packages")) {
-//            sootOptions.add("-include-packages");
-//            sootOptions.add(options.getString("include-packages"));
-//        }
-//
-//        if (options.containsKey("exclude-packages")) {
-//            sootOptions.add("-exclude-packages");
-//            sootOptions.add(options.getString("exclude-packages"));
-//        }
 
         return sootOptions;
     }
