@@ -2,6 +2,7 @@ package graft.traversal;
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.GremlinDsl;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import static graft.Const.*;
@@ -41,6 +42,27 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                 .has(EDGE_TYPE, ARG)
                 .has(INDEX, i)
                 .inV();
+    }
+
+    /**
+     * Returns true if the property specified by the given key has a value that sanitizes the given regex.
+     *
+     * @param key the key of the property to check
+     * @param regex the regex pattern to check the property value against
+     * @return true if the property value sanitizes the regex, else false
+     */
+    default GraphTraversal<S, ?> hasPattern(String key, String regex) {
+        return filter(x -> {
+            if (x.get() instanceof Vertex) {
+                Vertex vertex = (Vertex) x.get();
+                return vertex.value(key).toString().matches(regex);
+            } else if (x.get() instanceof Edge) {
+                Edge edge = (Edge) x.get();
+                return edge.value(key).toString().matches(regex);
+            } else {
+                return false;
+            }
+        });
     }
 
 }
