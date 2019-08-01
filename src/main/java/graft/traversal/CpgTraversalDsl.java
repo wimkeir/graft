@@ -7,8 +7,11 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+import graft.analysis.taint.MethodSanitizer;
 import graft.analysis.taint.SanitizerDescription;
+import graft.analysis.taint.SourceDescription;
 import graft.analysis.taint.SinkDescription;
+import graft.cpg.CpgUtil;
 import graft.utils.GraphUtil;
 
 import static graft.Const.*;
@@ -21,24 +24,10 @@ import static graft.Const.*;
 @GremlinDsl(traversalSource = "graft.traversal.CpgTraversalSourceDsl")
 public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
 
-//    /**
-//     * Fills the given list with all invoke expression nodes found in the AST subtree of the given node.
-//     *
-//     * Note that any existing values in the list will not be modified.
-//     *
-//     * @param invokeExprs the list to add the invoke expression nodes to
-//     * @return the identity traversal
-//     */
-//    default GraphTraversal<S, ?> getInvokeExprs(List<Vertex> invokeExprs) {
-//        CpgTraversal clone = (CpgTraversal) this.clone();
-//        clone.repeat(sideEffect(it -> {
-//            Vertex vertex = (Vertex) it.get();
-//            if (vertex.value(NODE_TYPE).equals(INVOKE_EXPR)) {
-//                invokeExprs.add(vertex);
-//            }
-//        }).out(AST_EDGE)).iterate();
-//        return this;
-//    }
+    default GraphTraversal<S, ?> isSource(SourceDescription sourceDescr, String varName) {
+        // TODO
+        return this;
+    }
 
     /**
      * Checks whether the current node is a reassignment of the given local variable.
@@ -65,15 +54,46 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
     /**
      * Checks whether the current node sanitizes the given local variable, according to the given sanitizer descriptions.
      *
+     * The sanitizer description specifies which argument indices are considered sanitized. If none are specified, then
+     * all arguments are considered sanitized.
+     *
      * @param sanitizers the sanitizer descriptions
      * @param varName the variable to check for sanitization
      * @return a filter traversal that returns true if the node sanitizes the variable, otherwise false
      */
     default GraphTraversal<S, ?> sanitizes(List<SanitizerDescription> sanitizers, String varName) {
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         return filter(it -> {
+            Vertex vertex = (Vertex) it.get();
             for (SanitizerDescription sanitizer : sanitizers) {
-                if (sanitizer.sanitizes((Vertex) it.get(), varName)) {
-                    return true;
+                if (sanitizer instanceof MethodSanitizer) {
+                    MethodSanitizer methSan = (MethodSanitizer) sanitizer;
+                    List<Vertex> sanInvokes = CpgUtil.getInvokeExprs(vertex, methSan.namePattern, methSan.scopePattern);
+
+                    for (Vertex sanInvoke : sanInvokes) {
+                        // if no args specified, we assume all args are sanitized
+                        if (methSan.sanitizesArgs.size() == 0) {
+                            CpgTraversal args = g.V(sanInvoke)
+                                    .outE(AST_EDGE)
+                                    .has(EDGE_TYPE, ARG)
+                                    .inV();
+                            while (args.hasNext()) {
+                                Vertex arg = (Vertex) args.next();
+                                if (arg.value(NAME).equals(varName)) {
+                                    return true;
+                                }
+                            }
+                        } else {
+                            for (int argIndex : methSan.sanitizesArgs) {
+                                Vertex arg = g.V(sanInvoke).ithArg(argIndex).next();
+                                if (arg.value(NAME).equals(varName)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // TODO: conditional sanitizers
                 }
             }
             return false;
