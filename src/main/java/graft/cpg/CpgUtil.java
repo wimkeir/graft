@@ -7,6 +7,9 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import soot.Type;
 
 import graft.cpg.visitors.TypeVisitor;
@@ -22,6 +25,8 @@ import static graft.traversal.__.*;
  * @author Wim Keirsgieter
  */
 public class CpgUtil {
+
+    private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
     /**
      * Adds a string property to the given node.
@@ -90,18 +95,11 @@ public class CpgUtil {
         g.V(vertex).repeat(
                 sideEffect(x -> {
                     Vertex v = (Vertex) x.get();
-                    System.out.println(CpgUtil.debugVertex(v));
                     if (v.value(NODE_TYPE).equals(INVOKE_EXPR)) {
                         invokeExprs.add(v);
                     }
                 }).out(AST_EDGE)
         ).iterate();
-
-        // XXX
-        System.out.println("Invoke exprs in " + debugVertex(vertex) + ":");
-        for (Vertex expr : invokeExprs) {
-            System.out.println(debugVertex(expr));
-        }
 
         return invokeExprs;
     }
@@ -113,6 +111,7 @@ public class CpgUtil {
      * @param vertex the root of the AST subtree to search for invoke expressions
      * @param namePattern the regex to match the method name against
      * @param scopePattern the regex to match the method scope against
+     * @return a list of all invoke expression nodes in the AST subtree
      */
     public static List<Vertex> getInvokeExprs(Vertex vertex, String namePattern, String scopePattern) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
@@ -133,13 +132,37 @@ public class CpgUtil {
     }
 
     /**
+     * Returns all local variable nodes in the AST subtree of the current node.
+     *
+     * @param vertex the root of the AST subtree to search for variable nodes
+     * @return a list of all local variable nodes in the AST subtree
+     */
+    public static List<Vertex> getLocals(Vertex vertex) {
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        List<Vertex> locals = new ArrayList<>();
+
+        if (vertex.value(NODE_TYPE).equals(LOCAL_VAR)) {
+            locals.add(vertex);
+        }
+
+        g.V(vertex).repeat(out(AST_EDGE)
+                .choose(
+                        values(NODE_TYPE).is(LOCAL_VAR),
+                        sideEffect(it -> locals.add(it.get()))
+                )
+        );
+
+        return locals;
+    }
+
+    /**
      * Get a string representation of a vertex and its properties for debugging.
      *
      * @param vertex the vertex to get a string representation of
      * @return a string representation of the given vertex
      */
-    public static String debugVertex(Vertex vertex) {
-        return debugElement(vertex, NODE_TYPE);
+    public static void debugVertex(Vertex vertex) {
+        debugElement(vertex, NODE_TYPE);
     }
 
     /**
@@ -148,20 +171,20 @@ public class CpgUtil {
      * @param edge the edge to get a string representation of
      * @return a string representation of the given edge
      */
-    public static String debugEdge(Edge edge) {
-        return debugElement(edge, EDGE_TYPE);
+    public static void debugEdge(Edge edge) {
+        debugElement(edge, EDGE_TYPE);
     }
 
-    private static String debugElement(Element element, String typeKey) {
+    private static void debugElement(Element element, String typeKey) {
         StringBuilder sb = new StringBuilder();
         sb.append("<").append(element.label()).append(" ");
         sb.append("(").append(element.value(typeKey).toString()).append(")");
         for (String key : element.keys()) {
             sb.append(" ");
-            sb.append(key).append("=").append(element.value(key).toString());
+            sb.append(key).append("='").append(element.value(key).toString()).append("'");
         }
         sb.append(">");
-        return sb.toString();
+        log.debug(sb.toString());
     }
 
 }
