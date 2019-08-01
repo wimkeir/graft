@@ -3,23 +3,30 @@ package graft.analysis.taint;
 import java.util.ArrayList;
 import java.util.List;
 
-import graft.cpg.CpgUtil;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-
-import graft.traversal.CpgTraversal;
-import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
-
-import static graft.Const.*;
-
+/**
+ * A sanitizer description that describes methods which sanitizes their arguments.
+ *
+ * If no arguments are specified as being sanitized, then all arguments are assumed sanitized.
+ *
+ * @author Wim Keirsgieter
+ */
 public class MethodSanitizer extends SanitizerDescription {
 
-    String namePattern;
-    String scopePattern;
+    public String namePattern;
+    public String scopePattern;
 
-    List<Integer> sanitizesArgs;
+    public List<Integer> sanitizesArgs;
 
+    /**
+     * Returns a new sanitizer description with patterns describing the name and scope of the methods,
+     * and a list of args sanitized by the matching methods.
+     *
+     * @param namePattern a regex describing the pattern of the method name
+     * @param scopePattern a regex describing the pattern of the method scope
+     * @param sanitizesArgs a list of arguments considered sanitized by the method (empty list implies all)
+     */
     public MethodSanitizer(String namePattern, String scopePattern, int... sanitizesArgs) {
+        // TODO: match on method signature
         this.namePattern = namePattern;
         this.scopePattern = scopePattern;
 
@@ -29,48 +36,4 @@ public class MethodSanitizer extends SanitizerDescription {
         }
     }
 
-    /**
-     * Checks if the given node sanitizes the given variable, according to the sanitizer description.
-     *
-     * @param vertex the node to check
-     * @param varName the variable name to sanitize
-     * @return true if the given node sanitizes the variable, otherwise false
-     */
-    @Override
-    public boolean sanitizes(Vertex vertex, String varName) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-        List<Vertex> invokeExprs = CpgUtil.getInvokeExprs(vertex, namePattern, scopePattern);
-
-        for (Vertex invokeExpr : invokeExprs) {
-
-            // if sink args are specified, we handle them here
-            for (int arg : sanitizesArgs) {
-                CpgTraversal sanitizedVar = g.V(invokeExpr).ithArg(arg);
-
-                if (sanitizedVar.hasNext()) {
-                    String sanVarName = ((Vertex) sanitizedVar.next()).value(NAME).toString();
-                    if (sanVarName.equals(varName)) {
-                        return true;
-                    }
-                }
-            }
-
-            // if not, we assume all args are sink args
-            if (sanitizesArgs.size() == 0) {
-                CpgTraversal sanVars = g.V(invokeExpr)
-                        .outE(AST_EDGE)
-                        .has(EDGE_TYPE, ARG)
-                        .inV();
-
-                while (sanVars.hasNext()) {
-                    String sanVarName = ((Vertex) sanVars.next()).value(NAME).toString();
-                    if (sanVarName.equals(varName)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
 }

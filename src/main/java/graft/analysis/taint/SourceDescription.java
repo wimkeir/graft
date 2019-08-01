@@ -11,15 +11,35 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import static graft.Const.*;
 
+/**
+ * A description of a tainted source (specifically a method call).
+ *
+ * The source can either taint its return value, or a specified set of arguments, or both (but not neither).
+ *
+ * @author Wim Keirsgieter
+ */
 public class SourceDescription {
 
-    String namePattern;
-    String scopePattern;
+    public String namePattern;
+    public String scopePattern;
 
-    List<Integer> taintsArgs;
-    boolean taintsRet;
+    public List<Integer> taintsArgs;
+    public boolean taintsRet;
 
+    /**
+     * Returns a new source description with patterns describing the name and scope of the methods (optionally
+     * tainting their return values), and a list of args tainted by the matching methods.
+     *
+     * If no args are specified as tainted, then the source must taint its return value.
+     *
+     * @param namePattern a regex describing the pattern of the method name
+     * @param scopePattern a regex describing the pattern of the method scope
+     * @param taintsRet true if the source taints its return value
+     * @param taintsArgs which args are tainted by the source
+     */
     public SourceDescription(String namePattern, String scopePattern, boolean taintsRet, int... taintsArgs) {
+        // TODO: match on method signature
+        assert (taintsRet || taintsArgs.length != 0);
         this.namePattern = namePattern;
         this.scopePattern = scopePattern;
         this.taintsRet = taintsRet;
@@ -31,12 +51,13 @@ public class SourceDescription {
     }
 
     /**
-     * Check whether a given CFG node sanitizes the source description.
+     * Check whether a given CFG node matches the source description.
      *
      * @param vertex the vertex to check against the description
-     * @return true if the vertex sanitizes the description, else false
+     * @return true if the vertex matches the description, else false
      */
     public boolean matches(Vertex vertex) {
+        // TODO: move this to DSL
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         List<Vertex> invokeExprs = CpgUtil.getInvokeExprs(vertex);
 
