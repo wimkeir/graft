@@ -13,7 +13,7 @@ public class InterprocPhase implements GraftPhase {
 
     @Override
     public PhaseResult run() {
-        Interproc.genInterprocCfgEdges();
+        Interproc.genInterprocEdges();
         PhaseResult result = new PhaseResult(this, true);
         return result;
     }

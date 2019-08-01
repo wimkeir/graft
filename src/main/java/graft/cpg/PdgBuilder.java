@@ -67,7 +67,7 @@ public class PdgBuilder {
         }
     }
 
-    private static Edge genDataDepEdge(Vertex from, Vertex to, String varName, String textLabel) {
+    public static Edge genDataDepEdge(Vertex from, Vertex to, String varName, String textLabel) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         return g.addE(PDG_EDGE)
                 .from(from).to(to)
