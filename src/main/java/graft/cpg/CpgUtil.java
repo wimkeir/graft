@@ -109,11 +109,10 @@ public class CpgUtil {
      * name and scope regex patterns.
      *
      * @param vertex the root of the AST subtree to search for invoke expressions
-     * @param namePattern the regex to match the method name against
-     * @param scopePattern the regex to match the method scope against
+     * @param sigPattern the regex to match the method name against
      * @return a list of all invoke expression nodes in the AST subtree
      */
-    public static List<Vertex> getInvokeExprs(Vertex vertex, String namePattern, String scopePattern) {
+    public static List<Vertex> getInvokeExprs(Vertex vertex, String sigPattern) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         List<Vertex> invokeExprs = new ArrayList<>();
 
@@ -121,8 +120,7 @@ public class CpgUtil {
                 sideEffect(x -> {
                     Vertex v = (Vertex) x.get();
                     if (v.value(NODE_TYPE).equals(INVOKE_EXPR) &&
-                        v.value(METHOD_NAME).toString().matches(namePattern) &&
-                        v.value(METHOD_SCOPE).toString().matches(scopePattern)) {
+                        v.value(METHOD_SIG).toString().matches(sigPattern)) {
                         invokeExprs.add(v);
                     }
                 }).out(AST_EDGE)

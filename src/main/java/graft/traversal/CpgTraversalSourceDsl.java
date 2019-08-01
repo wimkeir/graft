@@ -71,19 +71,17 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
     }
 
     /**
-     * Get all invoke expressions that invoke a method matching the given name and scope patterns.
+     * Get all invoke expressions that invoke a method matching the given signature pattern.
      *
-     * @param namePattern a regex specifying the method name pattern
-     * @param scopePattern a regex specifying the method scope pattern
+     * @param sigPattern a regex specifying the method signature pattern
      * @return a traversal containing all invoke expressions nodes of the matching methods
      */
     @SuppressWarnings("unchecked")
-    public CpgTraversal<Vertex, Vertex> getCallsTo(String namePattern, String scopePattern) {
+    public CpgTraversal<Vertex, Vertex> getCallsTo(String sigPattern) {
         return (CpgTraversal<Vertex, Vertex>) getV()
                 .hasLabel(AST_NODE)
                 .has(NODE_TYPE, INVOKE_EXPR)
-                .hasPattern(METHOD_NAME, namePattern)
-                .hasPattern(METHOD_SCOPE, scopePattern);
+                .hasPattern(METHOD_SIG, sigPattern);
     }
 
     protected CpgTraversal<Vertex, Vertex> getV() {

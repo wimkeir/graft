@@ -1,6 +1,5 @@
 package graft.analysis.taint;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,27 +12,24 @@ import java.util.List;
  */
 public class SinkDescription {
 
-    public String namePattern;
-    public String scopePattern;
+    public String sigPattern;
     public List<Integer> sinksArgs;
 
     /**
      * Returns a new sink description with patterns describing the name and scope of the methods, and a list of
      * args sunk by the matching methods.
      *
-     * @param namePattern a regex describing the pattern of the method name
-     * @param scopePattern a regex describing the pattern of the method scope
+     * @param sigPattern a regex describing the pattern of the method name
      * @param sinksArgs a list of arguments considered sunk by the method (empty list implies all)
      */
-    public SinkDescription(String namePattern, String scopePattern, int... sinksArgs) {
-        // TODO: match on method signature
-        this.namePattern = namePattern;
-        this.scopePattern = scopePattern;
+    public SinkDescription(String sigPattern, List<Integer> sinksArgs) {
+        this.sigPattern = sigPattern;
+        this.sinksArgs = sinksArgs;
+    }
 
-        this.sinksArgs = new ArrayList<>();
-        for (int arg : sinksArgs) {
-            this.sinksArgs.add(arg);
-        }
+    @Override
+    public String toString() {
+        return sigPattern;
     }
 
 }

@@ -1,6 +1,5 @@
 package graft.analysis.taint;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import graft.cpg.CpgUtil;
@@ -20,34 +19,26 @@ import static graft.Const.*;
  */
 public class SourceDescription {
 
-    public String namePattern;
-    public String scopePattern;
+    public String sigPattern;
 
     public List<Integer> taintsArgs;
     public boolean taintsRet;
 
     /**
-     * Returns a new source description with patterns describing the name and scope of the methods (optionally
+     * Returns a new source description with patterns describing the signature of the methods (optionally
      * tainting their return values), and a list of args tainted by the matching methods.
      *
      * If no args are specified as tainted, then the source must taint its return value.
      *
-     * @param namePattern a regex describing the pattern of the method name
-     * @param scopePattern a regex describing the pattern of the method scope
+     * @param sigPattern a regex describing the pattern of the method signature
      * @param taintsRet true if the source taints its return value
      * @param taintsArgs which args are tainted by the source
      */
-    public SourceDescription(String namePattern, String scopePattern, boolean taintsRet, int... taintsArgs) {
-        // TODO: match on method signature
-        assert (taintsRet || taintsArgs.length != 0);
-        this.namePattern = namePattern;
-        this.scopePattern = scopePattern;
+    public SourceDescription(String sigPattern, boolean taintsRet, List<Integer> taintsArgs) {
+        assert (taintsRet || taintsArgs.size() != 0);
+        this.sigPattern = sigPattern;
         this.taintsRet = taintsRet;
-
-        this.taintsArgs = new ArrayList<>();
-        for (int arg : taintsArgs) {
-            this.taintsArgs.add(arg);
-        }
+        this.taintsArgs = taintsArgs;
     }
 
     /**
@@ -64,13 +55,17 @@ public class SourceDescription {
         // TODO: this is very naive
         for (Vertex expr : invokeExprs) {
             CpgTraversal match = g.V(expr)
-                    .hasPattern(METHOD_NAME, namePattern)
-                    .hasPattern(METHOD_SCOPE, scopePattern);
+                    .hasPattern(METHOD_SIG, sigPattern);
             if ((long) match.count().next() > 0) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return sigPattern;
     }
 
 }

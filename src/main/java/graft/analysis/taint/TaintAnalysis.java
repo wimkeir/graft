@@ -1,15 +1,15 @@
 package graft.analysis.taint;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.configuration2.Configuration;
-
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import graft.analysis.AnalysisResult;
 import graft.analysis.GraftAnalysis;
@@ -22,20 +22,24 @@ import static graft.Const.*;
 
 public class TaintAnalysis implements GraftAnalysis {
 
-    List<SourceDescription> sources;
-    List<SinkDescription> sinks;
-    List<SanitizerDescription> sanitizers;
+    private static Logger log = LoggerFactory.getLogger(TaintAnalysis.class);
+
+    private List<SourceDescription> sources;
+    private List<SinkDescription> sinks;
+    private List<SanitizerDescription> sanitizers;
+
+    public TaintAnalysis(List<SourceDescription> sources, List<SinkDescription> sinks, List<SanitizerDescription> sanitizers) {
+        this.sources = sources;
+        this.sinks = sinks;
+        this.sanitizers = sanitizers;
+    }
 
     @Override
-    public AnalysisResult doAnalysis(Configuration options) {
-        sources = new ArrayList<>();
-        sinks = new ArrayList<>();
-        sanitizers = new ArrayList<>();
-
-        // TODO: don't hard code this!
-        sources.add(new SourceDescription("source", "Simple|SimpleInterproc", true));
-        sinks.add(new SinkDescription("sink", "Simple|SimpleInterproc"));
-        sanitizers.add(new MethodSanitizer("sanitizer", "Simple|SimpleInterproc"));
+    public AnalysisResult doAnalysis() {
+        log.info("Running taint analysis...");
+        for (SourceDescription source : sources) log.debug(source.toString());
+        for (SinkDescription sink : sinks) log.debug(sink.toString());
+        for (SanitizerDescription san : sanitizers) log.debug(san.toString());
 
         for (SinkDescription sinkDescr : sinks) {
             for (SourceDescription sourceDescr : sources) {
@@ -82,7 +86,7 @@ public class TaintAnalysis implements GraftAnalysis {
         Map<Vertex, Vertex> sunkVars = new HashMap<>();
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
 
-        CpgTraversal callsToSink = g.getCallsTo(sinkDescr.namePattern, sinkDescr.scopePattern);
+        CpgTraversal callsToSink = g.getCallsTo(sinkDescr.sigPattern);
         while (callsToSink.hasNext()) {
             Vertex invokeVertex = (Vertex) callsToSink.next();
 

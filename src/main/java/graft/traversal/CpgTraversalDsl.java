@@ -44,10 +44,7 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                     .has(EDGE_TYPE, TARGET)
                     .inV()
                     .values(NAME);
-            if (targetName.hasNext() && varName.equals(targetName.next())) {
-                return true;
-            }
-            return false;
+            return targetName.hasNext() && varName.equals(targetName.next());
         });
     }
 
@@ -68,7 +65,7 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
             for (SanitizerDescription sanitizer : sanitizers) {
                 if (sanitizer instanceof MethodSanitizer) {
                     MethodSanitizer methSan = (MethodSanitizer) sanitizer;
-                    List<Vertex> sanInvokes = CpgUtil.getInvokeExprs(vertex, methSan.namePattern, methSan.scopePattern);
+                    List<Vertex> sanInvokes = CpgUtil.getInvokeExprs(vertex, methSan.sigPattern);
 
                     for (Vertex sanInvoke : sanInvokes) {
                         // if no args specified, we assume all args are sanitized
@@ -107,8 +104,8 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
      * The sink description specifies which argument indices should be considered sunk. If none are specified, then all
      * arguments are considered sunk.
      *
-     * @param sink
-     * @return
+     * @param sink the description of the sink
+     * @return a traversal containing the arguments sunk
      */
     default GraphTraversal<S, Vertex> sunkArgs(SinkDescription sink) {
         return outE(AST_EDGE)
