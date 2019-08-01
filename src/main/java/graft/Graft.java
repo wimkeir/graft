@@ -5,10 +5,7 @@ import org.apache.commons.configuration2.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.phases.BuildCpgPhase;
-import graft.phases.DotPhase;
-import graft.phases.InterprocPhase;
-import graft.phases.TaintAnalysisPhase;
+import graft.phases.*;
 import graft.utils.GraphUtil;
 import graft.utils.LogUtil;
 
