@@ -1,7 +1,9 @@
 package graft.analysis;
 
+import java.util.List;
+
 public interface GraftAnalysis {
 
-    AnalysisResult doAnalysis();
+    List<AnalysisResult> doAnalysis();
 
 }

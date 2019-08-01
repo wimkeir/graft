@@ -17,6 +17,7 @@ import soot.PhaseOptions;
 import soot.Transform;
 
 import graft.cpg.CpgBuilder;
+import graft.cpg.CpgUtil;
 
 /**
  * TODO: javadoc
@@ -55,7 +56,9 @@ public class BuildCpgPhase implements GraftPhase {
         }
         soot.Main.main(sootArgs);
 
-        return new PhaseResult(this, true);
+        String details = String.format("| Nodes: %1$-89d |\n", CpgUtil.getNodeCount());
+        details += String.format("| Edges: %1$-89d |\n", CpgUtil.getEdgeCount());
+        return new PhaseResult(this, true, details);
     }
 
     public static Configuration getOptions(Configuration config) {
@@ -98,7 +101,6 @@ public class BuildCpgPhase implements GraftPhase {
 
         // configurable options
 
-        // TODO: get either process dirs or file from command line
         if (options.containsKey("process-dir")) {
             for (String dir : options.getStringArray("process-dir")) {
                 sootOptions.add("-process-dir");

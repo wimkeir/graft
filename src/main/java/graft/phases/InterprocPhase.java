@@ -20,7 +20,7 @@ public class InterprocPhase implements GraftPhase {
     public PhaseResult run() {
         log.info("Running InterprocPhase...");
         Interproc.genInterprocEdges();
-        PhaseResult result = new PhaseResult(this, true);
+        PhaseResult result = new PhaseResult(this, true, "");
         return result;
     }
 

@@ -28,6 +28,16 @@ public class CpgUtil {
 
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
+    public static long getNodeCount() {
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        return g.V().count().next();
+    }
+
+    public static long getEdgeCount() {
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        return g.E().count().next();
+    }
+
     /**
      * Adds a string property to the given node.
      *

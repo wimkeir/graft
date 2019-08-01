@@ -49,7 +49,7 @@ public class Graft {
                 new BuildCpgPhase(BuildCpgPhase.getOptions(config)),
                 new InterprocPhase(InterprocPhase.getOptions(config)),
                 new TaintAnalysisPhase(TaintAnalysisPhase.getOptions(config)),
-                new DotPhase(DotPhase.getOptions(config))
+                new DotPhase("etc/dot/cpg.dot")
         );
 
         GraftResult result = graftRun.run();

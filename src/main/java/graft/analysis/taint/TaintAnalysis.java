@@ -1,5 +1,6 @@
 package graft.analysis.taint;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,14 +29,18 @@ public class TaintAnalysis implements GraftAnalysis {
     private List<SinkDescription> sinks;
     private List<SanitizerDescription> sanitizers;
 
+    private List<AnalysisResult> results;
+
     public TaintAnalysis(List<SourceDescription> sources, List<SinkDescription> sinks, List<SanitizerDescription> sanitizers) {
         this.sources = sources;
         this.sinks = sinks;
         this.sanitizers = sanitizers;
+
+        results = new ArrayList<>();
     }
 
     @Override
-    public AnalysisResult doAnalysis() {
+    public List<AnalysisResult> doAnalysis() {
         log.info("Running taint analysis...");
         for (SourceDescription source : sources) log.debug(source.toString());
         for (SinkDescription sink : sinks) log.debug(sink.toString());
@@ -47,7 +52,7 @@ public class TaintAnalysis implements GraftAnalysis {
             }
         }
 
-        return new AnalysisResult();
+        return results;
     }
 
     private void backwardsTaintAnalysis(SinkDescription sinkDescr, SourceDescription sourceDescr) {
@@ -65,17 +70,20 @@ public class TaintAnalysis implements GraftAnalysis {
 
             while (sources.hasNext()) {
                 Vertex sourceVertex = (Vertex) sources.next();
-
                 GraphTraversal paths = g.sourceToSinkPaths(sourceVertex, rootVertex, sanitizers, varName);
-
                 while (paths.hasNext()) {
                     Path path = (Path) paths.next();
                     Vertex endVertex = path.get(path.size() - 1);
-                    System.out.println("PATH ENDS WITH");
-                    CpgUtil.debugVertex(endVertex);
 
                     if (endVertex.equals(rootVertex)) {
-                        System.out.println("******************* TAINT **********************");
+                        AnalysisResult result = new TaintAnalysisResult(sourceVertex,
+                                                                   rootVertex,
+                                                                   varName,
+                                                                   sourceDescr.sigPattern,
+                                                                   sinkDescr.sigPattern);
+                        if (!results.contains(result)) {
+                            results.add(result);
+                        }
                     }
                 }
             }

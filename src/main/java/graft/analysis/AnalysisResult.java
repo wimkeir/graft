@@ -1,4 +1,5 @@
 package graft.analysis;
 
-public class AnalysisResult {
+public abstract class AnalysisResult {
+
 }

@@ -1,8 +1,5 @@
 package graft.phases;
 
-import org.apache.commons.configuration2.BaseConfiguration;
-import org.apache.commons.configuration2.Configuration;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,23 +16,16 @@ public class DotPhase implements GraftPhase {
 
     private String dotFile;
 
-    public DotPhase(Configuration options) {
-        dotFile = options.getString("dot-file");
+    public DotPhase(String dotFile) {
+        this.dotFile = dotFile;
     }
 
     @Override
     public PhaseResult run() {
         log.info("Running DotPhase...");
         DotUtil.cpgToDot(dotFile, "cpg");
-        // TODO: handle failure
-        log.info("DotPhase complete");
-        return new PhaseResult(this, true);
-    }
-
-    public static Configuration getOptions(Configuration config) {
-        Configuration options = new BaseConfiguration();
-        options.setProperty("dot-file", config.getString("general.dot-file"));
-        return options;
+        String details = String.format("| Written to dotfile %1$-77s |\n", dotFile);
+        return new PhaseResult(this, true, details);
     }
 
 }

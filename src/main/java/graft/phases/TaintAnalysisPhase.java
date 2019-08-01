@@ -1,13 +1,15 @@
 package graft.phases;
 
-import graft.analysis.taint.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 import org.apache.commons.configuration2.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import graft.analysis.AnalysisResult;
+import graft.analysis.taint.*;
 
 public class TaintAnalysisPhase implements GraftPhase {
 
@@ -89,9 +91,19 @@ public class TaintAnalysisPhase implements GraftPhase {
     @Override
     public PhaseResult run() {
         log.info("Running TaintAnalysisPhase...");
-        TaintAnalysis taintAnalysis = new TaintAnalysis(sources, sinks, sanitizers);
-        taintAnalysis.doAnalysis();
-        return null;
+
+        try {
+            TaintAnalysis taintAnalysis = new TaintAnalysis(sources, sinks, sanitizers);
+            List<AnalysisResult> analysisResults = taintAnalysis.doAnalysis();
+            StringBuilder sb = new StringBuilder();
+            for (AnalysisResult res : analysisResults) {
+                sb.append(res.toString());
+            }
+            return new PhaseResult(this, true, sb.toString());
+        } catch (Exception e) {
+            // TODO: better details
+            return new PhaseResult(this, false, e.getMessage());
+        }
     }
 
     public static Configuration getOptions(Configuration config) {

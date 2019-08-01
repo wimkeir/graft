@@ -25,7 +25,11 @@ public class GraftResult {
 
     @Override
     public String toString() {
-        return "";
+        StringBuilder sb = new StringBuilder();
+        for (PhaseResult result : phaseResults) {
+            sb.append(result.toString());
+        }
+        return sb.toString();
     }
 
 }
