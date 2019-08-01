@@ -67,6 +67,7 @@ public class BuildCpgPhase implements GraftPhase {
         options.addProperty("main-class", config.getString("soot.options.main-class"));
         options.addProperty("output-dir", config.getString("soot.options.output-dir"));
         options.addProperty("soot-classpath", config.getString("soot.options.soot-classpath"));
+        options.addProperty("verbose", config.getString("soot.options.verbose"));
         return options;
     }
 
@@ -90,10 +91,9 @@ public class BuildCpgPhase implements GraftPhase {
         // debug options
         if (log.isDebugEnabled()) {
             sootOptions.add("-print-tags");             // show stmt tags in Jimple output
-            sootOptions.add("-verbose");                // enable Soot verbose mode
         }
         if (log.isTraceEnabled()) {
-            sootOptions.add("-debug");
+            sootOptions.add("-debug");                  // enable Soot debug logs
         }
 
         // configurable options
@@ -136,6 +136,10 @@ public class BuildCpgPhase implements GraftPhase {
         if (options.containsKey("output-dir")) {
             sootOptions.add("-output-dir");
             sootOptions.add(options.getString("output-dir"));
+        }
+
+        if (options.getBoolean("verbose", false)) {
+            sootOptions.add("-verbose");
         }
 
         return sootOptions;
