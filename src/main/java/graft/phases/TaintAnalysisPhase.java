@@ -11,6 +11,11 @@ import org.slf4j.LoggerFactory;
 import graft.analysis.AnalysisResult;
 import graft.analysis.taint.*;
 
+/**
+ * This phase handles the running of taint analyses.
+ *
+ * @author Wim Keirsgieter
+ */
 public class TaintAnalysisPhase implements GraftPhase {
 
     private static Logger log = LoggerFactory.getLogger(TaintAnalysisPhase.class);
@@ -24,6 +29,7 @@ public class TaintAnalysisPhase implements GraftPhase {
         sinks = new ArrayList<>();
         sanitizers = new ArrayList<>();
 
+        // get source descriptions
         int nrSources = options.getList("source.method").size();
         log.debug("{} sources specified", nrSources);
         for (int i = 0; i < nrSources; i++) {
@@ -45,6 +51,7 @@ public class TaintAnalysisPhase implements GraftPhase {
             }
         }
 
+        // get sink descriptions
         int nrSinks = options.getList("sink.method").size();
         log.debug("{} sinks specified", nrSinks);
         for (int i = 0; i < nrSinks; i++) {
@@ -65,6 +72,7 @@ public class TaintAnalysisPhase implements GraftPhase {
             }
         }
 
+        // get sanitizer descriptions
         // TODO: handle conditional sanitizers!
         int nrSanitizers = options.getList("sanitizer.method").size();
         log.debug("{} sanitizers specified", nrSanitizers);

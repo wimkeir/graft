@@ -108,7 +108,6 @@ public class Const {
     public static final String FIELD_SIG = "field-sig";
     public static final String FULL_NAME = "full-name";
     public static final String INVOKE_TYPE = "invoke-type";
-    public static final String INVOKES = "invokes";
     public static final String JAVA_TYPE = "java-type";
     public static final String METHOD_SCOPE = "method-scope";
     public static final String NAME = "name";

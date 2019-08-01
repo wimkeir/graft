@@ -4,6 +4,11 @@ import graft.utils.GraphUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This phase dumps the CPG (as currently in the database) to a file.
+ *
+ * @author Wim Keirsgieter
+ */
 public class DumpCpgPhase implements GraftPhase {
 
     private static Logger log = LoggerFactory.getLogger(DotPhase.class);

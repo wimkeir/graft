@@ -1,6 +1,5 @@
 package graft.cpg;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -32,7 +31,6 @@ import static graft.Const.*;
 public class PdgBuilder {
 
     private static Logger log = LoggerFactory.getLogger(PdgBuilder.class);
-    private static Map<Value, Vertex> symbolTable = new HashMap<>();
 
     /**
      * Generate a PDG for the given unit graph, using Soot's local defs analysis.
@@ -67,6 +65,15 @@ public class PdgBuilder {
         }
     }
 
+    /**
+     * Generate a data dependency PDG edge for the given variable, between the two given CFG nodes.
+     *
+     * @param from the start node of the edge
+     * @param to the end node of the edge
+     * @param varName the name of the dependent variable
+     * @param textLabel a text label for the node
+     * @return the generated PDG edge
+     */
     public static Edge genDataDepEdge(Vertex from, Vertex to, String varName, String textLabel) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         return g.addE(PDG_EDGE)

@@ -8,25 +8,26 @@ import org.slf4j.LoggerFactory;
 
 import graft.cpg.Interproc;
 
+/**
+ * This phase handles the generation of interprocedural CFG and PDG edges.
+ *
+ * @author Wim Keirsgieter
+ */
 public class InterprocPhase implements GraftPhase {
 
     private static Logger log = LoggerFactory.getLogger(GraftPhase.class);
 
-    public InterprocPhase(Configuration options) {
-        // TODO
-    }
+    public InterprocPhase(Configuration options) { }
 
     @Override
     public PhaseResult run() {
         log.info("Running InterprocPhase...");
         Interproc.genInterprocEdges();
-        PhaseResult result = new PhaseResult(this, true, "");
-        return result;
+        return new PhaseResult(this, true, "");
     }
 
     public static Configuration getOptions(Configuration config) {
-        Configuration options = new BaseConfiguration();
         // TODO
-        return options;
+        return new BaseConfiguration();
     }
 }

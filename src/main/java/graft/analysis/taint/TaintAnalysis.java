@@ -21,6 +21,11 @@ import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 
+/**
+ * This class performs a backwards taint analysis on the CPG, using the given source, sink and sanitizer descriptions.
+ *
+ * @author Wim Keirsgieter
+ */
 public class TaintAnalysis implements GraftAnalysis {
 
     private static Logger log = LoggerFactory.getLogger(TaintAnalysis.class);
@@ -42,9 +47,11 @@ public class TaintAnalysis implements GraftAnalysis {
     @Override
     public List<AnalysisResult> doAnalysis() {
         log.info("Running taint analysis...");
-        for (SourceDescription source : sources) log.debug(source.toString());
-        for (SinkDescription sink : sinks) log.debug(sink.toString());
-        for (SanitizerDescription san : sanitizers) log.debug(san.toString());
+        if (log.isDebugEnabled()) {
+            for (SourceDescription source : sources) log.debug(source.toString());
+            for (SinkDescription sink : sinks) log.debug(sink.toString());
+            for (SanitizerDescription san : sanitizers) log.debug(san.toString());
+        }
 
         for (SinkDescription sinkDescr : sinks) {
             for (SourceDescription sourceDescr : sources) {

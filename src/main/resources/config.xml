@@ -5,20 +5,24 @@
 
     <general>
         <log-level>info</log-level>
+        <dot-file>etc/dot/cpg.dot</dot-file>
+        <graph-file>etc/graphs/graph.xml</graph-file>
     </general>
 
     <db>
         <implementation>tinkergraph</implementation>
     </db>
 
-    <cpg>
-        <interproc>true</interproc>
-    </cpg>
-
     <soot>
         <options>
             <src-prec>only-class</src-prec>
         </options>
     </soot>
+
+    <phases>
+        <phase>BuildCpgPhase</phase>
+        <phase>InterprocPhase</phase>
+        <phase>DotPhase</phase>
+    </phases>
 
 </configuration>

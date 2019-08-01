@@ -20,7 +20,9 @@ import graft.cpg.CpgBuilder;
 import graft.cpg.CpgUtil;
 
 /**
- * TODO: javadoc
+ * This phase handles the actual construction of the (intraprocedural) CPG, using Soot.
+ *
+ * @author Wim Keirsgieter
  */
 public class BuildCpgPhase implements GraftPhase {
 
@@ -75,7 +77,7 @@ public class BuildCpgPhase implements GraftPhase {
     }
 
     private List<String> getSootOptions(Configuration options) {
-        // TODO (maybe useful):
+        // Other soot options (maybe useful):
         //  -phase-option key:val
         //  -via-shimple (stp phase)
         //  -throw-analysis

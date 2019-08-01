@@ -5,6 +5,11 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import static graft.Const.*;
 
+/**
+ * A significant result of a taint analysis run (ie. an instance of a taint vulnerability).
+ *
+ * @author Wim Keirsgieter
+ */
 public class TaintAnalysisResult extends AnalysisResult {
 
     private Vertex source;

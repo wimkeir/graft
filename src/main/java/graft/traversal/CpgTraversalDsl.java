@@ -9,7 +9,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import graft.analysis.taint.MethodSanitizer;
 import graft.analysis.taint.SanitizerDescription;
-import graft.analysis.taint.SourceDescription;
 import graft.analysis.taint.SinkDescription;
 import graft.cpg.CpgUtil;
 import graft.utils.GraphUtil;
@@ -23,11 +22,6 @@ import static graft.Const.*;
  */
 @GremlinDsl(traversalSource = "graft.traversal.CpgTraversalSourceDsl")
 public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
-
-    default GraphTraversal<S, ?> isSource(SourceDescription sourceDescr, String varName) {
-        // TODO
-        return this;
-    }
 
     /**
      * Checks whether the current node is a reassignment of the given local variable.

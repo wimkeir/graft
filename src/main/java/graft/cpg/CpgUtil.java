@@ -28,11 +28,21 @@ public class CpgUtil {
 
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
+    /**
+     * Get the number of nodes currently in the CPG.
+     *
+     * @return the number of nodes in the CPG
+     */
     public static long getNodeCount() {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         return g.V().count().next();
     }
 
+    /**
+     * Get the number of edges currently in the CPG.
+     *
+     * @return the number of edges in the CPG
+     */
     public static long getEdgeCount() {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         return g.E().count().next();

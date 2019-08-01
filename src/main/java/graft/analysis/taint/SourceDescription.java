@@ -52,7 +52,7 @@ public class SourceDescription {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         List<Vertex> invokeExprs = CpgUtil.getInvokeExprs(vertex);
 
-        // TODO: this is very naive
+        // TODO: this only checks for the presence of a source expression in the subtree
         for (Vertex expr : invokeExprs) {
             CpgTraversal match = g.V(expr)
                     .hasPattern(METHOD_SIG, sigPattern);

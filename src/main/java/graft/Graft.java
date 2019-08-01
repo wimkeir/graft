@@ -5,9 +5,9 @@ import org.apache.commons.configuration2.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.phases.*;
 import graft.utils.GraphUtil;
 import graft.utils.LogUtil;
+
 
 /**
  * TODO: javadoc
@@ -42,13 +42,6 @@ public class Graft {
         GraphUtil.initGraph();
 
         GraftRun graftRun = new GraftRun(config);
-        graftRun.register(
-                new BuildCpgPhase(BuildCpgPhase.getOptions(config)),
-                new InterprocPhase(InterprocPhase.getOptions(config)),
-                new TaintAnalysisPhase(TaintAnalysisPhase.getOptions(config)),
-                new DotPhase("etc/dot/cpg.dot")
-        );
-
         GraftResult result = graftRun.run();
         output(result.toString());
     }

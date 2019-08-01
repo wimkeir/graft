@@ -1,9 +1,15 @@
 package graft.phases;
 
-import graft.utils.GraphUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import graft.utils.GraphUtil;
+
+/**
+ * This phase loads the CPG (as currently in the database) from a file.
+ *
+ * @author Wim Keirsgieter
+ */
 public class LoadCpgPhase implements GraftPhase {
 
     private static Logger log = LoggerFactory.getLogger(DotPhase.class);
