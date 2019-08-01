@@ -47,8 +47,8 @@ public class Graft {
         GraftRun graftRun = new GraftRun(config);
         graftRun.register(
                 new BuildCpgPhase(BuildCpgPhase.getOptions(config)),
-                new TaintAnalysisPhase(TaintAnalysisPhase.getOptions(config)),
                 new InterprocPhase(InterprocPhase.getOptions(config)),
+                new TaintAnalysisPhase(TaintAnalysisPhase.getOptions(config)),
                 new DotPhase(DotPhase.getOptions(config))
         );
 
