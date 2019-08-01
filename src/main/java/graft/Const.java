@@ -50,6 +50,7 @@ public class Const {
     public static final String CONDITIONAL_STMT = "conditional-stmt";
     public static final String INVOKE_STMT = "invoke-stmt";
     public static final String RETURN_STMT = "return-stmt";
+    public static final String SWITCH_STMT = "switch-stmt";
     public static final String THROW_STMT = "throw-stmt";
 
     // CFG edge types

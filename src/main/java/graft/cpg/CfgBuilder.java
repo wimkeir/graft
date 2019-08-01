@@ -49,7 +49,7 @@ public class CfgBuilder {
 
         // generate method entry node
         SootMethod method = body.getMethod();
-        Vertex entryNode = genCfgNode(null, ENTRY, method.getName());
+        Vertex entryNode = genCfgNode(null, ENTRY, method.getSignature(), method.getName());
         CpgUtil.addNodeProperty(entryNode, METHOD_SIG, method.getSignature());
         CpgUtil.addNodeProperty(entryNode, METHOD_NAME, method.getName());
         CpgUtil.addNodeProperty(entryNode, METHOD_SCOPE, method.getDeclaringClass().getName());
@@ -70,7 +70,7 @@ public class CfgBuilder {
 
         // generate control flow graph and add nodes recursively
         for (Unit head : unitGraph.getHeads()) {
-            Vertex headVertex = genUnitNode(head, unitGraph, generatedNodes);
+            Vertex headVertex = genUnitNode(head, unitGraph, method.getSignature(), generatedNodes);
             genCfgEdge(entryNode, headVertex, EMPTY, EMPTY);
         }
     }
@@ -83,13 +83,14 @@ public class CfgBuilder {
      * @param textLabel the text label of the CFG node
      * @return the generated CFG node
      */
-    public static Vertex genCfgNode(Stmt stmt, String nodeType, String textLabel) {
+    public static Vertex genCfgNode(Stmt stmt, String nodeType, String methodSig, String textLabel) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         return g.addV(CFG_NODE)
                 .property(NODE_TYPE, nodeType)
                 .property(TEXT_LABEL, textLabel)
                 .property(FILE_PATH, getSourcePath(stmt))
                 .property(FILE_NAME, getSourceFile(stmt))
+                .property(METHOD_SIG, methodSig)
                 .property(LINE_NO, getLineNr(stmt))
                 .next();
     }
@@ -116,9 +117,9 @@ public class CfgBuilder {
     // private methods
     // ********************************************************************************************
 
-    private static Vertex genUnitNode(Unit unit, UnitGraph unitGraph, Map<Unit, Object> generated) {
+    private static Vertex genUnitNode(Unit unit, UnitGraph unitGraph, String methodSig, Map<Unit, Object> generated) {
         if (unit instanceof GotoStmt) {
-            return genUnitNode(((GotoStmt) unit).getTarget(), unitGraph, generated);
+            return genUnitNode(((GotoStmt) unit).getTarget(), unitGraph, methodSig, generated);
         }
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         log.debug("Generating Unit '{}'", unit.toString());
@@ -127,7 +128,7 @@ public class CfgBuilder {
         if (generated.containsKey(unit)) {
             unitVertex = g.V(generated.get(unit)).next();
         } else {
-            unitVertex = genUnitNode(unit);
+            unitVertex = genUnitNode(unit, methodSig);
             generated.put(unit, unitVertex);
         }
 
@@ -136,7 +137,7 @@ public class CfgBuilder {
             if (generated.containsKey(succ)) {
                 succVertex = g.V(generated.get(succ)).next();
             } else {
-                succVertex = genUnitNode(succ, unitGraph, generated);
+                succVertex = genUnitNode(succ, unitGraph, methodSig, generated);
                 if (succVertex == null) {
                     log.warn("Could not generate CFG node for unit '{}'", succ.toString());
                     continue;
@@ -156,9 +157,9 @@ public class CfgBuilder {
         return unitVertex;
     }
 
-    private static Vertex genUnitNode(Unit unit) {
+    private static Vertex genUnitNode(Unit unit, String methodSig) {
         Stmt stmt = (Stmt) unit;
-        StmtVisitor visitor = new StmtVisitor();
+        StmtVisitor visitor = new StmtVisitor(methodSig);
         stmt.apply(visitor);
         return (Vertex) visitor.getResult();
     }

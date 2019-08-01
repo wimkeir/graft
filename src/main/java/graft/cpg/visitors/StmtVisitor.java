@@ -22,6 +22,12 @@ public class StmtVisitor extends AbstractStmtSwitch {
 
     private static Logger log = LoggerFactory.getLogger(StmtVisitor.class);
 
+    private String methodSig;
+
+    public StmtVisitor(String methodSig) {
+        this.methodSig = methodSig;
+    }
+
     @Override
     public void caseAssignStmt(AssignStmt stmt) {
         log.trace("Visiting AssignStmt");
@@ -88,7 +94,7 @@ public class StmtVisitor extends AbstractStmtSwitch {
     public void caseRetStmt(RetStmt stmt) {
         // TODO: ret stmt vs return stmt?
         log.trace("Visiting RetStmt");
-        Vertex retVertex = CfgBuilder.genCfgNode(stmt, RETURN_STMT, stmt.toString());
+        Vertex retVertex = CfgBuilder.genCfgNode(stmt, RETURN_STMT, methodSig, stmt.toString());
         setResult(retVertex);
     }
 
@@ -101,15 +107,14 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseReturnVoidStmt(ReturnVoidStmt stmt) {
         log.trace("Visiting ReturnVoidStmt");
-        Vertex retVertex = CfgBuilder.genCfgNode(stmt, RETURN_STMT, stmt.toString());
+        Vertex retVertex = CfgBuilder.genCfgNode(stmt, RETURN_STMT, methodSig, stmt.toString());
         setResult(retVertex);
     }
 
     @Override
     public void caseTableSwitchStmt(TableSwitchStmt stmt) {
         log.trace("Visiting TableSwitchStmt");
-        // TODO
-        throw new UnsupportedOperationException("Not implemented");
+        caseStmtWithOp(stmt, SWITCH_STMT, stmt.getKey(), stmt.toString());
     }
 
     @Override
@@ -126,7 +131,7 @@ public class StmtVisitor extends AbstractStmtSwitch {
 
     // Generate CFG node for definition statements, with AST nodes for the target and value
     private void caseDefinitionStmt(DefinitionStmt stmt) {
-        Vertex assignVertex = CfgBuilder.genCfgNode(stmt, ASSIGN_STMT, stmt.toString());
+        Vertex assignVertex = CfgBuilder.genCfgNode(stmt, ASSIGN_STMT, methodSig, stmt.toString());
 
         Vertex leftOpVertex = AstBuilder.genValueNode(stmt.getLeftOp());
         Vertex rightOpVertex = AstBuilder.genValueNode(stmt.getRightOp());
@@ -138,7 +143,7 @@ public class StmtVisitor extends AbstractStmtSwitch {
 
     // Generates a CFG node for a statement of the given type with an operand of the given type
     private void caseStmtWithOp(Stmt stmt, String stmtType, Value op, String opType) {
-        Vertex stmtVertex = CfgBuilder.genCfgNode(stmt, stmtType, stmt.toString());
+        Vertex stmtVertex = CfgBuilder.genCfgNode(stmt, stmtType, methodSig, stmt.toString());
         Vertex opVertex = AstBuilder.genValueNode(op);
         AstBuilder.genAstEdge(stmtVertex, opVertex, opType, opType);
         setResult(stmtVertex);

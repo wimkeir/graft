@@ -88,6 +88,7 @@ public class TaintAnalysisPhase implements GraftPhase {
 
     @Override
     public PhaseResult run() {
+        log.info("Running TaintAnalysisPhase...");
         TaintAnalysis taintAnalysis = new TaintAnalysis(sources, sinks, sanitizers);
         taintAnalysis.doAnalysis();
         return null;

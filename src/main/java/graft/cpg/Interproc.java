@@ -7,6 +7,9 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import graft.traversal.CpgTraversalSource;
 import graft.utils.GraphUtil;
 
@@ -20,10 +23,13 @@ import static graft.traversal.__.*;
  */
 public class Interproc {
 
+    private static Logger log = LoggerFactory.getLogger(Interproc.class);
+
     /**
      * Generate interprocedural call and return edges between call sites and method entries / returns.
      */
     public static void genInterprocEdges() {
+        log.debug("Generating interprocedural edges...");
         // TODO NB: context sensitivity
         GraphTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         GraphTraversal invokeExprs = g.V()
@@ -65,32 +71,30 @@ public class Interproc {
     }
 
     private static void genArgToParamEdges(Vertex callSite, Vertex methodEntry) {
+        log.debug("Generating arg to param PDG edges for method '{}'...", methodEntry.value(METHOD_NAME).toString());
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
 
         List<Vertex> params = new ArrayList<>();
-        g.V(methodEntry)
-                .repeat(
-                        out(CFG_EDGE)
-                        .choose(
-                                values(NODE_TYPE).is(ASSIGN_STMT),
-                                choose(
-                                        outE(AST_EDGE).has(EDGE_TYPE, VALUE).inV().values(NODE_TYPE).is(PARAM_REF),
-                                        sideEffect(x -> params.add(CpgUtil.getCfgRoot(x.get())))
-                                )
-                        )
-                ).until(values(NODE_TYPE).is(RETURN_STMT)).iterate();
+        g.V().hasLabel(CFG_NODE)
+                .has(NODE_TYPE, ASSIGN_STMT)
+                .has(METHOD_SIG, methodEntry.value(METHOD_SIG).toString())
+                .choose(
+                        outE(AST_EDGE).has(EDGE_TYPE, VALUE).inV().values(NODE_TYPE).is(PARAM_REF),
+                        sideEffect(x -> params.add(CpgUtil.getCfgRoot((Vertex) x.get())))
+                ).iterate();
 
-        for (int i = 0; i < params.size(); i++) {
-            PdgBuilder.genDataDepEdge(callSite, params.get(i), ARG, ARG);
+        for (Vertex param : params) {
+            PdgBuilder.genDataDepEdge(callSite, param, ARG, ARG);
         }
     }
 
     private static void genRetToCallEdges(Vertex callSite, Vertex methodEntry) {
+        log.debug("Generating ret to call PDG edges for method '{}'...", methodEntry.value(METHOD_NAME).toString());
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
 
-        List<Vertex> returns = g.V(methodEntry)
-                .repeat(out(CFG_EDGE))
-                .until(values(NODE_TYPE).is(RETURN_STMT))
+        List<Vertex> returns = g.V().hasLabel(CFG_NODE)
+                .has(NODE_TYPE, RETURN_STMT)
+                .has(METHOD_SIG, methodEntry.value(METHOD_SIG).toString())
                 .toList();
 
         for (Vertex ret : returns) {
