@@ -47,7 +47,7 @@ public class PdgBuilder {
         Iterator<Unit> units = unitGraph.iterator();
         while (units.hasNext()) {
             Unit unit = units.next();
-            if (!unitNodes.containsKey(unit)) {
+            if (!unitNodes.containsKey(unit) || unitNodes.get(unit) ==  null) {
                 continue;
             }
             Vertex unitVertex = g.V(unitNodes.get(unit)).next();

@@ -106,6 +106,8 @@ public class CfgBuilder {
      */
     public static Edge genCfgEdge(Vertex from, Vertex to, String edgeType, String textLabel) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        assert from != null;
+        assert to != null;
         return g.addE(CFG_EDGE)
                 .from(from).to(to)
                 .property(EDGE_TYPE, edgeType)
@@ -131,6 +133,10 @@ public class CfgBuilder {
             unitVertex = genUnitNode(unit, methodSig);
             generated.put(unit, unitVertex);
         }
+        if (unitVertex == null) {
+            log.warn("Could not generate CFG node for unit '{}'", unit.toString());
+            return null;
+        }
 
         for (Unit succ : unitGraph.getSuccsOf(unit)) {
             Vertex succVertex;
@@ -138,10 +144,10 @@ public class CfgBuilder {
                 succVertex = g.V(generated.get(succ)).next();
             } else {
                 succVertex = genUnitNode(succ, unitGraph, methodSig, generated);
-                if (succVertex == null) {
-                    log.warn("Could not generate CFG node for unit '{}'", succ.toString());
-                    continue;
-                }
+            }
+            if (succVertex == null) {
+                log.warn("Could not generate CFG node for unit '{}'", succ.toString());
+                continue;
             }
             if (unit instanceof IfStmt) {
                 if (succ.equals(((IfStmt) unit).getTarget())) {
