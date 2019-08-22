@@ -10,8 +10,8 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 import static graft.traversal.__.*;

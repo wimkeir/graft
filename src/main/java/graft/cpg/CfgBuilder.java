@@ -18,8 +18,8 @@ import soot.tagkit.*;
 import soot.toolkits.graph.UnitGraph;
 
 import graft.cpg.visitors.StmtVisitor;
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 
@@ -85,7 +85,7 @@ public class CfgBuilder {
      */
     public static Vertex genCfgNode(Stmt stmt, String nodeType, String methodSig, String textLabel) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-        return g.addV(CFG_NODE)
+        Vertex node = g.addV(CFG_NODE)
                 .property(NODE_TYPE, nodeType)
                 .property(TEXT_LABEL, textLabel)
                 .property(FILE_PATH, getSourcePath(stmt))
@@ -93,6 +93,8 @@ public class CfgBuilder {
                 .property(METHOD_SIG, methodSig)
                 .property(LINE_NO, getLineNr(stmt))
                 .next();
+        // GraphUtil.graph().tx().commit();
+        return node;
     }
 
     /**
@@ -108,11 +110,13 @@ public class CfgBuilder {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         assert from != null;
         assert to != null;
-        return g.addE(CFG_EDGE)
+        Edge edge = g.addE(CFG_EDGE)
                 .from(from).to(to)
                 .property(EDGE_TYPE, edgeType)
                 .property(TEXT_LABEL, textLabel)
                 .next();
+        // GraphUtil.graph().tx().commit();
+        return edge;
     }
 
     // ********************************************************************************************

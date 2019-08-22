@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
 

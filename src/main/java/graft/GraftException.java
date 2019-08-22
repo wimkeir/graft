@@ -1,6 +1,6 @@
 package graft;
 
-public class GraftException extends Exception {
+public class GraftException extends RuntimeException {
 
     private String message;
     private Throwable cause;

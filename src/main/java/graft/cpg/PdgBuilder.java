@@ -18,8 +18,8 @@ import soot.toolkits.graph.UnitGraph;
 import soot.toolkits.scalar.LocalDefs;
 import soot.toolkits.scalar.SimpleLocalDefs;
 
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 
@@ -76,12 +76,14 @@ public class PdgBuilder {
      */
     public static Edge genDataDepEdge(Vertex from, Vertex to, String varName, String textLabel) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-        return g.addE(PDG_EDGE)
+        Edge edge = g.addE(PDG_EDGE)
                 .from(from).to(to)
                 .property(EDGE_TYPE, DATA_DEP)
                 .property(VAR_NAME, varName)
                 .property(TEXT_LABEL, textLabel)
                 .next();
+        // GraphUtil.graph().tx().commit();
+        return edge;
     }
 
 }

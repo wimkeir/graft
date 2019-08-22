@@ -14,8 +14,8 @@ import soot.Unit;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 

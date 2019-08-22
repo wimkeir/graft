@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 import graft.analysis.AnalysisResult;
 import graft.analysis.GraftAnalysis;
 import graft.cpg.CpgUtil;
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 

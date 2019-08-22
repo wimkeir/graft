@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import soot.Type;
 
 import graft.cpg.visitors.TypeVisitor;
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 import static graft.traversal.__.*;

@@ -1,8 +1,9 @@
 package graft.phases;
 
-import graft.utils.GraphUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import graft.db.GraphUtil;
 
 /**
  * This phase dumps the CPG (as currently in the database) to a file.
