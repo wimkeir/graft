@@ -74,11 +74,6 @@ public class GraphUtil {
     public static void closeGraph() {
         log.debug("Closing graph...");
         if (graph != null) {
-//            if (graph instanceof Neo4jGraph) {
-//                // TODO: do we only need to do this for neo4j?
-//                // TODO: is this where we should commit the transaction? not sooner? ...
-//                graph.tx().commit();
-//            }
             try {
                 graph.close();
             } catch (Exception e) {
