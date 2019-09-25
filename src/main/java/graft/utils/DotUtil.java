@@ -1,5 +1,6 @@
 package graft.utils;
 
+import graft.cpg.CpgUtil;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
@@ -52,6 +53,7 @@ public class DotUtil {
     }
 
     private static void vertexToDot(Vertex v, FileWriter out) throws IOException {
+        CpgUtil.debugVertex(v); // XXX
         out.write(v.id() + " [style=filled, shape=box");
         switch (v.label()) {
             case CFG_NODE:
@@ -66,6 +68,7 @@ public class DotUtil {
     }
 
     private static void edgeToDot(Edge e, FileWriter out) throws IOException {
+        CpgUtil.debugEdge(e);   // XXX
         out.write(e.outVertex().id() + " -> " + e.inVertex().id());
         out.write(" [style=bold");
         switch (e.label()) {

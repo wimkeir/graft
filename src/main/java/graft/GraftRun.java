@@ -30,8 +30,11 @@ public class GraftRun {
 
         for (String phaseName : config.getStringArray("phases.phase")) {
             switch (phaseName) {
+                case "AmendCpgPhase":
+                    register(new AmendCpgPhase(config));
+                    break;
                 case "BuildCpgPhase":
-                    register(new BuildCpgPhase(BuildCpgPhase.getOptions(config)));
+                    register(new BuildCpgPhase(config));
                     break;
                 case "DotPhase":
                     register(new DotPhase(getDotFilename(config.getString("general.dot-file"))));
