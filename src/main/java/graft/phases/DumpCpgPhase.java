@@ -28,7 +28,7 @@ public class DumpCpgPhase implements GraftPhase {
                     .write()
                     .iterate();
 
-            String details = String.format("| CPG written from file %1$-74s |\n", cpgFile);
+            String details = String.format("| CPG written to file %1$-74s |\n", cpgFile);
             return new PhaseResult(this, true, details);
 
         } catch (Exception e) {
