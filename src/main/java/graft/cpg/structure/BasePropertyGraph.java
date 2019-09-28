@@ -1,5 +1,6 @@
 package graft.cpg.structure;
 
+import graft.utils.DotUtil;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
@@ -64,6 +65,12 @@ public class BasePropertyGraph implements GGraph {
             return new ProgramDependenceGraph(g);
         }
         throw new GraftException("Graph is not a PDG");
+    }
+
+    @Override
+    public void toDot(String filename) {
+        // TODO: graph name
+        DotUtil.graphToDot(g, filename, "graphName");
     }
 
     // ********************************************************************************************

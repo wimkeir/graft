@@ -16,6 +16,7 @@ public interface GGraph {
     ControlFlowGraph asCfg();
     AbstractSyntaxTree asAst();
     ProgramDependenceGraph asPdg();
+    void toDot(String filename);
 
     // TODO
 //    void dump(String filename);
