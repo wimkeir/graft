@@ -17,6 +17,7 @@ import static graft.Const.*;
 
 /**
  * TODO: javadoc
+ * TODO: rename to GTraversal, GTraversalSource
  *
  * @author Wim Keirsgieter
  */
