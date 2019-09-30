@@ -11,6 +11,7 @@ import graft.analysis.taint.MethodSanitizer;
 import graft.analysis.taint.SanitizerDescription;
 import graft.analysis.taint.SinkDescription;
 import graft.cpg.CpgUtil;
+import graft.cpg.structure.VertexDescription;
 import graft.utils.GraphUtil;
 
 import static graft.Const.*;
@@ -40,6 +41,25 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                     .inV()
                     .values(NAME);
             return targetName.hasNext() && varName.equals(targetName.next());
+        });
+    }
+
+    /**
+     * TODO: javadoc
+     *
+     * @param descr
+     * @return
+     */
+    default GraphTraversal<S, Vertex> matches(VertexDescription descr) {
+        return (CpgTraversal<S, Vertex>) hasLabel(descr.LABEL).filter(t -> {
+            for (String key : descr.keys()) {
+                Vertex v = (Vertex) t.get();
+                String pattern = descr.getPropPattern(key);
+                if (!v.value(key).toString().matches(pattern)) {
+                    return false;
+                }
+            }
+            return true;
         });
     }
 

@@ -11,6 +11,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import graft.analysis.taint.SanitizerDescription;
 import graft.analysis.taint.SourceDescription;
+import graft.cpg.structure.VertexDescription;
 
 import java.util.List;
 
@@ -25,6 +26,10 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
 
     public CpgTraversalSourceDsl(Graph graph) {
         super(graph);
+    }
+
+    public CpgTraversal<Vertex, Vertex> getMatches(VertexDescription descr) {
+        return getV().matches(descr);
     }
 
     /**
