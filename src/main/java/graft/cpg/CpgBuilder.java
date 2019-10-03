@@ -19,6 +19,7 @@ import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
+import static graft.traversal.__.*;
 
 /**
  * Handles the actual construction of the CPG.
@@ -50,6 +51,34 @@ public class CpgBuilder {
             CpgUtil.addNodeProperty(classNode, FULL_NAME, cls.getName());
         }
 
+        UnitGraph unitGraph = new BriefUnitGraph(body);
+        Map<Unit, Object> unitNodes = new HashMap<>();
+        CfgBuilder.buildCfg(unitGraph, unitNodes);
+        PdgBuilder.buildPdg(unitGraph, unitNodes);
+
+        // TODO: make sure to do this everywhere its needed
+        if (GraphUtil.graph() instanceof Neo4jGraph) {
+            GraphUtil.graph().tx().commit();
+        }
+    }
+
+    /**
+     * Amend the CPG of the given body.
+     *
+     * @param body
+     */
+    public static void amendCpg(Body body) {
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        String methodSig = body.getMethod().getSignature();
+
+        // delete all method nodes and any interproc edges to/from them
+        g.V().hasLabel(CFG_NODE)
+                .has(METHOD_SIG, methodSig)
+                .union(__(), repeat(out(AST_EDGE)).emit())
+                .drop()
+                .iterate();
+
+        // generate the new graph
         UnitGraph unitGraph = new BriefUnitGraph(body);
         Map<Unit, Object> unitNodes = new HashMap<>();
         CfgBuilder.buildCfg(unitGraph, unitNodes);

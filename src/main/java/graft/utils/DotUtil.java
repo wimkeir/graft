@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import graft.cpg.CpgUtil;
 import graft.db.GraphUtil;
 
 import static graft.Const.*;
@@ -57,6 +58,7 @@ public class DotUtil {
     }
 
     private static void vertexToDot(Vertex v, FileWriter out) throws IOException {
+        CpgUtil.debugVertex(v); // XXX
         out.write(v.id() + " [style=filled, shape=box");
         switch (v.label()) {
             case CFG_NODE:
@@ -71,6 +73,7 @@ public class DotUtil {
     }
 
     private static void edgeToDot(Edge e, FileWriter out) throws IOException {
+        CpgUtil.debugEdge(e);   // XXX
         out.write(e.outVertex().id() + " -> " + e.inVertex().id());
         out.write(" [style=bold");
         switch (e.label()) {
