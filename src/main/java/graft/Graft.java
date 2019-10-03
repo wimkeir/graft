@@ -5,7 +5,7 @@ import org.apache.commons.configuration2.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.utils.GraphUtil;
+import graft.db.GraphUtil;
 import graft.utils.LogUtil;
 
 
@@ -39,10 +39,13 @@ public class Graft {
         LogUtil.setLogLevel(config.getString("general.log-level"));
         log.debug("Running with configuration {}", config.toString());
 
-        GraphUtil.initGraph();
+        GraphUtil.initGraph(config.subset("db"));
 
         GraftRun graftRun = new GraftRun(config);
         GraftResult result = graftRun.run();
+
+        GraphUtil.closeGraph();
+
         output(result.toString());
     }
 

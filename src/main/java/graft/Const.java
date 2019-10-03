@@ -37,6 +37,10 @@ public class Const {
     public static final String EDGE_TYPE = "type";
     public static final String TEXT_LABEL = "text-label";
 
+    // graph implementations
+    public static final String TINKERGRAPH = "tinkergraph";
+    public static final String NEO4J = "neo4j";
+
     // ********************************************************************************************
     // control flow graphs
     // ********************************************************************************************

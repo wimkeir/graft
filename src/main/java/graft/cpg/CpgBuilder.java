@@ -3,6 +3,7 @@ package graft.cpg;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -14,8 +15,8 @@ import soot.Unit;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
 
 import static graft.Const.*;
 
@@ -53,6 +54,11 @@ public class CpgBuilder {
         Map<Unit, Object> unitNodes = new HashMap<>();
         CfgBuilder.buildCfg(unitGraph, unitNodes);
         PdgBuilder.buildPdg(unitGraph, unitNodes);
+
+        // TODO: make sure to do this everywhere its needed
+        if (GraphUtil.graph() instanceof Neo4jGraph) {
+            GraphUtil.graph().tx().commit();
+        }
     }
 
 }

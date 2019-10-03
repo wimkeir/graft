@@ -2,11 +2,12 @@ package graft.analysis.taint;
 
 import java.util.List;
 
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+
 import graft.cpg.CpgUtil;
+import graft.db.GraphUtil;
 import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.GraphUtil;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import static graft.Const.*;
 

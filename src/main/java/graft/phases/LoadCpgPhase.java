@@ -3,7 +3,7 @@ package graft.phases;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.utils.GraphUtil;
+import graft.db.GraphUtil;
 
 /**
  * This phase loads the CPG (as currently in the database) from a file.

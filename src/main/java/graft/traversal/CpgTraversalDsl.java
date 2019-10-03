@@ -12,7 +12,7 @@ import graft.analysis.taint.SanitizerDescription;
 import graft.analysis.taint.SinkDescription;
 import graft.cpg.CpgUtil;
 import graft.cpg.structure.VertexDescription;
-import graft.utils.GraphUtil;
+import graft.db.GraphUtil;
 
 import static graft.Const.*;
 
