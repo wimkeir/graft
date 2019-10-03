@@ -40,7 +40,6 @@ public class Const {
     // graph implementations
     public static final String TINKERGRAPH = "tinkergraph";
     public static final String NEO4J = "neo4j";
-    public static final String NEO4J_BOLT = "neo4j-bolt";
 
     // ********************************************************************************************
     // control flow graphs

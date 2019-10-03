@@ -1,15 +1,9 @@
 package graft.db;
 
-//import com.steelbridgelabs.oss.neo4j.structure.providers.Neo4JNativeElementIdProvider;
-
 import org.apache.commons.configuration2.Configuration;
 import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-
-//import org.neo4j.driver.v1.AuthTokens;
-//import org.neo4j.driver.v1.Driver;
-//import org.neo4j.driver.v1.GraphDatabase;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +38,6 @@ public class GraphUtil {
                 break;
             case NEO4J:
                 initNeo4j(options);
-                break;
-            case NEO4J_BOLT:
-                initNeo4jBolt(options);
                 break;
 
             default:
@@ -102,19 +93,6 @@ public class GraphUtil {
         neo4jConfig.setProperty("gremlin.neo4j.conf.dbms.auto_index.nodes.enabled", "true");
         neo4jConfig.setProperty("gremlin.neo4j.conf.dbms.auto_index.relationships.enabled", "true");
         graph = Neo4jGraph.open(neo4jConfig);
-    }
-
-    private static void initNeo4jBolt(Configuration options) {
-        log.debug("Graph implementation: {}", NEO4J_BOLT);
-        log.warn("NOT IMPLEMENTED");
-//        org.apache.commons.configuration.Configuration neo4jConfig = new org.apache.commons.configuration.BaseConfiguration();
-//        // XXX
-//        neo4jConfig.setProperty("gremlin.neo4j.conf.dbms.auto_index.nodes.enabled", "true");
-//        neo4jConfig.setProperty("gremlin.neo4j.conf.dbms.auto_index.relationships.enabled", "true");
-//        Driver driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "devs"));
-//        graph = new com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph(driver,
-//                                                                       new Neo4JNativeElementIdProvider(),
-//                                                                       new Neo4JNativeElementIdProvider());
     }
     
 }
