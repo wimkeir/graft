@@ -43,3 +43,30 @@ task fatJar(type: Jar) {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
+
+// add script generation to build task
+// from https://stackoverflow.com/a/20106665
+build << {
+
+    // interactive shell script
+    File shellScript = file('bin/graft-shell.sh')
+    shellScript.withPrintWriter {
+        it.println '#!/bin/sh'
+        it.println "groovysh -cp ${getRuntimeClasspath()}"
+    }
+
+    // regular start script
+    File startScript = file('bin/graft.sh')
+    startScript.withPrintWriter {
+        it.println '#!/bin/sh'
+        it.println "java -cp ${getRuntimeClasspath()} graft.Graft \"\$@\""
+    }
+
+    // make scripts executable
+    ant.chmod(file: shellScript.absolutePath, perm: 'u+x')
+    ant.chmod(file: startScript.absolutePath, perm: 'u+x')
+}
+
+String getRuntimeClasspath() {
+    sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':')
+}
