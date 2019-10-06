@@ -34,29 +34,37 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
-// package the program as jar file with all dependencies
-task fatJar(type: Jar) {
-    manifest {
-        attributes 'Implementation-Version': version, 'Main-Class': 'graft.Graft'
-    }
-    baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}
+//task fatJar(type: Jar) {
+//    manifest {
+//        attributes 'Implementation-Version': version, 'Main-Class': 'graft.Graft'
+//    }
+//    baseName = project.name + '-all'
+//    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+//    with jar
+//}
+//
+//task uberJar(type: Jar) {
+//    from sourceSets.main.output
+//    dependsOn configurations.runtimeClasspath
+//    from {
+//        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+//    }
+//}
 
 // add script generation to build task
 // from https://stackoverflow.com/a/20106665
 build << {
+    mkdir 'bin'
 
     // interactive shell script
-    File shellScript = file('bin/graft-shell.sh')
+    File shellScript = file('bin/graft-shell')
     shellScript.withPrintWriter {
         it.println '#!/bin/sh'
         it.println "groovysh -cp ${getRuntimeClasspath()}"
     }
 
     // regular start script
-    File startScript = file('bin/graft.sh')
+    File startScript = file('bin/graft')
     startScript.withPrintWriter {
         it.println '#!/bin/sh'
         it.println "java -cp ${getRuntimeClasspath()} graft.Graft \"\$@\""
