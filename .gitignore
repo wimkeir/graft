@@ -17,6 +17,4 @@ out/
 
 # generated code
 src/main/generated
-
-# other
-etc/
+bin/
