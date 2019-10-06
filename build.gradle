@@ -13,6 +13,12 @@ repositories {
 
 dependencies {
 
+    // annotation processors
+    annotationProcessor 'org.apache.tinkerpop:gremlin-core:3.4.2'
+    annotationProcessor 'org.neo4j:neo4j-tinkerpop-api-impl:0.7-3.2.3'
+    testAnnotationProcessor 'org.apache.tinkerpop:gremlin-core:3.4.2'
+    testAnnotationProcessor 'org.neo4j:neo4j-tinkerpop-api-impl:0.7-3.2.3'
+
     // Soot
     implementation 'ca.mcgill.sable:soot:3.3.0'
 
@@ -53,26 +59,30 @@ dependencies {
 
 // add script generation to build task
 // from https://stackoverflow.com/a/20106665
-build << {
-    mkdir 'bin'
+build {
 
-    // interactive shell script
-    File shellScript = file('bin/graft-shell')
-    shellScript.withPrintWriter {
-        it.println '#!/bin/sh'
-        it.println "groovysh -cp ${getRuntimeClasspath()}"
+    doLast {
+        mkdir 'bin'
+
+        // interactive shell script
+        File shellScript = file('bin/graft-shell')
+        shellScript.withPrintWriter {
+            it.println '#!/bin/sh'
+            it.println "groovysh -cp ${getRuntimeClasspath()}"
+        }
+
+        // regular start script
+        File startScript = file('bin/graft')
+        startScript.withPrintWriter {
+            it.println '#!/bin/sh'
+            it.println "java -cp ${getRuntimeClasspath()} graft.Graft \"\$@\""
+        }
+
+        // make scripts executable
+        ant.chmod(file: shellScript.absolutePath, perm: 'u+x')
+        ant.chmod(file: startScript.absolutePath, perm: 'u+x')
     }
 
-    // regular start script
-    File startScript = file('bin/graft')
-    startScript.withPrintWriter {
-        it.println '#!/bin/sh'
-        it.println "java -cp ${getRuntimeClasspath()} graft.Graft \"\$@\""
-    }
-
-    // make scripts executable
-    ant.chmod(file: shellScript.absolutePath, perm: 'u+x')
-    ant.chmod(file: startScript.absolutePath, perm: 'u+x')
 }
 
 String getRuntimeClasspath() {
