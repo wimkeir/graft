@@ -52,8 +52,8 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
      */
     default GraphTraversal<S, Vertex> matches(VertexDescription descr) {
         return (CpgTraversal<S, Vertex>) hasLabel(descr.LABEL).filter(t -> {
+            Vertex v = (Vertex) t.get();
             for (String key : descr.keys()) {
-                Vertex v = (Vertex) t.get();
                 String pattern = descr.getPropPattern(key);
                 if (!v.value(key).toString().matches(pattern)) {
                     return false;
