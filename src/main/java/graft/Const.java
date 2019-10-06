@@ -11,6 +11,12 @@ public class Const {
     // general constants
     // ********************************************************************************************
 
+    // command line options
+    public static final String CLI_OPT_CONFIG = "config";
+    public static final String CLI_OPT_CLASS = "class";
+    public static final String CLI_OPT_DIR = "dir";
+    public static final String CLI_OPT_JAR = "jar";
+
     // log levels
     public static final String TRACE = "trace";
     public static final String DEBUG = "debug";
