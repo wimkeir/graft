@@ -18,3 +18,6 @@ out/
 # generated code
 src/main/generated
 bin/
+
+# database stuff
+.db
