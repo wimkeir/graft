@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE configuration>
+
+<configuration>
+
+    <general>
+        <log-level>info</log-level>
+        <dot-file>etc/dot/interproc.dot</dot-file>
+        <graph-file>etc/graphs/interproc.xml</graph-file>
+    </general>
+
+    <soot>
+        <options>
+            <process-dir>etc/demo/interproc</process-dir>
+            <soot-classpath>etc/demo/interproc</soot-classpath>
+            <output-format>jimple</output-format>
+            <output-dir>etc/sootOutput</output-dir>
+
+            <!-- excluded packages -->
+            <exclude>java.lang</exclude>
+            <exclude>org.apache</exclude>
+        </options>
+    </soot>
+
+    <phases>
+        <phase>BuildCpgPhase</phase>
+        <phase>DotPhase</phase>
+        <phase>InterprocPhase</phase>
+        <phase>DotPhase</phase>
+        <phase>TaintAnalysisPhase</phase>
+    </phases>
+
+    <taint-analysis>
+        <source>
+            <method>.*source.*</method>
+            <taints-ret>true</taints-ret>
+        </source>
+
+        <sanitizer>
+            <method>.*sanitize.*</method>
+        </sanitizer>
+
+        <sink>
+            <method>.*sink.*</method>
+            <!-- if no args specified, assume all -->
+            <args>0</args>
+        </sink>
+    </taint-analysis>
+
+</configuration>

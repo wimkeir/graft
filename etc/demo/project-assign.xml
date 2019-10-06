@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE configuration>
+
+<configuration>
+
+    <general>
+        <log-level>debug</log-level>
+        <dot-file>etc/dot/project.dot</dot-file>
+        <graph-file>etc/graphs/project-assign.json</graph-file>
+    </general>
+
+    <soot>
+        <options>
+            <process-dir>etc/demo/project-assign</process-dir>
+            <soot-classpath>etc/demo/project-assign</soot-classpath>
+            <output-format>jimple</output-format>
+            <output-dir>etc/sootOutput</output-dir>
+
+            <!-- excluded packages -->
+            <exclude>java.lang</exclude>
+            <exclude>org.apache</exclude>
+        </options>
+    </soot>
+
+    <phases>
+        <!--<phase>BuildCpgPhase</phase>-->
+        <phase>LoadCpgPhase</phase>
+        <!--<phase>InterprocPhase</phase>-->
+        <!--<phase>DumpCpgPhase</phase>-->
+        <phase>TaintAnalysisPhase</phase>
+    </phases>
+
+    <taint-analysis>
+
+        <source>
+            <method>.*readFile.*</method>
+            <taints-ret>true</taints-ret>
+        </source>
+
+        <sanitizer>
+            <method>.*validate.*</method>
+        </sanitizer>
+
+        <sink>
+            <method>.*assign.*</method>
+            <!-- if no args specified, assume all -->
+            <args>0</args>
+        </sink>
+
+    </taint-analysis>
+
+</configuration>

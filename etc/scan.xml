@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE configuration>
+
+<configuration>
+
+    <general>
+        <log-level>warn</log-level>
+    </general>
+
+    <soot>
+        <options>
+            <process-dir>/home/wimkeir/varsity-repos/search/group3/out/classes</process-dir>
+            <soot-classpath>/home/wimkeir/varsity-repos/search/group3/out/classes</soot-classpath>
+
+            <!-- excluded packages -->
+            <exclude>java</exclude>
+            <exclude>org</exclude>
+            <exclude>com</exclude>
+        </options>
+    </soot>
+
+    <phases>
+        <phase>BuildCpgPhase</phase>
+    </phases>
+
+</configuration>
