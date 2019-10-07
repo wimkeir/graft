@@ -14,6 +14,8 @@ out/
 *.iml
 .idea/
 .vscode/
+.settings/
+.project
 
 # generated code
 src/main/generated
