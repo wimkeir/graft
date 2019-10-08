@@ -24,3 +24,7 @@ bin/
 
 # database stuff
 .db
+
+# other stuff
+etc/dot/
+etc/dumps/

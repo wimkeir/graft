@@ -55,6 +55,9 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
             Vertex v = (Vertex) t.get();
             for (String key : descr.keys()) {
                 String pattern = descr.getPropPattern(key);
+                if (!v.keys().contains(key)) {
+                    return false;
+                }
                 if (!v.value(key).toString().matches(pattern)) {
                     return false;
                 }
