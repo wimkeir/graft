@@ -16,6 +16,7 @@ out/
 .vscode/
 .settings/
 .project
+.classpath
 
 # generated code
 src/main/generated
