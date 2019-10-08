@@ -1,8 +1,5 @@
 package graft.phases;
 
-import org.apache.commons.configuration2.BaseConfiguration;
-import org.apache.commons.configuration2.Configuration;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +14,7 @@ public class InterprocPhase implements GraftPhase {
 
     private static Logger log = LoggerFactory.getLogger(GraftPhase.class);
 
-    public InterprocPhase(Configuration options) { }
+    public InterprocPhase() { }
 
     @Override
     public PhaseResult run() {
@@ -26,8 +23,4 @@ public class InterprocPhase implements GraftPhase {
         return new PhaseResult(this, true, "");
     }
 
-    public static Configuration getOptions(Configuration config) {
-        // TODO
-        return new BaseConfiguration();
-    }
 }

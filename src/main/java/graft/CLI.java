@@ -13,7 +13,6 @@ class CLI {
 
     private static Logger log = LoggerFactory.getLogger(CLI.class);
 
-    // TODO: verbose, quiet options, log levels
     // TODO: validate args in constructor
     // TODO: debug args to console if debug enabled
 
@@ -26,7 +25,7 @@ class CLI {
      * @throws GraftException if the arguments cannot be parsed
      */
     CLI(String[] args) throws GraftException {
-        Options options = initOpts();
+        org.apache.commons.cli.Options options = initOpts();
         CommandLineParser parser = new DefaultParser();
 
         try {
@@ -69,8 +68,8 @@ class CLI {
     }
 
     // set up the command line options
-    private Options initOpts() {
-        Options options = new Options();
+    private org.apache.commons.cli.Options initOpts() {
+        org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
         options.addOption(new Option("config",  true, "path to config file"));
         options.addOption(new Option("class", true, "path to class file to analyse"));
         options.addOption(new Option("dir", true, "path to directory to analyse"));

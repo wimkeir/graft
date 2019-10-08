@@ -3,14 +3,12 @@ package graft.phases;
 import java.util.List;
 import java.util.Map;
 
-import graft.cpg.CpgBuilder;
-import org.apache.commons.configuration2.Configuration;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import soot.*;
 
+import graft.cpg.CpgBuilder;
 import graft.cpg.CpgUtil;
 import graft.utils.SootUtil;
 
@@ -18,11 +16,7 @@ public class AmendCpgPhase implements GraftPhase {
 
     private static Logger log = LoggerFactory.getLogger(BuildCpgPhase.class);
 
-    private Configuration config;
-
-    public AmendCpgPhase(Configuration config) {
-        this.config = config;
-    }
+    public AmendCpgPhase() { }
 
     @Override
     public PhaseResult run() {
@@ -43,7 +37,7 @@ public class AmendCpgPhase implements GraftPhase {
         }));
         PhaseOptions.v().setPhaseOption("jb", "use-original-names:true");
 
-        List<String> sootOptions = SootUtil.getSootOptions(config);
+        List<String> sootOptions = SootUtil.getSootOptions();
         String[] sootArgs = new String[(sootOptions).size()];
 
         log.debug("Running soot with options: ");

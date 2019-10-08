@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import graft.phases.*;
-import org.apache.commons.configuration2.Configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static graft.Const.*;
 
 /**
  * A single run of the Graft analysis tool.
@@ -22,34 +23,32 @@ public class GraftRun {
     private static Logger log = LoggerFactory.getLogger(GraftRun.class);
 
     private List<GraftPhase> phases;
-    private int nrDotPhases = 0;
-    private int nrDumpPhases = 0;
 
-    public GraftRun(Configuration config) {
+    public GraftRun() {
         phases = new ArrayList<>();
 
-        for (String phaseName : config.getStringArray("phases.phase")) {
+        for (String phaseName : Options.v().getStringArray(OPT_PHASES)) {
             switch (phaseName) {
                 case "AmendCpgPhase":
-                    register(new AmendCpgPhase(config));
+                    register(new AmendCpgPhase());
                     break;
                 case "BuildCpgPhase":
-                    register(new BuildCpgPhase(config));
+                    register(new BuildCpgPhase());
                     break;
                 case "DotPhase":
-                    register(new DotPhase(getDotFilename(config.getString("general.dot-file"))));
+                    register(new DotPhase());
                     break;
                 case "DumpCpgPhase":
-                    register(new DumpCpgPhase(getDumpFilename(config.getString("general.graph-file"))));
+                    register(new DumpCpgPhase());
                     break;
                 case "LoadCpgPhase":
-                    register(new LoadCpgPhase(config.getString("general.graph-file")));
+                    register(new LoadCpgPhase());
                     break;
                 case "InterprocPhase":
-                    register(new InterprocPhase(InterprocPhase.getOptions(config)));
+                    register(new InterprocPhase());
                     break;
                 case "TaintAnalysisPhase":
-                    register(new TaintAnalysisPhase(TaintAnalysisPhase.getOptions(config)));
+                    register(new TaintAnalysisPhase());
                     break;
                 default:
                     log.warn("Unrecognised phase name '{}' in config");
@@ -82,32 +81,6 @@ public class GraftRun {
             result.addPhaseResult(phaseResult);
         }
         return result;
-    }
-
-    private String getDotFilename(String dotFile) {
-        if (nrDotPhases == 0) {
-            nrDotPhases++;
-            return dotFile;
-        }
-
-        String[] splitFile = dotFile.split("[.]");
-        splitFile[splitFile.length - 2] += "_" + nrDotPhases++ + ".";
-        StringBuilder sb = new StringBuilder();
-        for (String s : splitFile) sb.append(s);
-        return sb.toString();
-    }
-
-    private String getDumpFilename(String graphFile) {
-        if (nrDumpPhases == 0) {
-            nrDumpPhases++;
-            return graphFile;
-        }
-
-        String[] splitFile = graphFile.split("[.]");
-        splitFile[splitFile.length - 2] += "_" + nrDotPhases++ + ".";
-        StringBuilder sb = new StringBuilder();
-        for (String s : splitFile) sb.append(s);
-        return sb.toString();
     }
 
 }

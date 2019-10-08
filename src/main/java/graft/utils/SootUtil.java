@@ -3,7 +3,7 @@ package graft.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.configuration2.Configuration;
+import graft.Options;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +18,11 @@ public class SootUtil {
     private static Logger log = LoggerFactory.getLogger(SootUtil.class);
 
     /**
-     * Get a list of command line options to pass to Soot from a config object.
+     * Get a list of Soot options from the current Graft options.
      *
-     * @param config the config object
      * @return a list of Soot command line options
      */
-    public static List<String> getSootOptions(Configuration config) {
+    public static List<String> getSootOptions() {
         // Other soot options (maybe useful):
         //  -phase-option key:val
         //  -via-shimple (stp phase)
@@ -50,46 +49,46 @@ public class SootUtil {
 
         // configurable options
 
-        if (config.containsKey("soot.options.process-dir")) {
-            for (String dir : config.getStringArray("soot.options.process-dir")) {
+        if (Options.v().containsKey("soot.options.process-dir")) {
+            for (String dir : Options.v().getStringArray("soot.options.process-dir")) {
                 sootOptions.add("-process-dir");
                 sootOptions.add(dir);
             }
         }
 
-        if (config.containsKey("soot.options.exclude")) {
-            for (String pkg : config.getStringArray("soot.options.exclude")) {
+        if (Options.v().containsKey("soot.options.exclude")) {
+            for (String pkg : Options.v().getStringArray("soot.options.exclude")) {
                 sootOptions.add("-exclude");
                 sootOptions.add(pkg);
             }
         }
 
-        if (config.containsKey("soot.options.src-prec")) {
+        if (Options.v().containsKey("soot.options.src-prec")) {
             sootOptions.add("-src-prec");
-            sootOptions.add(config.getString("soot.options.src-prec"));
+            sootOptions.add(Options.v().getString("soot.options.src-prec"));
         }
 
-        if (config.containsKey("soot.options.soot-classpath")) {
+        if (Options.v().containsKey("soot.options.soot-classpath")) {
             sootOptions.add("-soot-classpath");
-            sootOptions.add(config.getString("soot.options.soot-classpath"));
+            sootOptions.add(Options.v().getString("soot.options.soot-classpath"));
         }
 
-        if (config.containsKey("soot.options.output-format")) {
+        if (Options.v().containsKey("soot.options.output-format")) {
             sootOptions.add("-output-format");
-            sootOptions.add(config.getString("soot.options.output-format"));
+            sootOptions.add(Options.v().getString("soot.options.output-format"));
         }
 
-        if (config.containsKey("soot.options.main-class")) {
+        if (Options.v().containsKey("soot.options.main-class")) {
             sootOptions.add("-main-class");
-            sootOptions.add(config.getString("soot.options.main-class"));
+            sootOptions.add(Options.v().getString("soot.options.main-class"));
         }
 
-        if (config.containsKey("soot.options.output-dir")) {
+        if (Options.v().containsKey("soot.options.output-dir")) {
             sootOptions.add("-output-dir");
-            sootOptions.add(config.getString("soot.options.output-dir"));
+            sootOptions.add(Options.v().getString("soot.options.output-dir"));
         }
 
-        if (config.getBoolean("soot.options.verbose", false)) {
+        if (Options.v().getBoolean("soot.options.verbose", false)) {
             sootOptions.add("-verbose");
         }
 

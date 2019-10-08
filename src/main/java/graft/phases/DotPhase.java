@@ -1,9 +1,12 @@
 package graft.phases;
 
+import graft.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import graft.utils.DotUtil;
+
+import static graft.Const.*;
 
 /**
  * This phase writes the CPG (as currently in the database) to a dot file for visualisation.
@@ -14,17 +17,14 @@ public class DotPhase implements GraftPhase {
 
     private static Logger log = LoggerFactory.getLogger(DotPhase.class);
 
-    private String dotFile;
-
-    public DotPhase(String dotFile) {
-        this.dotFile = dotFile;
-    }
+    public DotPhase() { }
 
     @Override
     public PhaseResult run() {
         log.info("Running DotPhase...");
-        DotUtil.cpgToDot(dotFile, "cpg");
-        String details = String.format("| Written to dotfile %1$-77s |\n", dotFile);
+        String filename = Options.v().getString(OPT_GENERAL_DOT_FILE);
+        DotUtil.cpgToDot(filename, "cpg");
+        String details = String.format("| Written to dotfile %1$-77s |\n", filename);
         return new PhaseResult(this, true, details);
     }
 

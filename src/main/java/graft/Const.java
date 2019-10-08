@@ -11,11 +11,22 @@ public class Const {
     // general constants
     // ********************************************************************************************
 
+    // defaults
+    public static final String DEFAULT_DB_DIRECTORY = ".db";
+
     // command line options
     public static final String CLI_OPT_CONFIG = "config";
     public static final String CLI_OPT_CLASS = "class";
     public static final String CLI_OPT_DIR = "dir";
     public static final String CLI_OPT_JAR = "jar";
+
+    // option keys
+    public static final String OPT_GENERAL_DOT_FILE = "general.dot-file";
+    public static final String OPT_GENERAL_GRAPH_FILE = "general.graph-file";
+    public static final String OPT_GENERAL_LOG_LEVEL = "general.log-level";
+    public static final String OPT_DB_DIRECTORY = "db.directory";
+    public static final String OPT_DB_IMPLEMENTATION = "db.implementation";
+    public static final String OPT_PHASES = "phases";
 
     // log levels
     public static final String TRACE = "trace";
