@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import graft.Banner;
+import graft.Graft;
 import graft.Options;
 import graft.db.GraphUtil;
 
@@ -28,7 +29,7 @@ public class LoadCpgPhase implements GraftPhase {
         banner.println("LoadCpgPhase");
         banner.println("Filename: " + filename);
         try {
-            GraphUtil.graph().traversal()
+            Graft.cpg().traversal()
                     .io(filename)
                     .read()
                     .iterate();

@@ -17,8 +17,8 @@ import soot.jimple.Stmt;
 import soot.tagkit.*;
 import soot.toolkits.graph.UnitGraph;
 
+import graft.Graft;
 import graft.cpg.visitors.StmtVisitor;
-import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
@@ -55,7 +55,7 @@ public class CfgBuilder {
         CpgUtil.addNodeProperty(entryNode, METHOD_SCOPE, method.getDeclaringClass().getName());
 
         // get the class AST node
-        Vertex classNode = GraphUtil.graph().traversal(CpgTraversalSource.class)
+        Vertex classNode = Graft.cpg().traversal()
                 .V().hasLabel(AST_NODE)
                 .has(NODE_TYPE, CLASS)
                 .has(FULL_NAME, body.getMethod().getDeclaringClass().getName())
@@ -84,7 +84,7 @@ public class CfgBuilder {
      * @return the generated CFG node
      */
     public static Vertex genCfgNode(Stmt stmt, String nodeType, String methodSig, String textLabel) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         Vertex node = g.addV(CFG_NODE)
                 .property(NODE_TYPE, nodeType)
                 .property(TEXT_LABEL, textLabel)
@@ -93,7 +93,7 @@ public class CfgBuilder {
                 .property(METHOD_SIG, methodSig)
                 .property(LINE_NO, getLineNr(stmt))
                 .next();
-        // GraphUtil.graph().tx().commit();
+        // Graft.cpg().commit();
         return node;
     }
 
@@ -107,7 +107,7 @@ public class CfgBuilder {
      * @return the generated CFG edge
      */
     public static Edge genCfgEdge(Vertex from, Vertex to, String edgeType, String textLabel) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         assert from != null;
         assert to != null;
         Edge edge = g.addE(CFG_EDGE)
@@ -115,7 +115,7 @@ public class CfgBuilder {
                 .property(EDGE_TYPE, edgeType)
                 .property(TEXT_LABEL, textLabel)
                 .next();
-        // GraphUtil.graph().tx().commit();
+        // Graft.cpg().commit();
         return edge;
     }
 
@@ -127,7 +127,7 @@ public class CfgBuilder {
         if (unit instanceof GotoStmt) {
             return genUnitNode(((GotoStmt) unit).getTarget(), unitGraph, methodSig, generated);
         }
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         log.debug("Generating Unit '{}'", unit.toString());
 
         Vertex unitVertex;

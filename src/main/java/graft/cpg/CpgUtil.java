@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import soot.SootMethod;
 import soot.Type;
 
+import graft.Graft;
 import graft.cpg.visitors.TypeVisitor;
-import graft.db.GraphUtil;
 import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
 
@@ -36,7 +36,7 @@ public class CpgUtil {
      * @return the number of nodes in the CPG
      */
     public static long getNodeCount() {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         return g.V().count().next();
     }
 
@@ -46,7 +46,7 @@ public class CpgUtil {
      * @return the number of edges in the CPG
      */
     public static long getEdgeCount() {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         return g.E().count().next();
     }
 
@@ -58,7 +58,7 @@ public class CpgUtil {
      * @param value the property value
      */
     public static void addNodeProperty(Vertex node, String key, Object value) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         g.V(node).property(key, value).iterate();
     }
 
@@ -70,12 +70,12 @@ public class CpgUtil {
      * @param value the property value
      */
     public static void addEdgeProperty(Edge edge, String key, Object value) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         g.E(edge).property(key, value).iterate();
     }
 
     public static void dropCfg(SootMethod method) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         String methodSig = method.getSignature();
 
         // delete all method nodes and any interproc edges to/from them
@@ -87,7 +87,7 @@ public class CpgUtil {
     }
 
     public static String getClassHash(String className) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         CpgTraversal t = g.V()
                 .hasLabel(AST_NODE)
                 .has(NODE_TYPE, CLASS)
@@ -124,7 +124,7 @@ public class CpgUtil {
             return vertex;
         }
 
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         return g.V(vertex)
                 .repeat(in(AST_EDGE))
                 .until(hasLabel(CFG_NODE))
@@ -138,7 +138,7 @@ public class CpgUtil {
      * @return a list of all invoke expressions found in the subtree
      */
     public static List<Vertex> getInvokeExprs(Vertex vertex) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         List<Vertex> invokeExprs = new ArrayList<>();
 
         g.V(vertex).repeat(
@@ -162,7 +162,7 @@ public class CpgUtil {
      * @return a list of all invoke expression nodes in the AST subtree
      */
     public static List<Vertex> getInvokeExprs(Vertex vertex, String sigPattern) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         List<Vertex> invokeExprs = new ArrayList<>();
 
         g.V(vertex).repeat(
@@ -185,7 +185,7 @@ public class CpgUtil {
      * @return a list of all local variable nodes in the AST subtree
      */
     public static List<Vertex> getLocals(Vertex vertex) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         List<Vertex> locals = new ArrayList<>();
 
         if (vertex.value(NODE_TYPE).equals(LOCAL_VAR)) {

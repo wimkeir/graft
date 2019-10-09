@@ -74,4 +74,8 @@ public class CodePropertyGraph extends BasePropertyGraph {
         return BasePropertyGraph.fromConfig(config).asCpg();
     }
 
+    public static CodePropertyGraph fromGraph(Graph g) {
+        return new CodePropertyGraph(g);
+    }
+
 }

@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -17,7 +16,8 @@ import soot.Unit;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-import graft.db.GraphUtil;
+import graft.Graft;
+import graft.Options;
 import graft.traversal.CpgTraversalSource;
 import graft.utils.FileUtil;
 
@@ -62,13 +62,13 @@ public class CpgBuilder {
         PdgBuilder.buildPdg(unitGraph, unitNodes);
 
         // TODO: make sure to do this everywhere its needed
-        if (GraphUtil.graph() instanceof Neo4jGraph) {
-            GraphUtil.graph().tx().commit();
+        if (Options.v().getString(OPT_DB_IMPLEMENTATION).equals(NEO4J)) {
+            Graft.cpg().commit();
         }
     }
 
     public static void amendCpg(SootClass cls, File classFile) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         g.V().hasLabel(AST_NODE)
                 .has(NODE_TYPE, CLASS)
                 .has(FULL_NAME, cls.getName())

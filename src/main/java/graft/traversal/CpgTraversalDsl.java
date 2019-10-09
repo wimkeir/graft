@@ -6,7 +6,6 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import graft.cpg.structure.VertexDescription;
-import graft.db.GraphUtil;
 
 import static graft.Const.*;
 
@@ -18,25 +17,6 @@ import static graft.Const.*;
  */
 @GremlinDsl(traversalSource = "graft.traversal.CpgTraversalSourceDsl")
 public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
-
-    /**
-     * Checks whether the current node is a reassignment of the given local variable.
-     *
-     * @param varName the name of the local variable to check
-     * @return a filter traversal that returns true if the node is a reassignment, otherwise false
-     */
-    default GraphTraversal<S, ?> reassigns(String varName) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-        return filter(it -> {
-            Vertex vertex  = (Vertex) it.get();
-            CpgTraversal targetName = g.V(vertex)
-                    .outE(AST_EDGE)
-                    .has(EDGE_TYPE, TARGET)
-                    .inV()
-                    .values(NAME);
-            return targetName.hasNext() && varName.equals(targetName.next());
-        });
-    }
 
     /**
      * TODO: javadoc

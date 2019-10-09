@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import graft.Banner;
+import graft.Graft;
 import graft.Options;
 import graft.utils.DotUtil;
 
@@ -27,7 +28,7 @@ public class DotPhase implements GraftPhase {
         Banner banner = new Banner();
         banner.println("DotPhase");
         banner.println("Filename: " + filename);
-        DotUtil.cpgToDot(filename, "cpg");
+        DotUtil.graphToDot(Graft.cpg(), filename, "cpg");
         banner.println("CPG written to dotfile " + filename);
         banner.display();
     }

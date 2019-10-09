@@ -1,5 +1,6 @@
 package graft;
 
+import graft.cpg.structure.CodePropertyGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,12 @@ public class Graft {
 
     private static Logger log = LoggerFactory.getLogger(Graft.class);
 
+    private static CodePropertyGraph cpg;
+
+    public static CodePropertyGraph cpg() {
+        return cpg;
+    }
+
     /**
      * TODO: javadoc
      *
@@ -30,11 +37,11 @@ public class Graft {
         LogUtil.setLogLevel(Options.v().getString(OPT_GENERAL_LOG_LEVEL));
         log.debug("Running with configuration {}", config.toString());
 
-        GraphUtil.initGraph();
+        cpg = GraphUtil.getCpg();
         SootUtil.configureSoot();
 
         new GraftRun().run();
-        GraphUtil.closeGraph();
+        // GraphUtil.closeGraph();
     }
 
 }

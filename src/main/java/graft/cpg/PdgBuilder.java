@@ -18,7 +18,7 @@ import soot.toolkits.graph.UnitGraph;
 import soot.toolkits.scalar.LocalDefs;
 import soot.toolkits.scalar.SimpleLocalDefs;
 
-import graft.db.GraphUtil;
+import graft.Graft;
 import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
@@ -40,7 +40,7 @@ public class PdgBuilder {
      */
     public static void buildPdg(UnitGraph unitGraph, Map<Unit, Object> unitNodes) {
         log.debug("Building PDG for method '{}'", unitGraph.getBody().getMethod().getName());
-        GraphTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        GraphTraversalSource g = Graft.cpg().traversal();
 
         LocalDefs localDefs = new SimpleLocalDefs(unitGraph);
 
@@ -75,14 +75,14 @@ public class PdgBuilder {
      * @return the generated PDG edge
      */
     public static Edge genDataDepEdge(Vertex from, Vertex to, String varName, String textLabel) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         Edge edge = g.addE(PDG_EDGE)
                 .from(from).to(to)
                 .property(EDGE_TYPE, DATA_DEP)
                 .property(VAR_NAME, varName)
                 .property(TEXT_LABEL, textLabel)
                 .next();
-        // GraphUtil.graph().tx().commit();
+        // Graft.cpg().tx().commit();
         return edge;
     }
 

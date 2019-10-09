@@ -10,7 +10,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.db.GraphUtil;
+import graft.Graft;
 import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
@@ -31,7 +31,7 @@ public class Interproc {
     public static void genInterprocEdges() {
         log.debug("Generating interprocedural edges...");
         // TODO NB: context sensitivity
-        GraphTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        GraphTraversalSource g = Graft.cpg().traversal();
         GraphTraversal invokeExprs = g.V()
                 .hasLabel(AST_NODE)
                 .has(NODE_TYPE, INVOKE_EXPR);
@@ -72,7 +72,7 @@ public class Interproc {
 
     private static void genArgToParamEdges(Vertex callSite, Vertex methodEntry) {
         log.debug("Generating arg to param PDG edges for method '{}'...", methodEntry.value(METHOD_NAME).toString());
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
 
         List<Vertex> params = new ArrayList<>();
         g.V().hasLabel(CFG_NODE)
@@ -90,7 +90,7 @@ public class Interproc {
 
     private static void genRetToCallEdges(Vertex callSite, Vertex methodEntry) {
         log.debug("Generating ret to call PDG edges for method '{}'...", methodEntry.value(METHOD_NAME).toString());
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
 
         List<Vertex> returns = g.V().hasLabel(CFG_NODE)
                 .has(NODE_TYPE, RETURN_STMT)

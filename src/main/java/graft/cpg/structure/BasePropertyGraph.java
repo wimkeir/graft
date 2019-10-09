@@ -1,19 +1,21 @@
 package graft.cpg.structure;
 
-import graft.utils.DotUtil;
 import org.apache.commons.configuration.Configuration;
+
+import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import graft.GraftException;
 import graft.db.TinkerGraphUtil;
 import graft.traversal.CpgTraversalSource;
+import graft.utils.DotUtil;
 
 /**
  * A base class for property graph implementations.
  *
  * TODO: more detailed javadoc
  */
-public class BasePropertyGraph implements GGraph {
+public class BasePropertyGraph {
 
     private Graph g;
 
@@ -30,33 +32,33 @@ public class BasePropertyGraph implements GGraph {
     // implemented GGraph methods
     // ********************************************************************************************
 
-    @Override
     public CpgTraversalSource traversal() {
         return g.traversal(CpgTraversalSource.class);
     }
 
-    @Override
     public CodePropertyGraph asCpg() {
+        if (this instanceof CodePropertyGraph) {
+            return (CodePropertyGraph) this;
+        }
         if (CodePropertyGraph.isCpg(g)) {
             return new CodePropertyGraph(g);
         }
         throw new GraftException("Graph is not a CPG");
     }
 
-    @Override
     public void toDot(String filename) {
         // TODO: graph name
-        DotUtil.graphToDot(g, filename, "graphName");
+        DotUtil.graphToDot(this, filename, "graphName");
     }
 
-    @Override
     public void dump(String filename) {
         // TODO
     }
 
-    @Override
     public void commit() {
-        // TODO
+        if (g instanceof Neo4jGraph) {
+            g.tx().commit();
+        }
     }
 
     // ********************************************************************************************
@@ -71,7 +73,7 @@ public class BasePropertyGraph implements GGraph {
      * @param filename the file to load the graph from
      * @return the graph loaded from the file
      */
-    public static GGraph fromFile(String filename) {
+    public static BasePropertyGraph fromFile(String filename) {
         Graph g = TinkerGraphUtil.fromFile(filename);
         return new BasePropertyGraph(g);
     }
@@ -82,7 +84,7 @@ public class BasePropertyGraph implements GGraph {
      * @param config the config of the graph database
      * @return the graph loaded from the database
      */
-    public static GGraph fromConfig(Configuration config) {
+    public static BasePropertyGraph fromConfig(Configuration config) {
         Graph g = TinkerGraphUtil.fromConfig(config);
         return new BasePropertyGraph(g);
     }

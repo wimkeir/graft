@@ -29,6 +29,8 @@ public class Const {
     public static final String OPT_GENERAL_LOG_LEVEL = "general.log-level";
     public static final String OPT_DB_DIRECTORY = "db.directory";
     public static final String OPT_DB_IMPLEMENTATION = "db.implementation";
+    public static final String OPT_DB_LOAD_FROM = "db.load-from";
+    public static final String OPT_DB_DUMP_TO = "db.dump-to";
     public static final String OPT_PHASES = "phases";
     public static final String OPT_SOOT_OPTIONS_CLASSPATH = "soot.options.classpath";
     public static final String OPT_TARGET_DIR = "target-dir";

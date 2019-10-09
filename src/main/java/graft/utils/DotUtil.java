@@ -1,9 +1,6 @@
 package graft.utils;
 
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -14,7 +11,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import graft.cpg.CpgUtil;
-import graft.db.GraphUtil;
+import graft.cpg.structure.BasePropertyGraph;
+import graft.traversal.CpgTraversal;
+import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
 
@@ -27,26 +26,16 @@ public class DotUtil {
 
     private static Logger log = LoggerFactory.getLogger(DotUtil.class);
 
-    /**
-     * Write the CPG (as currently in the database) to the given file in dot format.
-     *
-     * @param dotfile the dot file to write to
-     * @param graphName the name of the graph
-     */
-    public static void cpgToDot(String dotfile, String graphName) {
-        graphToDot(GraphUtil.graph(), dotfile, graphName);
-    }
-
-    public static void graphToDot(Graph graph, String filename, String graphName) {
-        GraphTraversalSource g = graph.traversal();
+    public static void graphToDot(BasePropertyGraph graph, String filename, String graphName) {
+        CpgTraversalSource g = graph.traversal();
         try {
             FileWriter out = new FileWriter(new File(filename));
             out.write("digraph " + graphName + "{\n");
-            GraphTraversal nodes = g.V();
+            CpgTraversal nodes = g.V();
             while (nodes.hasNext()) {
                 vertexToDot((Vertex) nodes.next(), out);
             }
-            GraphTraversal edges = g.E();
+            CpgTraversal edges = g.E();
             while (edges.hasNext()) {
                 edgeToDot((Edge) edges.next(), out);
             }

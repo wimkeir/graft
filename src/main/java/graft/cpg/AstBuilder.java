@@ -12,10 +12,10 @@ import soot.jimple.Constant;
 import soot.jimple.Expr;
 import soot.jimple.Ref;
 
+import graft.Graft;
 import graft.cpg.visitors.ConstantVisitor;
 import graft.cpg.visitors.ExprVisitor;
 import graft.cpg.visitors.RefVisitor;
-import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
@@ -62,12 +62,12 @@ public class AstBuilder {
      * @return the generated AST node
      */
     public static Vertex genAstNode(String nodeType, String textLabel) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         Vertex node = g.addV(AST_NODE)
                 .property(NODE_TYPE, nodeType)
                 .property(TEXT_LABEL, textLabel)
                 .next();
-        // GraphUtil.graph().tx().commit();
+        // Graft.cpg().commit();
         return node;
     }
 
@@ -81,13 +81,13 @@ public class AstBuilder {
      * @return the generated AST edge
      */
     public static Edge genAstEdge(Vertex from, Vertex to, String edgeType, String textLabel) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversalSource g = Graft.cpg().traversal();
         Edge edge = g.addE(AST_EDGE)
                 .from(from).to(to)
                 .property(EDGE_TYPE, edgeType)
                 .property(TEXT_LABEL, textLabel)
                 .next();
-        // GraphUtil.graph().tx().commit();
+        // Graft.cpg().commit();
         return edge;
     }
 
