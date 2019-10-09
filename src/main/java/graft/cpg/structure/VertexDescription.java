@@ -1,5 +1,6 @@
 package graft.cpg.structure;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -9,14 +10,31 @@ public class VertexDescription {
 
     public final String NAME;
     public final String LABEL;
-    private Map<String, String> propPatterns;
 
-    public VertexDescription(String name, String label, Map<String, String> propPatterns) {
+    private Map<String, String> propPatterns;
+    private VertexDescription childDescr;
+    private VertexDescription parentDescr;
+
+    public VertexDescription(String name, String label) {
         this.NAME = name;
         this.LABEL = label;
+        this.propPatterns = new HashMap<>();
+    }
 
-        // TODO: copy propPatterns instead
-        this.propPatterns = propPatterns;
+    public void setChildDescr(VertexDescription childDescr) {
+        this.childDescr = childDescr;
+    }
+
+    public void setParentDescr(VertexDescription parentDescr) {
+        this.parentDescr = parentDescr;
+    }
+
+    public VertexDescription getChildDescr() {
+        return childDescr;
+    }
+
+    public VertexDescription getParentDescr() {
+        return parentDescr;
     }
 
     public Iterable<String> keys() {
@@ -25,10 +43,6 @@ public class VertexDescription {
 
     public String getPropPattern(String key) {
         return propPatterns.get(key);
-    }
-
-    public String getPropPattern(String key, String defaultPattern) {
-        return propPatterns.getOrDefault(key, defaultPattern);
     }
 
     public void setPropPattern(String key, String value) {

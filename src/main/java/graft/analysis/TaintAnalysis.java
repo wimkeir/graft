@@ -86,18 +86,15 @@ public class TaintAnalysis implements GraftAnalysis {
     public static void main(String[] args) {
         LogUtil.setLogLevel(DEBUG);
         CodePropertyGraph cpg = CodePropertyGraph.fromFile("etc/dumps/simple.json");
-        Map<String, String> srcProps = new HashMap<>();
-        Map<String, String> sinkProps = new HashMap<>();
-        Map<String, String> sanProps = new HashMap<>();
 
-        srcProps.put(NODE_TYPE, ASSIGN_STMT);
-        VertexDescription srcDescr = new VertexDescription("source", CFG_NODE, srcProps);
+        VertexDescription srcDescr = new VertexDescription("source", CFG_NODE);
+        srcDescr.setPropPattern(NODE_TYPE, ASSIGN_STMT);
 
-        sinkProps.put(NODE_TYPE, INVOKE_STMT);
-        VertexDescription sinkDescr = new VertexDescription("sink", CFG_NODE, sinkProps);
+        VertexDescription sinkDescr = new VertexDescription("sink", CFG_NODE);
+        sinkDescr.setPropPattern(NODE_TYPE, INVOKE_STMT);
 
-        sanProps.put(NODE_TYPE, CONDITIONAL_STMT);
-        VertexDescription sanDescr = new VertexDescription("sanitizer", CFG_NODE, sanProps);
+        VertexDescription sanDescr = new VertexDescription("sanitizer", CFG_NODE);
+        sanDescr.setPropPattern(NODE_TYPE, CONDITIONAL_STMT);
 
         TaintAnalysis analysis = new TaintAnalysis(srcDescr, sinkDescr, sanDescr);
         analysis.doAnalysis(cpg);

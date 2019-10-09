@@ -6,9 +6,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static graft.Const.*;
 import static org.junit.Assert.*;
@@ -25,11 +23,11 @@ public class TestCpgTraversalDsl {
 
     @Test
     public void testMatches() {
+        // TODO: test w/ parent, child descriptions
         String regex = "[a-zA-Z_]*";
-        Map<String, String> props = new HashMap<>();
-        props.put(NODE_TYPE, ENTRY);
-        props.put(TEXT_LABEL, regex);
-        VertexDescription descr = new VertexDescription("entry-nodes", CFG_NODE, props);
+        VertexDescription descr = new VertexDescription("entry-nodes", CFG_NODE);
+        descr.setPropPattern(NODE_TYPE, ENTRY);
+        descr.setPropPattern(TEXT_LABEL, regex);
 
         List<Vertex> matches = cpg.traversal().V().matches(descr).toList();
         assertEquals(4, matches.size());
