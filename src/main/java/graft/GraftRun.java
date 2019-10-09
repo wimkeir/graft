@@ -13,8 +13,7 @@ import static graft.Const.*;
 /**
  * A single run of the Graft analysis tool.
  *
- * Graft phases are registered to a Graft run, and are executed in sequence with their results being
- * gathered in the Graft run's result.
+ * Graft phases are registered to a Graft run, and are executed in sequence.
  *
  * @author Wim Keirsgieter
  */
@@ -69,18 +68,12 @@ public class GraftRun {
     }
 
     /**
-     * Run all registered phases in sequence, gathering their individual phase results in the Graft
-     * result returned.
-     *
-     * @return the result of the Graft run
+     * Run all registered phases in sequence.
      */
-    public GraftResult run() {
-        GraftResult result = new GraftResult();
+    public void run() {
         for (GraftPhase phase : phases) {
-            PhaseResult phaseResult = phase.run();
-            result.addPhaseResult(phaseResult);
+            phase.run();
         }
-        return result;
     }
 
 }

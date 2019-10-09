@@ -1,9 +1,10 @@
 package graft.phases;
 
-import graft.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import graft.Banner;
+import graft.Options;
 import graft.utils.DotUtil;
 
 import static graft.Const.*;
@@ -20,12 +21,15 @@ public class DotPhase implements GraftPhase {
     public DotPhase() { }
 
     @Override
-    public PhaseResult run() {
+    public void run() {
         log.info("Running DotPhase...");
         String filename = Options.v().getString(OPT_GENERAL_DOT_FILE);
+        Banner banner = new Banner();
+        banner.println("DotPhase");
+        banner.println("Filename: " + filename);
         DotUtil.cpgToDot(filename, "cpg");
-        String details = String.format("| Written to dotfile %1$-77s |\n", filename);
-        return new PhaseResult(this, true, details);
+        banner.println("CPG written to dotfile " + filename);
+        banner.display();
     }
 
 }

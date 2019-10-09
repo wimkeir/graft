@@ -5,16 +5,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import graft.utils.FileUtil;
-import graft.utils.SootUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import soot.*;
 
+import graft.Banner;
 import graft.Options;
 import graft.cpg.CpgBuilder;
 import graft.cpg.CpgUtil;
+import graft.utils.FileUtil;
+import graft.utils.SootUtil;
 
 import static graft.Const.*;
 
@@ -30,36 +31,45 @@ public class AmendCpgPhase implements GraftPhase {
     public AmendCpgPhase() { }
 
     @Override
-    public PhaseResult run() {
+    public void run() {
         log.info("Running AmendCpgPhase...");
         String targetDir = Options.v().getString(OPT_TARGET_DIR);
+        Banner banner = new Banner();
+        banner.println("AmendCpgPhase");
+        banner.println("Target dir: " + targetDir);
 
-        // get all class files in target dir
         List<File> classFiles = Arrays.asList(SootUtil.getClassFiles(targetDir));
         if (classFiles.size() == 0) {
-            return new PhaseResult(this, false, "No class files found in target directory");
+            banner.println("No class files in target dir");
+            banner.display();
+            return;
         }
 
-        // fill list of classes to be amended if their file hashes have changed
         List<File> amendedClasses = new ArrayList<>();
         List<String> classNames = new ArrayList<>();
+        banner.println("Files changed:");
         for (File classFile : classFiles) {
             // TODO: package prefixes
             String className = classFile.getName().replace(".class", "");
             String hash = FileUtil.hashFile(classFile);
             if (!hash.equals(CpgUtil.getClassHash(className))) {
                 log.info("Class '{}' has been changed", className);
+                banner.println("- " + classFile.getName() + " (" + className + ")");
                 amendedClasses.add(classFile);
                 classNames.add(className);
             }
         }
 
         if (amendedClasses.size() == 0) {
-            String details = "No changes to class files";
-            return new PhaseResult(this, true, details);
+            banner.println("No files changed - nothing to do");
+            banner.display();
+            return;
         }
+        banner.println(amendedClasses.size() + " classes to amend");
 
         SootUtil.loadClasses(classNames.toArray(new String[0]));
+        long prevNodes = CpgUtil.getNodeCount();
+        long prevEdges = CpgUtil.getEdgeCount();
 
         for (int i = 0; i < amendedClasses.size(); i++) {
             log.debug("Amending CPG of class '{}'", classNames.get(i));
@@ -67,11 +77,10 @@ public class AmendCpgPhase implements GraftPhase {
             CpgBuilder.amendCpg(cls, amendedClasses.get(i));
         }
 
-        // TODO: display phase output directly from phase
-
-        String details = String.format("| Nodes: %1$-89d |\n", CpgUtil.getNodeCount());
-        details += String.format("| Edges: %1$-89d |\n", CpgUtil.getEdgeCount());
-        return new PhaseResult(this, true, details);
+        banner.println("CPG amended successfully");
+        banner.println("Nodes: " + CpgUtil.getNodeCount() + "(prev " + prevNodes + ")");
+        banner.println("Edges: " + CpgUtil.getEdgeCount() + "(prev " + prevEdges + ")");
+        banner.display();
     }
 
 }

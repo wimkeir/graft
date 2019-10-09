@@ -10,9 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import soot.*;
 
+import graft.Banner;
+import graft.Options;
 import graft.cpg.CpgBuilder;
 import graft.cpg.CpgUtil;
-import graft.Options;
 import graft.utils.SootUtil;
 
 import static graft.Const.*;
@@ -29,20 +30,29 @@ public class BuildCpgPhase implements GraftPhase {
     public BuildCpgPhase() { }
 
     @Override
-    public PhaseResult run() {
+    public void run() {
         log.info("Running BuildCpgPhase");
         String targetDir = Options.v().getString(OPT_TARGET_DIR);
+        Banner banner = new Banner();
+        banner.println("BuildCpgPhase");
+        banner.println("Target dir: " + targetDir);
+
         List<File> classFiles = Arrays.asList(SootUtil.getClassFiles(targetDir));
         if (classFiles.size() == 0) {
-            return new PhaseResult(this, true, "No class files found in target directory");
+            banner.println("No class files in target dir");
+            banner.display();
+            return;
         }
+
         int nrClasses = classFiles.size();
-        log.debug("Loading {} classes", nrClasses);
+        banner.println("Loading " + nrClasses + " classes:");
 
         List<String> classNames = new ArrayList<>();
         for (File classFile : classFiles) {
             // TODO: package prefixes
-            classNames.add(classFile.getName().replace(".class", ""));
+            String className = classFile.getName().replace(".class", "");
+            banner.println("- " + className);
+            classNames.add(className);
         }
 
         SootUtil.loadClasses(classNames.toArray(new String[0]));
@@ -53,11 +63,10 @@ public class BuildCpgPhase implements GraftPhase {
             CpgBuilder.buildCpg(cls, classFiles.get(i));
         }
 
-        // TODO: display phase output directly from phase
-
-        String details = String.format("| Nodes: %1$-89d |\n", CpgUtil.getNodeCount());
-        details += String.format("| Edges: %1$-89d |\n", CpgUtil.getEdgeCount());
-        return new PhaseResult(this, true, details);
+        banner.println("CPG constructed successfully");
+        banner.println("Nodes: " + CpgUtil.getNodeCount());
+        banner.println("Edges: " + CpgUtil.getEdgeCount());
+        banner.display();
     }
 
 }

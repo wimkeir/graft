@@ -1,9 +1,10 @@
 package graft.phases;
 
-import graft.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import graft.Banner;
+import graft.Options;
 import graft.db.GraphUtil;
 
 import static graft.Const.*;
@@ -20,23 +21,23 @@ public class DumpCpgPhase implements GraftPhase {
     public DumpCpgPhase() { }
 
     @Override
-    public PhaseResult run() {
+    public void run() {
         log.info("Running DumpCpgPhase...");
         String filename = Options.v().getString(OPT_GENERAL_GRAPH_FILE);
+        Banner banner = new Banner();
+        banner.println("DumpCpgPhase");
+        banner.println("Filename: " + filename);
         try {
             GraphUtil.graph().traversal()
                     .io(filename)
                     .write()
                     .iterate();
-
-            String details = String.format("| CPG written to file %1$-76s |\n", filename);
-            return new PhaseResult(this, true, details);
-
+            banner.println("CPG dumped to file");
         } catch (Exception e) {
             log.error("Could not write CPG to file '{}'", filename, e);
-            String details = String.format("| Could not write CPG to file %1$-68s |\n", filename);
-            return new PhaseResult(this, false, details);
+            banner.println("CPG could not be written to file");
         }
+        banner.display();
     }
 
 }

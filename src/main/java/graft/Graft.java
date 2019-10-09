@@ -33,16 +33,8 @@ public class Graft {
         GraphUtil.initGraph();
         SootUtil.configureSoot();
 
-        GraftRun graftRun = new GraftRun();
-        GraftResult result = graftRun.run();
-
+        new GraftRun().run();
         GraphUtil.closeGraph();
-
-        output(result.toString());
-    }
-
-    private static void output(String s) {
-        System.out.println(s);
     }
 
 }
