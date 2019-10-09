@@ -31,4 +31,8 @@ public class VertexDescription {
         return propPatterns.getOrDefault(key, defaultPattern);
     }
 
+    public void setPropPattern(String key, String value) {
+        propPatterns.put(key, value);
+    }
+
 }
