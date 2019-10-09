@@ -1,5 +1,6 @@
 package graft.cpg;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,15 +12,16 @@ import org.slf4j.LoggerFactory;
 
 import soot.Body;
 import soot.SootClass;
+import soot.SootMethod;
 import soot.Unit;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
 import graft.db.GraphUtil;
 import graft.traversal.CpgTraversalSource;
+import graft.utils.FileUtil;
 
 import static graft.Const.*;
-import static graft.traversal.__.*;
 
 /**
  * Handles the actual construction of the CPG.
@@ -30,27 +32,30 @@ public class CpgBuilder {
 
     private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);
 
+    public static void buildCpg(SootClass cls, File classFile) {
+        // TODO: how does this handle interfaces, extensions, enums etc?
+        Vertex classNode = AstBuilder.genAstNode(CLASS, cls.getShortName());
+        CpgUtil.addNodeProperty(classNode, SHORT_NAME, cls.getShortName());
+        CpgUtil.addNodeProperty(classNode, FULL_NAME, cls.getName());
+        CpgUtil.addNodeProperty(classNode, FILE_NAME, classFile.getName());
+        CpgUtil.addNodeProperty(classNode, FILE_PATH, classFile.getPath());
+        CpgUtil.addNodeProperty(classNode, FILE_HASH, FileUtil.hashFile(classFile));
+
+        log.debug("New class AST root");
+        log.debug(CpgUtil.debugVertex(classNode));
+
+        for (SootMethod method : cls.getMethods()) {
+            Body body = method.retrieveActiveBody();
+            buildCpg(body);
+        }
+    }
+
     /**
      * Build a CPG for the given method body.
      *
      * @param body the method body
      */
     public static void buildCpg(Body body) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-        SootClass cls = body.getMethod().getDeclaringClass();
-
-        // create an AST node for the method's declaring class if it doesn't exist
-        long count = g.V()
-                .hasLabel(AST_NODE)
-                .has(NODE_TYPE, CLASS)
-                .has(FULL_NAME, cls.getName())
-                .count().next();
-        if (count == 0) {
-            Vertex classNode = AstBuilder.genAstNode(CLASS, cls.getShortName());
-            CpgUtil.addNodeProperty(classNode, SHORT_NAME, cls.getShortName());
-            CpgUtil.addNodeProperty(classNode, FULL_NAME, cls.getName());
-        }
-
         UnitGraph unitGraph = new BriefUnitGraph(body);
         Map<Unit, Object> unitNodes = new HashMap<>();
         CfgBuilder.buildCfg(unitGraph, unitNodes);
@@ -62,32 +67,19 @@ public class CpgBuilder {
         }
     }
 
-    /**
-     * Amend the CPG of the given body.
-     *
-     * @param body
-     */
-    public static void amendCpg(Body body) {
+    public static void amendCpg(SootClass cls, File classFile) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-        String methodSig = body.getMethod().getSignature();
-
-        // delete all method nodes and any interproc edges to/from them
-        g.V().hasLabel(CFG_NODE)
-                .has(METHOD_SIG, methodSig)
-                .union(__(), repeat(out(AST_EDGE)).emit())
+        g.V().hasLabel(AST_NODE)
+                .has(NODE_TYPE, CLASS)
+                .has(FULL_NAME, cls.getName())
                 .drop()
                 .iterate();
 
-        // generate the new graph
-        UnitGraph unitGraph = new BriefUnitGraph(body);
-        Map<Unit, Object> unitNodes = new HashMap<>();
-        CfgBuilder.buildCfg(unitGraph, unitNodes);
-        PdgBuilder.buildPdg(unitGraph, unitNodes);
-
-        // TODO: make sure to do this everywhere its needed
-        if (GraphUtil.graph() instanceof Neo4jGraph) {
-            GraphUtil.graph().tx().commit();
+        for (SootMethod method : cls.getMethods()) {
+            CpgUtil.dropCfg(method);
         }
+
+        buildCpg(cls, classFile);
     }
 
 }

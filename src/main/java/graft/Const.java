@@ -11,6 +11,9 @@ public class Const {
     // general constants
     // ********************************************************************************************
 
+    // regular expressions
+    public static final String CLASS_FILE_REGEX = "[a-zA-Z_$]+[a-zA-Z_1-9$]*.class";
+
     // defaults
     public static final String DEFAULT_DB_DIRECTORY = ".db";
 
@@ -27,6 +30,10 @@ public class Const {
     public static final String OPT_DB_DIRECTORY = "db.directory";
     public static final String OPT_DB_IMPLEMENTATION = "db.implementation";
     public static final String OPT_PHASES = "phases";
+    public static final String OPT_SOOT_OPTIONS_CLASSPATH = "soot.options.classpath";
+    public static final String OPT_TARGET_DIR = "target-dir";
+    public static final String OPT_TARGET_JAR = "target-jar";
+    public static final String OPT_TARGET_CLASS = "target-class";
 
     // log levels
     public static final String TRACE = "trace";
@@ -80,8 +87,6 @@ public class Const {
     public static final String RET = "ret";
 
     // CFG node property keys
-    public static final String FILE_PATH = "file-path";
-    public static final String FILE_NAME = "file-name";
     public static final String METHOD_NAME = "method-name";
     public static final String METHOD_SIG = "method-sig";
     public static final String LINE_NO = "line-no";
@@ -134,6 +139,9 @@ public class Const {
     public static final String NAME = "name";
     public static final String OPERATOR = "operator";
     public static final String SHORT_NAME = "short-name";
+    public static final String FILE_PATH = "file-path";
+    public static final String FILE_NAME = "file-name";
+    public static final String FILE_HASH = "file-hash";
 
     // AST edge property keys
     public static final String INDEX = "index";

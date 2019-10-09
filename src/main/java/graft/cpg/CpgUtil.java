@@ -10,10 +10,12 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import soot.SootMethod;
 import soot.Type;
 
 import graft.cpg.visitors.TypeVisitor;
 import graft.db.GraphUtil;
+import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
@@ -70,6 +72,33 @@ public class CpgUtil {
     public static void addEdgeProperty(Edge edge, String key, Object value) {
         CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
         g.E(edge).property(key, value).iterate();
+    }
+
+    public static void dropCfg(SootMethod method) {
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        String methodSig = method.getSignature();
+
+        // delete all method nodes and any interproc edges to/from them
+        g.V().hasLabel(CFG_NODE)
+                .has(METHOD_SIG, methodSig)
+                .union(__(), repeat(out(AST_EDGE)).emit())
+                .drop()
+                .iterate();
+    }
+
+    public static String getClassHash(String className) {
+        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
+        CpgTraversal t = g.V()
+                .hasLabel(AST_NODE)
+                .has(NODE_TYPE, CLASS)
+                .has(FULL_NAME, className)
+                .values(FILE_HASH);
+        if (t.hasNext()) {
+            return t.next().toString();
+        } else {
+            log.warn("Cannot get file hash of class '{}': no results", className);
+            return "";
+        }
     }
 
     /**
@@ -179,8 +208,8 @@ public class CpgUtil {
      * @param vertex the vertex to get a string representation of
      * @return a string representation of the given vertex
      */
-    public static void debugVertex(Vertex vertex) {
-        debugElement(vertex, NODE_TYPE);
+    public static String debugVertex(Vertex vertex) {
+        return debugElement(vertex, NODE_TYPE);
     }
 
     /**
@@ -189,11 +218,11 @@ public class CpgUtil {
      * @param edge the edge to get a string representation of
      * @return a string representation of the given edge
      */
-    public static void debugEdge(Edge edge) {
-        debugElement(edge, EDGE_TYPE);
+    public static String debugEdge(Edge edge) {
+        return debugElement(edge, EDGE_TYPE);
     }
 
-    private static void debugElement(Element element, String typeKey) {
+    private static String debugElement(Element element, String typeKey) {
         StringBuilder sb = new StringBuilder();
         sb.append("<").append(element.label()).append(" ");
         sb.append("(").append(element.value(typeKey).toString()).append(")");
@@ -202,7 +231,7 @@ public class CpgUtil {
             sb.append(key).append("='").append(element.value(key).toString()).append("'");
         }
         sb.append(">");
-        log.debug(sb.toString());
+        return sb.toString();
     }
 
 }

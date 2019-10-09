@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import graft.db.GraphUtil;
 import graft.utils.LogUtil;
+import graft.utils.SootUtil;
 
 import static graft.Const.*;
 
@@ -30,6 +31,7 @@ public class Graft {
         log.debug("Running with configuration {}", config.toString());
 
         GraphUtil.initGraph();
+        SootUtil.configureSoot();
 
         GraftRun graftRun = new GraftRun();
         GraftResult result = graftRun.run();
