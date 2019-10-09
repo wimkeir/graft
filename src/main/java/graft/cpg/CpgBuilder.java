@@ -45,8 +45,12 @@ public class CpgBuilder {
         log.debug(CpgUtil.debugVertex(classNode));
 
         for (SootMethod method : cls.getMethods()) {
-            Body body = method.retrieveActiveBody();
-            buildCpg(body);
+            try {
+                Body body = method.retrieveActiveBody();
+                buildCpg(body);
+            } catch (RuntimeException e) {
+                log.warn("No body for method '{}'", method.getSignature(), e);
+            }
         }
     }
 

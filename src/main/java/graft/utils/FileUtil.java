@@ -40,4 +40,12 @@ public class FileUtil {
 
         throw new GraftException("Could not hash file '" + file.getName() + "'");
     }
+
+    public static String getClassName(File rootDir, File classFile) {
+        return rootDir.toURI()
+                .relativize(classFile.toURI())
+                .getPath()
+                .replace('/', '.')
+                .replace(".class", "");
+    }
 }

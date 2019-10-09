@@ -2,7 +2,6 @@ package graft.phases;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -33,12 +32,14 @@ public class AmendCpgPhase implements GraftPhase {
     @Override
     public void run() {
         log.info("Running AmendCpgPhase...");
-        String targetDir = Options.v().getString(OPT_TARGET_DIR);
+        String targetDirName = Options.v().getString(OPT_TARGET_DIR);
+        File targetDir = new File(targetDirName);
+
         Banner banner = new Banner();
         banner.println("AmendCpgPhase");
         banner.println("Target dir: " + targetDir);
 
-        List<File> classFiles = Arrays.asList(SootUtil.getClassFiles(targetDir));
+        List<File> classFiles = SootUtil.getClassFiles(targetDir);
         if (classFiles.size() == 0) {
             banner.println("No class files in target dir");
             banner.display();
@@ -49,8 +50,7 @@ public class AmendCpgPhase implements GraftPhase {
         List<String> classNames = new ArrayList<>();
         banner.println("Files changed:");
         for (File classFile : classFiles) {
-            // TODO: package prefixes
-            String className = classFile.getName().replace(".class", "");
+            String className = FileUtil.getClassName(targetDir, classFile);
             String hash = FileUtil.hashFile(classFile);
             if (!hash.equals(CpgUtil.getClassHash(className))) {
                 log.info("Class '{}' has been changed", className);

@@ -9,6 +9,8 @@ import soot.PhaseOptions;
 import soot.Scene;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import static graft.Const.*;
 
@@ -21,6 +23,7 @@ public class SootUtil {
 
     private static Logger log = LoggerFactory.getLogger(SootUtil.class);
 
+
     public static void configureSoot() {
         soot.options.Options.v().set_soot_classpath(Options.v().getString(OPT_SOOT_OPTIONS_CLASSPATH));
         soot.options.Options.v().set_prepend_classpath(true);
@@ -30,6 +33,12 @@ public class SootUtil {
         soot.options.Options.v().set_no_bodies_for_excluded(true);
         // TODO: set app or whole program?
         soot.options.Options.v().set_app(true);
+        soot.options.Options.v().set_allow_phantom_refs(true);
+
+        List<String> excluded = new ArrayList<>();
+        excluded.add("java.lang");
+        soot.options.Options.v().set_exclude(excluded);
+
         PhaseOptions.v().setPhaseOption("jb", "use-original-names:true");
 
         // TODO:
@@ -40,9 +49,17 @@ public class SootUtil {
         // output dir
     }
 
-    public static File[] getClassFiles(String targetDir) {
-        File dir = new File(targetDir);
-        return dir.listFiles(file -> file.getName().matches(CLASS_FILE_REGEX));
+    public static List<File> getClassFiles(File targetDir) {
+        List<File> classFiles = new ArrayList<>();
+        for (File file : targetDir.listFiles()) {
+            if (file.isDirectory()) {
+                classFiles.addAll(getClassFiles(file));
+            }
+            if (file.getName().matches(CLASS_FILE_REGEX)) {
+                classFiles.add(file);
+            }
+        }
+        return classFiles;
     }
 
     public static void loadClasses(String[] classNames) {
