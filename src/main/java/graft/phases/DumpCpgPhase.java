@@ -23,7 +23,7 @@ public class DumpCpgPhase implements GraftPhase {
     @Override
     public void run() {
         log.info("Running DumpCpgPhase...");
-        String filename = Options.v().getString(OPT_GENERAL_GRAPH_FILE);
+        String filename = Options.v().getString(OPT_DB_DUMP_TO);
         Banner banner = new Banner();
         banner.println("DumpCpgPhase");
         banner.println("Filename: " + filename);

@@ -24,7 +24,7 @@ public class LoadCpgPhase implements GraftPhase {
     @Override
     public void run() {
         log.info("Running LoadCpgPhase...");
-        String filename = Options.v().getString(OPT_GENERAL_GRAPH_FILE);
+        String filename = Options.v().getString(OPT_DB_LOAD_FROM);
         Banner banner = new Banner();
         banner.println("LoadCpgPhase");
         banner.println("Filename: " + filename);
