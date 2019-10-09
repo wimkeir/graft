@@ -13,12 +13,7 @@ public interface GGraph {
 
     CpgTraversalSource traversal();
     CodePropertyGraph asCpg();
-    ControlFlowGraph asCfg();
-    AbstractSyntaxTree asAst();
-    ProgramDependenceGraph asPdg();
     void toDot(String filename);
-
-    // TODO
-//    void dump(String filename);
-//    void commit();
+    void dump(String filename);
+    void commit();
 }

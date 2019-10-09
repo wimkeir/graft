@@ -5,8 +5,6 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import graft.GraftException;
 
-import static graft.Const.*;
-
 /**
  * An implementation of the code property graph.
  *
@@ -38,45 +36,6 @@ public class CodePropertyGraph extends BasePropertyGraph {
     // ********************************************************************************************
 
     // TODO: use traversals for getX methods
-
-    /**
-     * Get the control flow subgraph of the CPG.
-     *
-     * @return the CFG subgraph of the CPG
-     */
-    public ControlFlowGraph getCfg() {
-        Graph cfg = (Graph) traversal().E()
-                .hasLabel(CFG_EDGE)
-                .subgraph("cfg")
-                .cap("cfg").next();
-        return new ControlFlowGraph(cfg);
-    }
-
-    /**
-     * Get the abstract syntax tree subgraph of the CPG.
-     *
-     * @return the AST subgraph of the CPG
-     */
-    public AbstractSyntaxTree getAst() {
-        Graph ast = (Graph) traversal().E()
-                .hasLabel(AST_EDGE)
-                .subgraph("ast")
-                .cap("ast").next();
-        return new AbstractSyntaxTree(ast);
-    }
-
-    /**
-     * Get the program dependence subgraph of the CPG.
-     *
-     * @return the PDG subgraph of the CPG.
-     */
-    public ProgramDependenceGraph getPdg() {
-        Graph pdg = (Graph) traversal().E()
-                .hasLabel(PDG_EDGE)
-                .subgraph("pdg")
-                .cap("pdg").next();
-        return new ProgramDependenceGraph(pdg);
-    }
 
     // ********************************************************************************************
     // public static methods

@@ -44,33 +44,19 @@ public class BasePropertyGraph implements GGraph {
     }
 
     @Override
-    public ControlFlowGraph asCfg() {
-        if (ControlFlowGraph.isCfg(g)) {
-            return new ControlFlowGraph(g);
-        }
-        throw new GraftException("Graph is not a CPG");
-    }
-
-    @Override
-    public AbstractSyntaxTree asAst() {
-        if (AbstractSyntaxTree.isAst(g)) {
-            return new AbstractSyntaxTree(g);
-        }
-        throw new GraftException("Graph is not an AST");
-    }
-
-    @Override
-    public ProgramDependenceGraph asPdg() {
-        if (ProgramDependenceGraph.isPdg(g)) {
-            return new ProgramDependenceGraph(g);
-        }
-        throw new GraftException("Graph is not a PDG");
-    }
-
-    @Override
     public void toDot(String filename) {
         // TODO: graph name
         DotUtil.graphToDot(g, filename, "graphName");
+    }
+
+    @Override
+    public void dump(String filename) {
+        // TODO
+    }
+
+    @Override
+    public void commit() {
+        // TODO
     }
 
     // ********************************************************************************************
