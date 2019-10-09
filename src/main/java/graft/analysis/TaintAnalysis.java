@@ -1,4 +1,4 @@
-package graft.analysis.taint;
+package graft.analysis;
 
 import java.util.*;
 
@@ -11,8 +11,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import graft.analysis.GraftAnalysis;
 
 import static graft.Const.*;
 

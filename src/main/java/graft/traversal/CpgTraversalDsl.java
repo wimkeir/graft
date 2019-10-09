@@ -1,16 +1,10 @@
 package graft.traversal;
 
-import java.util.List;
-
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.GremlinDsl;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
-import graft.analysis.taint.MethodSanitizer;
-import graft.analysis.taint.SanitizerDescription;
-import graft.analysis.taint.SinkDescription;
-import graft.cpg.CpgUtil;
 import graft.cpg.structure.VertexDescription;
 import graft.db.GraphUtil;
 
@@ -64,76 +58,6 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
             }
             return true;
         });
-    }
-
-    /**
-     * Checks whether the current node sanitizes the given local variable, according to the given sanitizer descriptions.
-     *
-     * The sanitizer description specifies which argument indices are considered sanitized. If none are specified, then
-     * all arguments are considered sanitized.
-     *
-     * @param sanitizers the sanitizer descriptions
-     * @param varName the variable to check for sanitization
-     * @return a filter traversal that returns true if the node sanitizes the variable, otherwise false
-     */
-    default GraphTraversal<S, ?> sanitizes(List<SanitizerDescription> sanitizers, String varName) {
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-        return filter(it -> {
-            Vertex vertex = (Vertex) it.get();
-            for (SanitizerDescription sanitizer : sanitizers) {
-                if (sanitizer instanceof MethodSanitizer) {
-                    MethodSanitizer methSan = (MethodSanitizer) sanitizer;
-                    List<Vertex> sanInvokes = CpgUtil.getInvokeExprs(vertex, methSan.sigPattern);
-
-                    for (Vertex sanInvoke : sanInvokes) {
-                        // if no args specified, we assume all args are sanitized
-                        if (methSan.sanitizesArgs.size() == 0) {
-                            CpgTraversal args = g.V(sanInvoke)
-                                    .outE(AST_EDGE)
-                                    .has(EDGE_TYPE, ARG)
-                                    .inV();
-                            while (args.hasNext()) {
-                                Vertex arg = (Vertex) args.next();
-                                if (arg.value(NAME).equals(varName)) {
-                                    return true;
-                                }
-                            }
-                        } else {
-                            for (int argIndex : methSan.sanitizesArgs) {
-                                Vertex arg = g.V(sanInvoke).ithArg(argIndex).next();
-                                if (arg.value(NAME).equals(varName)) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // TODO: conditional sanitizers
-                }
-            }
-            return false;
-        });
-    }
-
-    /**
-     * Returns a traversal containing all argument nodes that are "sunk" in the current sink node, according to the given
-     * sink description.
-     *
-     * The sink description specifies which argument indices should be considered sunk. If none are specified, then all
-     * arguments are considered sunk.
-     *
-     * @param sink the description of the sink
-     * @return a traversal containing the arguments sunk
-     */
-    default GraphTraversal<S, Vertex> sunkArgs(SinkDescription sink) {
-        return outE(AST_EDGE)
-                .has(EDGE_TYPE, ARG)
-                .filter(it -> {
-                    if (sink.sinksArgs.size() == 0) return true;
-                    Edge argEdge = it.get();
-                    int index = argEdge.value(INDEX);
-                    return sink.sinksArgs.contains(index);
-                }).inV();
     }
 
     /**
