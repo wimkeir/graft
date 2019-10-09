@@ -78,8 +78,8 @@ public class AmendCpgPhase implements GraftPhase {
         }
 
         banner.println("CPG amended successfully");
-        banner.println("Nodes: " + CpgUtil.getNodeCount() + "(prev " + prevNodes + ")");
-        banner.println("Edges: " + CpgUtil.getEdgeCount() + "(prev " + prevEdges + ")");
+        banner.println("Nodes: " + CpgUtil.getNodeCount() + " (prev " + prevNodes + ")");
+        banner.println("Edges: " + CpgUtil.getEdgeCount() + " (prev " + prevEdges + ")");
         banner.display();
     }
 
