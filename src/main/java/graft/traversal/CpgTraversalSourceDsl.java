@@ -32,6 +32,13 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         return getV().matches(descr);
     }
 
+    public CpgTraversal<Vertex, Path> pathsBetween(Vertex v, Vertex w, String edgeLabel) {
+        return (CpgTraversal<Vertex, Path>) V(v)
+                .repeat(out(edgeLabel).simplePath())
+                .until(is(w))
+                .path();
+    }
+
     /**
      * Get the tainted sources that taint the given variable argument of the given sink, according to the given source
      * description.

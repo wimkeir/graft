@@ -1,6 +1,6 @@
 package graft.analysis;
 
-import java.util.List;
+import graft.cpg.structure.CodePropertyGraph;
 
 /**
  * Base interface for analysis runs.
@@ -9,6 +9,6 @@ import java.util.List;
  */
 public interface GraftAnalysis {
 
-    List<AnalysisResult> doAnalysis();
+    void doAnalysis(CodePropertyGraph cpg);
 
 }

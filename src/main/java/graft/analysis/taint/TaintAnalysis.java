@@ -1,28 +1,23 @@
 package graft.analysis.taint;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import graft.Banner;
+import graft.cpg.structure.CodePropertyGraph;
+import graft.cpg.structure.VertexDescription;
+import graft.utils.LogUtil;
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.analysis.AnalysisResult;
 import graft.analysis.GraftAnalysis;
-import graft.cpg.CpgUtil;
-import graft.db.GraphUtil;
-import graft.traversal.CpgTraversal;
-import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
 
 /**
- * This class performs a backwards taint analysis on the CPG, using the given source, sink and sanitizer descriptions.
+ * This class performs a taint analysis on the CPG, using the given source, sink and sanitizer descriptions.
  *
  * @author Wim Keirsgieter
  */
@@ -30,66 +25,47 @@ public class TaintAnalysis implements GraftAnalysis {
 
     private static Logger log = LoggerFactory.getLogger(TaintAnalysis.class);
 
-    private List<SourceDescription> sources;
-    private List<SinkDescription> sinks;
-    private List<SanitizerDescription> sanitizers;
+    private VertexDescription source;
+    private VertexDescription sink;
+    private VertexDescription sanitizer;
 
-    private List<AnalysisResult> results;
-
-    public TaintAnalysis(List<SourceDescription> sources, List<SinkDescription> sinks, List<SanitizerDescription> sanitizers) {
-        this.sources = sources;
-        this.sinks = sinks;
-        this.sanitizers = sanitizers;
-
-        results = new ArrayList<>();
+    public TaintAnalysis(VertexDescription source, VertexDescription sink, VertexDescription sanitizer) {
+        this.source = source;
+        this.sink = sink;
+        this.sanitizer = sanitizer;
     }
 
     @Override
-    public List<AnalysisResult> doAnalysis() {
+    public void doAnalysis(CodePropertyGraph cpg) {
         log.info("Running taint analysis...");
-        if (log.isDebugEnabled()) {
-            for (SourceDescription source : sources) log.debug(source.toString());
-            for (SinkDescription sink : sinks) log.debug(sink.toString());
-            for (SanitizerDescription san : sanitizers) log.debug(san.toString());
-        }
+        // TODO: ideally we want the source vertices as well as the tainted vars in a map
+        List<Vertex> sources = cpg.traversal().getMatches(source).toList();
+        List<Vertex> sinks = cpg.traversal().getMatches(sink).toList();
 
-        for (SinkDescription sinkDescr : sinks) {
-            for (SourceDescription sourceDescr : sources) {
-                backwardsTaintAnalysis(sinkDescr, sourceDescr);
-            }
-        }
+        log.debug("{} sources found", sources.size());
+        log.debug("{} sinks found", sinks.size());
 
-        return results;
-    }
-
-    private void backwardsTaintAnalysis(SinkDescription sinkDescr, SourceDescription sourceDescr) {
-        // a mapping of variables (args) to the sink invoke expression that "sunk" them
-        Map<Vertex, Vertex> sunkVars = getSunkVars(sinkDescr);
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-
-        // TODO: this can easily be parallelised
-        for (Vertex localVertex : sunkVars.keySet()) {
-            Vertex invokeVertex = sunkVars.get(localVertex);
-            Vertex rootVertex = CpgUtil.getCfgRoot(invokeVertex);
-            String varName = localVertex.value(NAME);         // NB: this assumes the arg is a local variable
-
-            CpgTraversal sources = g.getSourcesOfArg(rootVertex, varName, sourceDescr);
-
-            while (sources.hasNext()) {
-                Vertex sourceVertex = (Vertex) sources.next();
-                GraphTraversal paths = g.sourceToSinkPaths(sourceVertex, rootVertex, sanitizers, varName);
-                while (paths.hasNext()) {
-                    Path path = (Path) paths.next();
-                    Vertex endVertex = path.get(path.size() - 1);
-
-                    if (endVertex.equals(rootVertex)) {
-                        AnalysisResult result = new TaintAnalysisResult(sourceVertex,
-                                                                   rootVertex,
-                                                                   varName,
-                                                                   sourceDescr.sigPattern,
-                                                                   sinkDescr.sigPattern);
-                        if (!results.contains(result)) {
-                            results.add(result);
+        for (Vertex srcVertex : sources) {
+            for (Vertex sinkVertex : sinks) {
+                List<Path> pdgPaths = cpg.traversal()
+                        .pathsBetween(srcVertex, sinkVertex, PDG_EDGE)
+                        .toList();
+                log.debug("{} PDG paths between vertex '{}' and vertex '{}'",
+                        pdgPaths.size(),
+                        srcVertex.value(TEXT_LABEL),
+                        sinkVertex.value(TEXT_LABEL));
+                if (pdgPaths.size() > 0) {
+                    List<Path> cfgPaths = cpg.traversal()
+                            .pathsBetween(srcVertex, sinkVertex, CFG_EDGE)
+                            .toList();
+                    for (Path path : cfgPaths) {
+                        if (!isSanitized(cpg, path)) {
+                            Banner banner = new Banner();
+                            banner.println("Taint vulnerability found!");
+                            banner.println("");
+                            banner.println("Source: " + ((Vertex) path.get(0)).value(TEXT_LABEL));
+                            banner.println("Sink: " + ((Vertex) path.get(path.size() - 1)).value(TEXT_LABEL));
+                            banner.display();
                         }
                     }
                 }
@@ -97,30 +73,35 @@ public class TaintAnalysis implements GraftAnalysis {
         }
     }
 
-    private Map<Vertex, Vertex> getSunkVars(SinkDescription sinkDescr) {
-        Map<Vertex, Vertex> sunkVars = new HashMap<>();
-        CpgTraversalSource g = GraphUtil.graph().traversal(CpgTraversalSource.class);
-
-        CpgTraversal callsToSink = g.getCallsTo(sinkDescr.sigPattern);
-        while (callsToSink.hasNext()) {
-            Vertex invokeVertex = (Vertex) callsToSink.next();
-
-            GraphTraversal sunkArgs = g.V(invokeVertex).sunkArgs(sinkDescr);
-
-            while (sunkArgs.hasNext()) {
-                Vertex sunkArg = (Vertex) sunkArgs.next();
-                // TODO: handle refs
-                // TODO: special case where call to source is arg to sink
-
-                List<Vertex> locals = CpgUtil.getLocals(sunkArg);
-                for (Vertex local : locals) {
-                    sunkVars.put(local, invokeVertex);
-                }
+    private boolean isSanitized(CodePropertyGraph cpg, Path path) {
+        boolean[] sanitized = new boolean[]{ false };
+        path.iterator().forEachRemaining(it -> {
+            Vertex v = (Vertex) it;
+            if (cpg.traversal().V(v).matches(sanitizer).hasNext()) {
+                sanitized[0] = true;
             }
-
-        }
-
-        return sunkVars;
+        });
+        return sanitized[0];
     }
 
+    // XXX
+    public static void main(String[] args) {
+        LogUtil.setLogLevel(DEBUG);
+        CodePropertyGraph cpg = CodePropertyGraph.fromFile("etc/dumps/simple.json");
+        Map<String, String> srcProps = new HashMap<>();
+        Map<String, String> sinkProps = new HashMap<>();
+        Map<String, String> sanProps = new HashMap<>();
+
+        srcProps.put(NODE_TYPE, ASSIGN_STMT);
+        VertexDescription srcDescr = new VertexDescription("source", CFG_NODE, srcProps);
+
+        sinkProps.put(NODE_TYPE, INVOKE_STMT);
+        VertexDescription sinkDescr = new VertexDescription("sink", CFG_NODE, sinkProps);
+
+        sanProps.put(NODE_TYPE, CONDITIONAL_STMT);
+        VertexDescription sanDescr = new VertexDescription("sanitizer", CFG_NODE, sanProps);
+
+        TaintAnalysis analysis = new TaintAnalysis(srcDescr, sinkDescr, sanDescr);
+        analysis.doAnalysis(cpg);
+    }
 }
