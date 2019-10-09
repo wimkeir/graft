@@ -11,7 +11,7 @@ public class Simple {
             // comment out this line so tainted variable a propagates to sink
             sanitizer(attr);
         }
-        sink(a);
+        sink(a - 1);
     }
 
     public static int source() {
@@ -19,11 +19,11 @@ public class Simple {
     }
 
     public static void sanitizer(int a) {
-        // sanitize args...
+        assert a > 2;
     }
 
     public static void sink(int a) {
-        // sensitive sink...
+        assert a < 1;
     }
 
 }
