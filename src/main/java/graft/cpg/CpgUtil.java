@@ -30,6 +30,15 @@ public class CpgUtil {
 
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
+    public static Vertex genCpgRoot(String targetDir) {
+        CpgTraversalSource g = Graft.cpg().traversal();
+        return g.addV(CPG_ROOT)
+                .property(NODE_TYPE, CPG_ROOT)
+                .property(TARGET, targetDir)
+                .property(TEXT_LABEL, targetDir)
+                .next();
+    }
+
     /**
      * Get the number of nodes currently in the CPG.
      *

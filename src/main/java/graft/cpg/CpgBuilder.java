@@ -32,7 +32,7 @@ public class CpgBuilder {
 
     private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);
 
-    public static void buildCpg(SootClass cls, File classFile) {
+    public static void buildCpg(Vertex cpgRoot, SootClass cls, File classFile) {
         // TODO: how does this handle interfaces, extensions, enums etc?
         Vertex classNode = AstBuilder.genAstNode(CLASS, cls.getShortName());
         CpgUtil.addNodeProperty(classNode, SHORT_NAME, cls.getShortName());
@@ -41,8 +41,8 @@ public class CpgBuilder {
         CpgUtil.addNodeProperty(classNode, FILE_PATH, classFile.getPath());
         CpgUtil.addNodeProperty(classNode, FILE_HASH, FileUtil.hashFile(classFile));
 
-        log.debug("New class AST root");
-        log.debug(CpgUtil.debugVertex(classNode));
+        // TODO: package nodes
+        AstBuilder.genAstEdge(cpgRoot, classNode, CLASS, CLASS);
 
         for (SootMethod method : cls.getMethods()) {
             try {
@@ -71,7 +71,7 @@ public class CpgBuilder {
         }
     }
 
-    public static void amendCpg(SootClass cls, File classFile) {
+    public static void amendCpg(Vertex cpgRoot, SootClass cls, File classFile) {
         CpgTraversalSource g = Graft.cpg().traversal();
         g.V().hasLabel(AST_NODE)
                 .has(NODE_TYPE, CLASS)
@@ -83,7 +83,7 @@ public class CpgBuilder {
             CpgUtil.dropCfg(method);
         }
 
-        buildCpg(cls, classFile);
+        buildCpg(cpgRoot, cls, classFile);
     }
 
 }

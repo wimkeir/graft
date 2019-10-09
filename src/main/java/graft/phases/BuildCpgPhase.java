@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,10 +60,11 @@ public class BuildCpgPhase implements GraftPhase {
 
         SootUtil.loadClasses(classNames.toArray(new String[0]));
 
+        Vertex cpgRoot = CpgUtil.genCpgRoot(targetDirName);
         for (int i = 0; i < nrClasses; i++) {
             log.debug("Building CPG of class '{}'", classNames.get(i));
             SootClass cls = Scene.v().loadClassAndSupport(classNames.get(i));
-            CpgBuilder.buildCpg(cls, classFiles.get(i));
+            CpgBuilder.buildCpg(cpgRoot, cls, classFiles.get(i));
         }
 
         banner.println("CPG constructed successfully");

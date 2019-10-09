@@ -4,12 +4,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import soot.*;
 
 import graft.Banner;
+import graft.Graft;
 import graft.Options;
 import graft.cpg.CpgBuilder;
 import graft.cpg.CpgUtil;
@@ -67,6 +70,7 @@ public class AmendCpgPhase implements GraftPhase {
         }
         banner.println(amendedClasses.size() + " classes to amend");
 
+        Vertex cpgRoot = Graft.cpg().traversal().V().hasLabel(CPG_ROOT).next();
         SootUtil.loadClasses(classNames.toArray(new String[0]));
         long prevNodes = CpgUtil.getNodeCount();
         long prevEdges = CpgUtil.getEdgeCount();
@@ -74,7 +78,7 @@ public class AmendCpgPhase implements GraftPhase {
         for (int i = 0; i < amendedClasses.size(); i++) {
             log.debug("Amending CPG of class '{}'", classNames.get(i));
             SootClass cls = Scene.v().loadClassAndSupport(classNames.get(i));
-            CpgBuilder.amendCpg(cls, amendedClasses.get(i));
+            CpgBuilder.amendCpg(cpgRoot, cls, amendedClasses.get(i));
         }
 
         banner.println("CPG amended successfully");

@@ -11,6 +11,8 @@ public class Const {
     // general constants
     // ********************************************************************************************
 
+    public static final String CPG_ROOT = "cpg-root";
+
     // regular expressions
     public static final String CLASS_FILE_REGEX = "[a-zA-Z_$]+[a-zA-Z_1-9$]*.class";
 

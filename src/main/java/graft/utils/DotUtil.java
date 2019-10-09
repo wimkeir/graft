@@ -53,6 +53,7 @@ public class DotUtil {
             case CFG_NODE:
                 cfgNodeToDot(v, out);
                 break;
+            case CPG_ROOT:
             case AST_NODE:
                 astNodeToDot(v, out);
                 break;
