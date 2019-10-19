@@ -34,6 +34,9 @@ public class Const {
     public static final String OPT_DB_DUMP_TO = "db.dump-to";
     public static final String OPT_PHASES = "phases";
     public static final String OPT_SOOT_OPTIONS_CLASSPATH = "soot.options.classpath";
+    public static final String OPT_TAINT_SOURCE = "taint.source";
+    public static final String OPT_TAINT_SINK = "taint.sink";
+    public static final String OPT_TAINT_SANITIZER = "taint.sanitizer";
     public static final String OPT_TARGET_DIR = "target-dir";
     public static final String OPT_TARGET_JAR = "target-jar";
     public static final String OPT_TARGET_CLASS = "target-class";

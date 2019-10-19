@@ -3,14 +3,13 @@ package graft.cpg;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import graft.Graft;
+import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
@@ -31,8 +30,8 @@ public class Interproc {
     public static void genInterprocEdges() {
         log.debug("Generating interprocedural edges...");
         // TODO NB: context sensitivity
-        GraphTraversalSource g = Graft.cpg().traversal();
-        GraphTraversal invokeExprs = g.V()
+        CpgTraversalSource g = Graft.cpg().traversal();
+        CpgTraversal invokeExprs = g.V()
                 .hasLabel(AST_NODE)
                 .has(NODE_TYPE, INVOKE_EXPR);
 
@@ -45,10 +44,14 @@ public class Interproc {
                     .repeat(in(AST_EDGE))
                     .until(hasLabel(CFG_NODE))
                     .next();
-            Vertex retSite = g.V(callSite).out(CFG_EDGE).next();
+            CpgTraversal ret = g.V(callSite).out(CFG_EDGE);
+            Vertex retSite = null;
+            if (ret.hasNext()) {
+                retSite = (Vertex) ret.next();
+            }
 
             // find entry node of method invoked
-            GraphTraversal methodEntries = g.V()
+            CpgTraversal methodEntries = g.V()
                     .hasLabel(CFG_NODE)
                     .has(NODE_TYPE, ENTRY)
                     .has(METHOD_SIG, methodSig);
@@ -60,9 +63,16 @@ public class Interproc {
                 // generate call edge
                 CfgBuilder.genCfgEdge(callSite, methodEntry, CALL, CALL);
 
-                // generate ret edge
-                Vertex retStmt = g.V(methodEntry).repeat(out(CFG_EDGE)).until(has(NODE_TYPE, RETURN_STMT)).next();
-                CfgBuilder.genCfgEdge(retStmt, retSite, RET, RET);
+                if (retSite != null) {
+                    // generate ret edge
+                    Vertex retStmt = Graft.cpg().traversal()
+                            .V(methodEntry)
+                            .repeat(out(CFG_EDGE)).until(has(NODE_TYPE, RETURN_STMT))
+                            .next();
+                    CfgBuilder.genCfgEdge(retStmt, retSite, RET, RET);
+                } else {
+                    log.warn("No ret site for call at vertex '{}'", callSite.value(TEXT_LABEL).toString());
+                }
 
                 genArgToParamEdges(callSite, methodEntry);
                 genRetToCallEdges(callSite, methodEntry);

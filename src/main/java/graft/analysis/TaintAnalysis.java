@@ -1,16 +1,23 @@
 package graft.analysis;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
-import graft.Banner;
-import graft.cpg.structure.CodePropertyGraph;
-import graft.cpg.structure.VertexDescription;
-import graft.utils.LogUtil;
+import groovy.lang.Binding;
+import groovy.lang.GroovyShell;
+
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import graft.Banner;
+import graft.Options;
+import graft.cpg.CpgUtil;
+import graft.cpg.structure.CodePropertyGraph;
+import graft.traversal.CpgTraversal;
 
 import static graft.Const.*;
 
@@ -23,25 +30,40 @@ public class TaintAnalysis implements GraftAnalysis {
 
     private static Logger log = LoggerFactory.getLogger(TaintAnalysis.class);
 
-    private VertexDescription source;
-    private VertexDescription sink;
-    private VertexDescription sanitizer;
+    private CpgTraversal sourceDescr;
+    private CpgTraversal sinkDescr;
+    private CpgTraversal sanDescr;
 
-    public TaintAnalysis(VertexDescription source, VertexDescription sink, VertexDescription sanitizer) {
-        this.source = source;
-        this.sink = sink;
-        this.sanitizer = sanitizer;
-    }
+    private Set<Vertex> sanitizers;
+
+    public TaintAnalysis() { }
 
     @Override
     public void doAnalysis(CodePropertyGraph cpg) {
         log.info("Running taint analysis...");
-        // TODO: ideally we want the source vertices as well as the tainted vars in a map
-        List<Vertex> sources = cpg.traversal().getMatches(source).toList();
-        List<Vertex> sinks = cpg.traversal().getMatches(sink).toList();
 
-        log.debug("{} sources found", sources.size());
-        log.debug("{} sinks found", sinks.size());
+        log.debug("Loading taint descriptions");
+        Binding binding = new Binding();
+        GroovyShell shell = new GroovyShell(binding);
+        binding.setProperty("cpg", cpg);
+
+        try {
+            sourceDescr = (CpgTraversal) shell.evaluate(new File(Options.v().getString(OPT_TAINT_SOURCE)));
+            sinkDescr = (CpgTraversal) shell.evaluate(new File(Options.v().getString(OPT_TAINT_SINK)));
+            sanDescr = (CpgTraversal) shell.evaluate(new File(Options.v().getString(OPT_TAINT_SANITIZER)));
+        } catch (IOException e) {
+            log.error("Unable to read taint descriptions, failure", e);
+            return;
+        }
+
+        sanitizers = sanDescr.toSet();
+
+        // TODO: ideally we want the source vertices as well as the tainted vars in a map
+        List<Vertex> sources = sourceDescr.toList();
+        List<Vertex> sinks = sinkDescr.toList();
+
+        log.debug("{} potential sources found", sources.size());
+        log.debug("{} potential sinks found", sinks.size());
 
         for (Vertex srcVertex : sources) {
             for (Vertex sinkVertex : sinks) {
@@ -52,51 +74,48 @@ public class TaintAnalysis implements GraftAnalysis {
                         pdgPaths.size(),
                         srcVertex.value(TEXT_LABEL),
                         sinkVertex.value(TEXT_LABEL));
-                if (pdgPaths.size() > 0) {
-                    List<Path> cfgPaths = cpg.traversal()
-                            .pathsBetween(srcVertex, sinkVertex, CFG_EDGE)
-                            .toList();
-                    for (Path path : cfgPaths) {
-                        if (!isSanitized(cpg, path)) {
-                            Banner banner = new Banner();
-                            banner.println("Taint vulnerability found!");
-                            banner.println("");
-                            banner.println("Source: " + ((Vertex) path.get(0)).value(TEXT_LABEL));
-                            banner.println("Sink: " + ((Vertex) path.get(path.size() - 1)).value(TEXT_LABEL));
-                            banner.display();
-                        }
+                for (Path pdgPath : pdgPaths) {
+                    if (!isSanitized(cpg, pdgPath)) {
+                        reportTaintedPath(pdgPath);
+                    } else {
+                        log.debug("Path is sanitized");
                     }
                 }
             }
         }
     }
 
-    private boolean isSanitized(CodePropertyGraph cpg, Path path) {
-        boolean[] sanitized = new boolean[]{ false };
-        path.iterator().forEachRemaining(it -> {
-            Vertex v = (Vertex) it;
-            if (cpg.traversal().V(v).matches(sanitizer).hasNext()) {
-                sanitized[0] = true;
+    private void reportTaintedPath(Path pdgPath) {
+        Vertex src = pdgPath.get(0);
+        Vertex sink = pdgPath.get(pdgPath.size() - 1);
+        Banner banner = new Banner();
+        banner.println("Taint vulnerability found!");
+        banner.println("");
+        banner.println("Source:");
+        banner.println(src.value(TEXT_LABEL));
+        banner.println("Location: " + CpgUtil.getFileName(src) + " (" + src.value(LINE_NO) + ")");
+        banner.println("Sink:");
+        banner.println(sink.value(TEXT_LABEL));
+        banner.println("Location: " + CpgUtil.getFileName(sink) + " (" + sink.value(LINE_NO) + ")");
+        banner.display();
+
+    }
+
+    private boolean isSanitized(CodePropertyGraph cpg, Path pdgPath) {
+        log.debug("Checking path for sanitization");
+        for (int i = 0; i < pdgPath.size() - 1; i++) {
+            List<Path> cfgPaths = cpg.traversal()
+                    .pathsBetween(pdgPath.get(i), pdgPath.get(i + 1), CFG_EDGE)
+                    .toList();
+            for (Path cfgPath : cfgPaths) {
+                for (int j = 0; j < cfgPath.size(); j++) {
+                    if (sanitizers.contains(cfgPath.get(j))) {
+                        return true;
+                    }
+                }
             }
-        });
-        return sanitized[0];
+        }
+        return false;
     }
 
-    // XXX
-    public static void main(String[] args) {
-        LogUtil.setLogLevel(DEBUG);
-        CodePropertyGraph cpg = CodePropertyGraph.fromFile("etc/dumps/simple.json");
-
-        VertexDescription srcDescr = new VertexDescription("source", CFG_NODE);
-        srcDescr.setPropPattern(NODE_TYPE, ASSIGN_STMT);
-
-        VertexDescription sinkDescr = new VertexDescription("sink", CFG_NODE);
-        sinkDescr.setPropPattern(NODE_TYPE, INVOKE_STMT);
-
-        VertexDescription sanDescr = new VertexDescription("sanitizer", CFG_NODE);
-        sanDescr.setPropPattern(NODE_TYPE, CONDITIONAL_STMT);
-
-        TaintAnalysis analysis = new TaintAnalysis(srcDescr, sinkDescr, sanDescr);
-        analysis.doAnalysis(cpg);
-    }
 }

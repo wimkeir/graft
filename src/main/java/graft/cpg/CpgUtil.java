@@ -30,6 +30,15 @@ public class CpgUtil {
 
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
+    public static String getFileName(Vertex v) {
+        CpgTraversalSource g = Graft.cpg().traversal();
+        return g.V(v)
+                .until(hasLabel(CFG_NODE)).repeat(in())
+                .until(has(NODE_TYPE, ENTRY)).repeat(in(CFG_EDGE))
+                .until(has(NODE_TYPE, CLASS)).repeat(in(AST_EDGE))
+                .values(FILE_PATH).next().toString();
+    }
+
     public static Vertex genCpgRoot(String targetDir) {
         CpgTraversalSource g = Graft.cpg().traversal();
         return g.addV(CPG_ROOT)
@@ -84,13 +93,16 @@ public class CpgUtil {
     }
 
     public static void dropCfg(SootMethod method) {
+        log.debug("Dropping method '{}'", method.getName());
         CpgTraversalSource g = Graft.cpg().traversal();
         String methodSig = method.getSignature();
 
         // delete all method nodes and any interproc edges to/from them
         g.V().hasLabel(CFG_NODE)
                 .has(METHOD_SIG, methodSig)
-                .union(__(), repeat(out(AST_EDGE)).emit())
+                .store("d")
+                .repeat(out(AST_EDGE).store("d"))
+                .cap("d").unfold()
                 .drop()
                 .iterate();
     }

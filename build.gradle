@@ -40,6 +40,8 @@ dependencies {
     // command line parsing
     implementation 'commons-cli:commons-cli:1.4'
 
+    implementation 'org.codehaus.groovy:groovy-all:2.5.8'
+
     testImplementation 'junit:junit:4.12'
 }
 
@@ -63,6 +65,7 @@ dependencies {
 
 clean {
     delete += 'bin'
+    delete += 'sootOutput'
 }
 
 build {

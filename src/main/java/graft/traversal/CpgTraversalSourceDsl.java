@@ -30,7 +30,7 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
 
     public CpgTraversal<Vertex, Path> pathsBetween(Vertex v, Vertex w, String edgeLabel) {
         return (CpgTraversal<Vertex, Path>) V(v)
-                .repeat(out(edgeLabel).simplePath())
+                .repeat(timeLimit(1000).out(edgeLabel).simplePath())
                 .until(is(w))
                 .path();
     }
