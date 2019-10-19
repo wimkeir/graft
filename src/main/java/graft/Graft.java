@@ -41,7 +41,7 @@ public class Graft {
         SootUtil.configureSoot();
 
         new GraftRun().run();
-        // GraphUtil.closeGraph();
+        cpg.close();
     }
 
 }

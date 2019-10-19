@@ -61,6 +61,16 @@ public class BasePropertyGraph {
         }
     }
 
+    public void close() {
+        if (g instanceof Neo4jGraph) {
+            try {
+                g.close();
+            } catch (Exception e) {
+                throw new GraftException("Unable to close Neo4j graph", e);
+            }
+        }
+    }
+
     // ********************************************************************************************
     // public static methods
     // ********************************************************************************************
