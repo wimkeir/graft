@@ -15,7 +15,7 @@ public class Simple {
     }
 
     public static int source() {
-        return (int) Math.random();
+        return (int) Math.random() + 2  ;
     }
 
     public static void sanitizer(int a) {

@@ -26,5 +26,8 @@ bin/
 .db
 
 # other stuff
-etc/dot/
-etc/dumps/
+etc/dot/*.dot
+etc/dot/*.png
+etc/dumps/*.xml
+etc/dumps/*.kryo
+etc/dumps/*.json

@@ -5,6 +5,8 @@ public class SimpleInterproc {
 
         if (b < 10) {
             sanitize(b);
+        } else {
+            sanitize(b);
         }
 
         foo(b);
