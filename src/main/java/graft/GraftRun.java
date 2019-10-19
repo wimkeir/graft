@@ -50,7 +50,7 @@ public class GraftRun {
                     register(new TaintAnalysisPhase());
                     break;
                 default:
-                    log.warn("Unrecognised phase name '{}' in config");
+                    log.warn("Unrecognised phase name '{}' in config", phaseName);
             }
         }
     }
