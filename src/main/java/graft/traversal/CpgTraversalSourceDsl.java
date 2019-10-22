@@ -24,6 +24,38 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         super(graph);
     }
 
+    public CpgTraversal<Vertex, Vertex> getNewStmts() {
+        // TODO: we assume statements of the form x = new T()
+        // that is, new statements that also load or store (eg. x.f = new T()) are not handled
+        return getAssignStmts()
+                .outE(AST_EDGE).has(EDGE_TYPE, VALUE)
+                .inV().has(NODE_TYPE, NEW_EXPR)
+                .in(AST_EDGE)
+                .outE(AST_EDGE).has(EDGE_TYPE, TARGET)
+                .inV().has(NODE_TYPE, LOCAL_VAR)
+                .in(AST_EDGE);
+    }
+
+    public CpgTraversal<Vertex, Vertex> getRefAssignStmts() {
+        return getAssignStmts()
+                .outE(AST_EDGE)
+                .has(EDGE_TYPE, VALUE).inV()
+                .has(NODE_TYPE, LOCAL_VAR)
+                .has(REF_TYPE, true)
+                .in(AST_EDGE)
+                .outE(AST_EDGE)
+                .has(EDGE_TYPE, TARGET).inV()
+                .has(NODE_TYPE, LOCAL_VAR)
+                .has(REF_TYPE, true)
+                .in(AST_EDGE);
+    }
+
+    public CpgTraversal<Vertex, Vertex> getAssignStmts() {
+        return getV()
+                .hasLabel(CFG_NODE)
+                .has(NODE_TYPE, ASSIGN_STMT);
+    }
+
     public CpgTraversal<Vertex, Vertex> getMatches(VertexDescription descr) {
         return getV().matches(descr);
     }
