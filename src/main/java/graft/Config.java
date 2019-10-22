@@ -159,4 +159,22 @@ public class Config {
         return def;
     }
 
+    // ********************************************************************************************
+    // overridden Object methods
+    // ********************************************************************************************
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Config:\n");
+
+        Iterator<String> keys = keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            sb.append(key).append(": ").append(getProperty(key)).append("\n");
+        }
+
+        return sb.toString();
+    }
+
 }
