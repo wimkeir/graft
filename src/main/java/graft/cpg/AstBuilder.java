@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import soot.Local;
+import soot.RefType;
 import soot.Value;
 import soot.jimple.Constant;
 import soot.jimple.Expr;
@@ -100,6 +101,11 @@ public class AstBuilder {
         Vertex localNode = genAstNode(LOCAL_VAR, local.getName());
         CpgUtil.addNodeProperty(localNode, NAME, local.getName());
         CpgUtil.addNodeProperty(localNode, JAVA_TYPE, CpgUtil.getTypeString(local.getType()));
+        if (local.getType() instanceof RefType) {
+            CpgUtil.addNodeProperty(localNode, REF_TYPE, true);
+        } else {
+            CpgUtil.addNodeProperty(localNode, REF_TYPE, false);
+        }
         return localNode;
     }
 

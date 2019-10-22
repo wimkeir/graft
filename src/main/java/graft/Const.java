@@ -165,6 +165,7 @@ public class Const {
     public static final String VOID = "void";
 
     // reference types
+    public static final String REF_TYPE = "ref-type";
     public static final String ARRAY_REF = "array-ref";
     public static final String EXCEPTION_REF = "exception-ref";
     public static final String INSTANCE_FIELD_REF = "inst-field-ref";
