@@ -83,9 +83,12 @@ public class Const {
     public static final String ASSIGN_STMT = "assign-stmt";
     public static final String BREAKPOINT_STMT = "breakpoint-stmt";
     public static final String CONDITIONAL_STMT = "conditional-stmt";
+    public static final String ENTER_MONITOR_STMT = "enter-monitor-stmt";
+    public static final String EXIT_MONITOR_STMT = "exit-monitor-stmt";
     public static final String INVOKE_STMT = "invoke-stmt";
+    public static final String LOOKUP_SWITCH_STMT = "lookup-switch-stmt";
     public static final String RETURN_STMT = "return-stmt";
-    public static final String SWITCH_STMT = "switch-stmt";
+    public static final String TABLE_SWITCH_STMT = "table-switch-stmt";
     public static final String THROW_STMT = "throw-stmt";
 
     // CFG edge types
@@ -96,7 +99,14 @@ public class Const {
     // CFG node property keys
     public static final String METHOD_NAME = "method-name";
     public static final String METHOD_SIG = "method-sig";
-    public static final String LINE_NO = "line-no";
+    public static final String SRC_LINE_NO = "line-no";
+
+    // CFG edge property keys
+    public static final String CONTEXT = "context";
+    public static final String INTERPROC = "interproc";
+
+    // CFG edge property values
+    public static final String DEFAULT_TARGET = "default-target";
 
     // ********************************************************************************************
     // abstract syntax trees
@@ -120,15 +130,18 @@ public class Const {
     // AST edge types
     public static final String ARG = "arg";
     public static final String BASE = "base";
+    public static final String CONDITION = "condition";
     public static final String CONSTRUCTOR = "constructor";
     public static final String EXPR = "expr";
     public static final String LEFT_OPERAND = "left-op";
     public static final String METHOD = "method";
+    public static final String MONITOR = "monitor";
     public static final String OPERAND = "operand";
     public static final String PARAM = "param";
     public static final String RIGHT_OPERAND = "right-op";
     public static final String RETURNS = "returns";
     public static final String SIZE = "size";
+    public static final String SWITCH_KEY = "switch-key";
     public static final String TARGET = "target";
     public static final String THROWS = "throws";
     public static final String VALUE = "value";

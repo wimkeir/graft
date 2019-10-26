@@ -47,7 +47,12 @@ public class CpgBuilder {
         for (SootMethod method : cls.getMethods()) {
             try {
                 Body body = method.retrieveActiveBody();
-                buildCpg(body);
+                Vertex methodEntry = buildCpg(body);
+                if (method.isConstructor()) {
+                    AstBuilder.genAstEdge(classNode, methodEntry, CONSTRUCTOR, CONSTRUCTOR);
+                } else {
+                    AstBuilder.genAstEdge(classNode, methodEntry, METHOD, METHOD);
+                }
             } catch (RuntimeException e) {
                 log.warn("No body for method '{}'", method.getSignature(), e);
             }
@@ -59,16 +64,18 @@ public class CpgBuilder {
      *
      * @param body the method body
      */
-    public static void buildCpg(Body body) {
+    public static Vertex buildCpg(Body body) {
         UnitGraph unitGraph = new BriefUnitGraph(body);
-        Map<Unit, Object> unitNodes = new HashMap<>();
-        CfgBuilder.buildCfg(unitGraph, unitNodes);
+        Map<Unit, Vertex> unitNodes = new HashMap<>();
+        Vertex methodEntry = CfgBuilder.buildCfg(unitGraph, unitNodes);
         PdgBuilder.buildPdg(unitGraph, unitNodes);
 
         // TODO: make sure to do this everywhere its needed
         if (Options.v().getString(OPT_DB_IMPLEMENTATION).equals(NEO4J)) {
             Graft.cpg().commit();
         }
+
+        return methodEntry;
     }
 
     public static void amendCpg(Vertex cpgRoot, SootClass cls, File classFile) {

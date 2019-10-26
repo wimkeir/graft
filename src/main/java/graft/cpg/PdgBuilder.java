@@ -3,7 +3,6 @@ package graft.cpg;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
@@ -38,9 +37,9 @@ public class PdgBuilder {
      * @param unitGraph the unit graph to generate the PDG for
      * @param unitNodes a mapping of units to their vertices in the CPG
      */
-    public static void buildPdg(UnitGraph unitGraph, Map<Unit, Object> unitNodes) {
+    public static void buildPdg(UnitGraph unitGraph, Map<Unit, Vertex> unitNodes) {
         log.debug("Building PDG for method '{}'", unitGraph.getBody().getMethod().getName());
-        GraphTraversalSource g = Graft.cpg().traversal();
+        CpgTraversalSource g = Graft.cpg().traversal();
 
         LocalDefs localDefs = new SimpleLocalDefs(unitGraph);
 
@@ -50,7 +49,7 @@ public class PdgBuilder {
             if (!unitNodes.containsKey(unit) || unitNodes.get(unit) ==  null) {
                 continue;
             }
-            Vertex unitVertex = g.V(unitNodes.get(unit)).next();
+            Vertex unitVertex = unitNodes.get(unit);
             for (ValueBox valueBox : unit.getUseBoxes()) {
                 Value value = valueBox.getValue();
                 if (!(value instanceof Local)) {
