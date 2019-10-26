@@ -137,7 +137,6 @@ public class Const {
     public static final String METHOD = "method";
     public static final String MONITOR = "monitor";
     public static final String OPERAND = "operand";
-    public static final String PARAM = "param";
     public static final String RIGHT_OPERAND = "right-op";
     public static final String RETURNS = "returns";
     public static final String SIZE = "size";
@@ -150,18 +149,21 @@ public class Const {
     public static final String BASE_TYPE = "base-type";
     public static final String CAST_TYPE = "cast-type";
     public static final String CHECK_TYPE = "check-type";
+    public static final String EXPR_TYPE = "expr-type";
     public static final String FIELD_NAME = "field-name";
     public static final String FIELD_SIG = "field-sig";
+    public static final String FIELD_REF_TYPE = "field-ref-type";
     public static final String FULL_NAME = "full-name";
     public static final String INVOKE_TYPE = "invoke-type";
     public static final String JAVA_TYPE = "java-type";
-    public static final String METHOD_SCOPE = "method-scope";
     public static final String NAME = "name";
+    public static final String NEW_EXPR_TYPE = "new-expr-type";
     public static final String OPERATOR = "operator";
     public static final String SHORT_NAME = "short-name";
     public static final String FILE_PATH = "file-path";
     public static final String FILE_NAME = "file-name";
     public static final String FILE_HASH = "file-hash";
+    public static final String REF_TYPE = "ref-type";
 
     // AST edge property keys
     public static final String INDEX = "index";
@@ -176,11 +178,14 @@ public class Const {
     public static final String INT = "int";
     public static final String LONG = "long";
     public static final String NULL = "null";
+    public static final String STRING = "string";
     public static final String VOID = "void";
 
     // reference types
+    public static final String REF = "ref";
     public static final String ARRAY_REF = "array-ref";
     public static final String EXCEPTION_REF = "exception-ref";
+    public static final String FIELD_REF = "field-ref";
     public static final String INSTANCE_FIELD_REF = "inst-field-ref";
     public static final String PARAM_REF = "param-ref";
     public static final String STATIC_FIELD_REF = "field-ref";

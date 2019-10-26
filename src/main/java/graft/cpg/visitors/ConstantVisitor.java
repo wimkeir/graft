@@ -43,17 +43,17 @@ public class ConstantVisitor extends AbstractConstantSwitch {
 
     @Override
     public void caseNullConstant(NullConstant constant) {
-        caseConstant(CpgUtil.getTypeString(constant.getType()), NULL);
+        caseConstant(NULL, NULL);
     }
 
     @Override
     public void caseStringConstant(StringConstant constant) {
-        caseConstant(CpgUtil.getTypeString(constant.getType()), constant.value);
+        caseConstant(STRING, constant.value);
     }
 
     @Override
     public void caseClassConstant(ClassConstant constant) {
-        caseConstant(CpgUtil.getTypeString(constant.getType()), constant.getValue());
+        caseConstant(CLASS, constant.getValue());
     }
 
     @Override
@@ -65,9 +65,7 @@ public class ConstantVisitor extends AbstractConstantSwitch {
 
     // Generate an AST node for a constant value
     private void caseConstant(String type, Object value) {
-        Vertex constVertex = AstBuilder.genAstNode(CONSTANT, value.toString());
-        CpgUtil.addNodeProperty(constVertex, JAVA_TYPE, type);
-        CpgUtil.addNodeProperty(constVertex, VALUE, value);
+        Vertex constVertex = AstBuilder.genConstantNode(type, value.toString(), value.toString());
         setResult(constVertex);
     }
 

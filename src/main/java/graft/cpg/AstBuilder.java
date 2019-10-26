@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import soot.Local;
+import soot.SootField;
 import soot.Value;
 import soot.jimple.Constant;
 import soot.jimple.Expr;
@@ -89,6 +90,111 @@ public class AstBuilder {
                 .next();
         // Graft.cpg().commit();
         return edge;
+    }
+
+    /**
+     * Generate an expression AST node with the given expression type, text label and Java type.
+     *
+     * @param exprType the expression type
+     * @param textLabel the text label
+     * @param type the Java type of the expression
+     * @return the newly generated node
+     */
+    public static Vertex genExprNode(String exprType, String textLabel, String type) {
+        CpgTraversalSource g = Graft.cpg().traversal();
+        Vertex exprNode = g.addV(AST_NODE)
+                .property(NODE_TYPE, EXPR)
+                .property(EXPR_TYPE, exprType)
+                .property(TEXT_LABEL, textLabel)
+                .property(JAVA_TYPE, type)
+                .next();
+        // Graft.cpg().commit();
+        return exprNode;
+    }
+
+    /**
+     * Generate a new expression AST node with the given new expression type, text label and Java type.
+     *
+     * @param newExprType the new expression type
+     * @param textLabel the text label
+     * @param type the Java type of the expression
+     * @return the newly generated node
+     */
+    public static Vertex genNewExprNode(String newExprType, String textLabel, String type) {
+        CpgTraversalSource g = Graft.cpg().traversal();
+        Vertex exprNode = g.addV(AST_NODE)
+                .property(NODE_TYPE, EXPR)
+                .property(EXPR_TYPE, NEW_EXPR)
+                .property(NEW_EXPR_TYPE, newExprType)
+                .property(TEXT_LABEL, textLabel)
+                .property(JAVA_TYPE, type)
+                .next();
+        // Graft.cpg().commit();
+        return exprNode;
+    }
+
+    /**
+     * Generate a constant AST node with the given constant type, text label and value.
+     *
+     * @param type the constant type
+     * @param textLabel the text label
+     * @param value the value of the constant
+     * @return the newly generated node
+     */
+    public static Vertex genConstantNode(String type, String textLabel, String value) {
+        CpgTraversalSource g = Graft.cpg().traversal();
+        Vertex constNode = g.addV(AST_NODE)
+                .property(NODE_TYPE, CONSTANT)
+                .property(JAVA_TYPE, type)
+                .property(VALUE, value)
+                .property(TEXT_LABEL, textLabel)
+                .next();
+        // Graft.cpg().commit();
+        return constNode;
+    }
+
+    /**
+     * Generate a reference AST node with the given reference type, text label and Java type.
+     *
+     * @param refType the reference type
+     * @param textLabel the text label
+     * @param javaType the Java type of the expression
+     * @return the newly generated node
+     */
+    public static Vertex genRefNode(String refType, String javaType, String textLabel) {
+        CpgTraversalSource g = Graft.cpg().traversal();
+        Vertex refNode = g.addV(AST_NODE)
+                .property(NODE_TYPE, REF)
+                .property(REF_TYPE, refType)
+                .property(JAVA_TYPE, javaType)
+                .property(TEXT_LABEL, textLabel)
+                .next();
+        // Graft.cpg().commit();
+        return refNode;
+    }
+
+    /**
+     * Generate a field reference AST node from the given field.
+     *
+     * @param field the field to generate a reference node for
+     * @param textLabel the text label
+     * @return the newly generated node
+     */
+    public static Vertex genFieldRefNode(SootField field, String textLabel) {
+        CpgTraversalSource g = Graft.cpg().traversal();
+        String fieldType = field.isStatic() ? STATIC_FIELD_REF : INSTANCE_FIELD_REF;
+        Vertex fieldRefNode = g.addV(AST_NODE)
+                .property(NODE_TYPE, REF)
+                .property(REF_TYPE, FIELD_REF)
+                .property(FIELD_REF_TYPE, fieldType)
+                .property(FIELD_NAME, field.getName())
+                .property(FIELD_SIG, field.getSignature())
+                .property(JAVA_TYPE, CpgUtil.getTypeString(field.getType()))
+                .property(TEXT_LABEL, textLabel)
+                .next();
+        // Graft.cpg().commit();
+        return fieldRefNode;
+
     }
 
     // ********************************************************************************************
