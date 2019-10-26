@@ -36,9 +36,10 @@ public class StmtVisitor extends AbstractStmtSwitch {
 
     @Override
     public void caseBreakpointStmt(BreakpointStmt stmt) {
+        // TODO: is falling through the best way to handle this?
         log.trace("Visiting BreakpointStmt");
-        // TODO
-        throw new UnsupportedOperationException("Not implemented");
+        Vertex bpVertex = CfgBuilder.genCfgNode(stmt, BREAKPOINT_STMT, methodSig, stmt.toString());
+        setResult(bpVertex);
     }
 
     @Override

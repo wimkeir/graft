@@ -81,6 +81,7 @@ public class Const {
     // CFG node types
     public static final String ENTRY = "entry";
     public static final String ASSIGN_STMT = "assign-stmt";
+    public static final String BREAKPOINT_STMT = "breakpoint-stmt";
     public static final String CONDITIONAL_STMT = "conditional-stmt";
     public static final String INVOKE_STMT = "invoke-stmt";
     public static final String RETURN_STMT = "return-stmt";
