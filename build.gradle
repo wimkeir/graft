@@ -82,7 +82,7 @@ build {
         File startScript = file('bin/graft')
         startScript.withPrintWriter {
             it.println '#!/bin/sh'
-            it.println "java -cp ${getRuntimeClasspath()} graft.Graft \"\$@\""
+            it.println "java -ea -cp ${getRuntimeClasspath()} graft.Graft \"\$@\""
         }
         ant.chmod(file: shellScript.absolutePath, perm: 'u+x')
         ant.chmod(file: startScript.absolutePath, perm: 'u+x')
