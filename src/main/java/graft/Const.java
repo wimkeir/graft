@@ -212,4 +212,11 @@ public class Const {
     // PDG edge property keys
     public static final String VAR_NAME = "var-name";
 
+    // ********************************************************************************************
+    // alias analysis
+    // ********************************************************************************************
+
+    public static final String MAY_ALIAS = "may-alias";
+
+
 }

@@ -76,6 +76,9 @@ public class DotUtil {
             case PDG_EDGE:
                 pdgEdgeToDot(e, out);
                 break;
+            case MAY_ALIAS:
+                aliasEdgeToDot(e, out);
+                break;
             default:
                 log.warn("There are edges with unrecognized labels in the CPG: '{}'", e.label());
         }
@@ -105,6 +108,10 @@ public class DotUtil {
 
     private static void pdgEdgeToDot(Edge e, FileWriter out) throws IOException {
         out.write(", color=red, label=\"" + e.value(TEXT_LABEL) + "\"];\n");
+    }
+
+    private static void aliasEdgeToDot(Edge e, FileWriter out) throws IOException {
+        out.write(", color=orange, label=\"" + e.value(TEXT_LABEL) + "\"];\n");
     }
 
 }

@@ -19,6 +19,29 @@ import static graft.Const.*;
 public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
 
     /**
+     * Get the value node of an assign statement.
+     *
+     * @return the value node of an assign stmt
+     */
+    default GraphTraversal<S, Vertex> getVal() {
+        return hasLabel(CFG_NODE).has(NODE_TYPE, ASSIGN_STMT) // ensure we're on an assign stmt
+                .outE(AST_EDGE).has(EDGE_TYPE, VALUE)
+                .inV();
+    }
+
+    /**
+     * Get the target node of an assign statement.
+     *
+     * @return the value node of an assign stmt
+     */
+    default GraphTraversal<S, Vertex> getTgt() {
+        return hasLabel(CFG_NODE).has(NODE_TYPE, ASSIGN_STMT) // ensure we're on an assign stmt
+                .outE(AST_EDGE).has(EDGE_TYPE, TARGET)
+                .inV();
+    }
+
+
+    /**
      * TODO: javadoc
      *
      * @param descr

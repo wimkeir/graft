@@ -49,6 +49,9 @@ public class GraftRun {
                 case "TaintAnalysisPhase":
                     register(new TaintAnalysisPhase());
                     break;
+                case "AliasAnalysisPhase":
+                    register(new AliasAnalysisPhase());
+                    break;
                 default:
                     log.warn("Unrecognised phase name '{}' in config", phaseName);
             }
