@@ -10,9 +10,9 @@ import soot.Value;
 import soot.jimple.*;
 
 import graft.cpg.AstBuilder;
-import graft.cpg.CpgUtil;
 
 import static graft.Const.*;
+import static graft.cpg.CpgUtil.*;
 
 /**
  * Visitor applied to expressions to create AST nodes (or subtrees) for them.
@@ -176,36 +176,33 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseNewExpr(NewExpr expr) {
-        Vertex exprVertex = AstBuilder.genAstNode(NEW_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
-        CpgUtil.addNodeProperty(exprVertex, BASE_TYPE, CpgUtil.getTypeString(expr.getBaseType()));
+        Vertex exprVertex = AstBuilder.genNewExprNode(NEW_EXPR, expr.toString(), getTypeString(expr.getType()));
+        addNodeProperty(exprVertex, BASE_TYPE, getTypeString(expr.getBaseType()));
         setResult(exprVertex);
     }
 
     @Override
     public void caseNewArrayExpr(NewArrayExpr expr) {
-        Vertex exprVertex = AstBuilder.genAstNode(NEW_ARRAY_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
-        CpgUtil.addNodeProperty(exprVertex, BASE_TYPE, CpgUtil.getTypeString(expr.getBaseType()));
+        Vertex exprVertex = AstBuilder.genNewExprNode(NEW_ARRAY_EXPR, expr.toString(), getTypeString(expr.getType()));
+        addNodeProperty(exprVertex, BASE_TYPE, getTypeString(expr.getBaseType()));
 
         Vertex sizeVertex = AstBuilder.genValueNode(expr.getSize());
         Edge sizeEdge = AstBuilder.genAstEdge(exprVertex, sizeVertex, SIZE, SIZE);
-        CpgUtil.addEdgeProperty(sizeEdge, DIM, 0);
+        addEdgeProperty(sizeEdge, DIM, 0);
 
         setResult(exprVertex);
     }
 
     @Override
     public void caseNewMultiArrayExpr(NewMultiArrayExpr expr) {
-        Vertex exprVertex = AstBuilder.genAstNode(NEW_ARRAY_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
-        CpgUtil.addNodeProperty(exprVertex, BASE_TYPE, CpgUtil.getTypeString(expr.getBaseType()));
+        Vertex exprVertex = AstBuilder.genNewExprNode(NEW_ARRAY_EXPR, expr.toString(), getTypeString(expr.getType()));
+        addNodeProperty(exprVertex, BASE_TYPE, getTypeString(expr.getBaseType()));
 
         int i = 0;
         for (Value size : expr.getSizes()) {
             Vertex sizeVertex = AstBuilder.genValueNode(size);
             Edge sizeEdge = AstBuilder.genAstEdge(exprVertex, sizeVertex, SIZE, SIZE);
-            CpgUtil.addEdgeProperty(sizeEdge, DIM, i++);
+            addEdgeProperty(sizeEdge, DIM, i++);
         }
 
         setResult(exprVertex);
@@ -213,9 +210,8 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseInstanceOfExpr(InstanceOfExpr expr) {
-        Vertex exprVertex = AstBuilder.genAstNode(INSTANCEOF_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
-        CpgUtil.addNodeProperty(exprVertex, CHECK_TYPE, CpgUtil.getTypeString(expr.getCheckType()));
+        Vertex exprVertex = AstBuilder.genExprNode(INSTANCEOF_EXPR, expr.toString(), getTypeString(expr.getType()));
+        addNodeProperty(exprVertex, CHECK_TYPE, getTypeString(expr.getCheckType()));
 
         Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
         AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
@@ -225,9 +221,8 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseCastExpr(CastExpr expr) {
-        Vertex exprVertex = AstBuilder.genAstNode(CAST_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
-        CpgUtil.addNodeProperty(exprVertex, CAST_TYPE, CpgUtil.getTypeString(expr.getCastType()));
+        Vertex exprVertex = AstBuilder.genExprNode(CAST_EXPR, expr.toString(), getTypeString(expr.getType()));
+        addNodeProperty(exprVertex, CAST_TYPE, getTypeString(expr.getCastType()));
 
         Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
         AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
@@ -250,9 +245,8 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     // Generates an AST subtree for a binary expression and its operands
     private void caseBinaryExpr(BinopExpr expr, String operator) {
-        Vertex exprVertex = AstBuilder.genAstNode(BINARY_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, OPERATOR, operator);
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+        Vertex exprVertex = AstBuilder.genExprNode(BINARY_EXPR, expr.toString(), getTypeString(expr.getType()));
+        addNodeProperty(exprVertex, OPERATOR, operator);
 
         Vertex lopVertex = AstBuilder.genValueNode(expr.getOp1());
         Vertex ropVertex = AstBuilder.genValueNode(expr.getOp2());
@@ -264,24 +258,21 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     // Generates an AST subtree for a unary expression and its operand
     private void caseUnaryExpr(UnopExpr expr, String operator) {
-        Vertex exprVertex = AstBuilder.genAstNode(UNARY_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, OPERATOR, operator);
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
+        Vertex exprVertex = AstBuilder.genExprNode(UNARY_EXPR, expr.toString(), getTypeString(expr.getType()));
+        addNodeProperty(exprVertex, OPERATOR, operator);
 
         Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
-        AstBuilder.genAstEdge(exprVertex, opVertex, LEFT_OPERAND, LEFT_OPERAND);
+        AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
 
         setResult(exprVertex);
     }
 
     // Generates an AST subtree for an invoke expression and possibly its base and args
     private void caseInvokeExpr(InvokeExpr expr, String invokeType, Value base) {
-        Vertex exprVertex = AstBuilder.genAstNode(INVOKE_EXPR, expr.toString());
-        CpgUtil.addNodeProperty(exprVertex, JAVA_TYPE, CpgUtil.getTypeString(expr.getType()));
-        CpgUtil.addNodeProperty(exprVertex, INVOKE_TYPE, invokeType);
-        CpgUtil.addNodeProperty(exprVertex, METHOD_SIG, expr.getMethod().getSignature());
-        CpgUtil.addNodeProperty(exprVertex, METHOD_NAME, expr.getMethod().getName());
-        CpgUtil.addNodeProperty(exprVertex, METHOD_SCOPE, expr.getMethod().getDeclaringClass().getName());
+        Vertex exprVertex = AstBuilder.genExprNode(INVOKE_EXPR, expr.toString(), getTypeString(expr.getType()));
+        addNodeProperty(exprVertex, INVOKE_TYPE, invokeType);
+        // TODO: rename this property to INVOKES
+        addNodeProperty(exprVertex, METHOD_SIG, expr.getMethod().getSignature());
 
         if (base != null) {
             Vertex baseVertex = AstBuilder.genValueNode(base);
@@ -292,7 +283,7 @@ public class ExprVisitor extends AbstractExprSwitch {
         for (Value arg : expr.getArgs()) {
             Vertex argVertex = AstBuilder.genValueNode(arg);
             Edge argEdge = AstBuilder.genAstEdge(exprVertex, argVertex, ARG, ARG);
-            CpgUtil.addEdgeProperty(argEdge, INDEX, i++);
+            addEdgeProperty(argEdge, INDEX, i++);
         }
 
         setResult(exprVertex);

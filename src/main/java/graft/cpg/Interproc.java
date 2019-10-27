@@ -61,7 +61,7 @@ public class Interproc {
                 assert !methodEntries.hasNext();
 
                 // generate call edge
-                CfgBuilder.genCfgEdge(callSite, methodEntry, CALL, CALL);
+                CfgBuilder.genCallEdge(callSite, methodEntry, "");  // TODO: context!
 
                 if (retSite != null) {
                     // generate ret edge
@@ -69,7 +69,7 @@ public class Interproc {
                             .V(methodEntry)
                             .repeat(out(CFG_EDGE)).until(has(NODE_TYPE, RETURN_STMT))
                             .next();
-                    CfgBuilder.genCfgEdge(retStmt, retSite, RET, RET);
+                    CfgBuilder.genRetEdge(retStmt, retSite, "");    // TODO: context!
                 } else {
                     log.warn("No ret site for call at vertex '{}'", callSite.value(TEXT_LABEL).toString());
                 }

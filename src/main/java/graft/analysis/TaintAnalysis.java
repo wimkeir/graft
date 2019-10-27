@@ -93,10 +93,10 @@ public class TaintAnalysis implements GraftAnalysis {
         banner.println("");
         banner.println("Source:");
         banner.println(src.value(TEXT_LABEL));
-        banner.println("Location: " + CpgUtil.getFileName(src) + " (" + src.value(LINE_NO) + ")");
+        banner.println("Location: " + CpgUtil.getFileName(src) + " (" + src.value(SRC_LINE_NO) + ")");
         banner.println("Sink:");
         banner.println(sink.value(TEXT_LABEL));
-        banner.println("Location: " + CpgUtil.getFileName(sink) + " (" + sink.value(LINE_NO) + ")");
+        banner.println("Location: " + CpgUtil.getFileName(sink) + " (" + sink.value(SRC_LINE_NO) + ")");
         banner.display();
 
     }

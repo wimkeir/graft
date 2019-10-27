@@ -22,8 +22,8 @@ out/
 src/main/generated
 bin/
 
-# database stuff
-.db
+# Graft folder
+.graft/
 
 # other stuff
 etc/dot/*.dot

@@ -11,7 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import graft.cpg.CpgUtil;
-import graft.cpg.structure.BasePropertyGraph;
+import graft.cpg.structure.CodePropertyGraph;
 import graft.traversal.CpgTraversal;
 import graft.traversal.CpgTraversalSource;
 
@@ -26,7 +26,7 @@ public class DotUtil {
 
     private static Logger log = LoggerFactory.getLogger(DotUtil.class);
 
-    public static void graphToDot(BasePropertyGraph graph, String filename, String graphName) {
+    public static void graphToDot(CodePropertyGraph graph, String filename, String graphName) {
         CpgTraversalSource g = graph.traversal();
         try {
             FileWriter out = new FileWriter(new File(filename));

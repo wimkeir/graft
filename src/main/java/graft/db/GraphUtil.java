@@ -13,12 +13,14 @@ import graft.GraftException;
 import graft.Options;
 import graft.cpg.structure.CodePropertyGraph;
 
+import java.nio.file.Paths;
+
 import static graft.Const.*;
 
 /**
  * TODO: javadocs
  */
-public abstract class GraphUtil {
+public class GraphUtil {
 
     private static Logger log = LoggerFactory.getLogger(GraphUtil.class);
 
@@ -41,11 +43,52 @@ public abstract class GraphUtil {
         }
     }
 
+    public static CodePropertyGraph newTinkergraphCpg() {
+        return CodePropertyGraph.fromGraph(TinkerGraph.open());
+    }
+
+    public static CodePropertyGraph newNeo4jCpg(String dir) {
+        if (Paths.get(dir).toFile().exists()) {
+            throw new GraftException("Folder '" + dir + "' already contains Neo4j database");
+        }
+        Configuration config = new BaseConfiguration();
+        config.setProperty("gremlin.neo4j.directory", dir);
+        config.setProperty("gremlin.neo4j.conf.dbms.auto_index.nodes.enabled", "true");
+        config.setProperty("gremlin.neo4j.conf.dbms.auto_index.relationships.enabled", "true");
+        return CodePropertyGraph.fromGraph(Neo4jUtil.fromConfig(config));
+    }
+
+    public static String getDbImplementation() {
+        return Options.v().getString(OPT_DB_IMPLEMENTATION);
+    }
+
+    public static boolean validDbImplementation(String impl) {
+        return impl.equals(TINKERGRAPH) || impl.equals(NEO4J);
+    }
+
+    public static String dbFileName() {
+        String format = Options.v().getString(OPT_DB_FILE_FORMAT);
+        switch (format) {
+            case "json":
+                return DB_FILE_NAME + ".json";
+            case "xml":
+            case "graphml":
+                return DB_FILE_NAME + ".xml";
+            case "kryo":
+                return DB_FILE_NAME + ".kryo";
+            default:
+                throw new GraftException("Unrecognised DB file format '" + format);
+        }
+    }
+
     private static Graph tinkerGraph() {
         log.debug("Initialising TinkerGraph implementation");
-        if (Options.v().containsKey(OPT_DB_LOAD_FROM)) {
-            return TinkerGraphUtil.fromFile(Options.v().getString(OPT_DB_LOAD_FROM));
+        if (Options.v().containsKey(OPT_DB_FILE)) {
+            String filename = Options.v().getString(OPT_DB_FILE);
+            log.debug("Loading TinkerGraph from file '{}'", filename);
+            return TinkerGraphUtil.fromFile(filename);
         }
+        log.debug("Initialising new TinkerGraph instance");
         return TinkerGraph.open();
     }
 
@@ -55,9 +98,6 @@ public abstract class GraphUtil {
         neo4jConfig.setProperty("gremlin.neo4j.directory", Options.v().getString(OPT_DB_DIRECTORY));
         neo4jConfig.setProperty("gremlin.neo4j.conf.dbms.auto_index.nodes.enabled", "true");
         neo4jConfig.setProperty("gremlin.neo4j.conf.dbms.auto_index.relationships.enabled", "true");
-        if (Options.v().containsKey(OPT_DB_LOAD_FROM)) {
-            return Neo4jUtil.fromFile(Options.v().getString(OPT_DB_DIRECTORY), Options.v().getString(OPT_DB_LOAD_FROM));
-        }
         return Neo4jUtil.fromConfig(neo4jConfig);
     }
     

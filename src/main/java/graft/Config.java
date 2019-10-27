@@ -3,6 +3,7 @@ package graft;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 
@@ -12,6 +13,8 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static graft.Const.*;
 
 /**
  * A wrapper around the Apache Commons Configuration, with helpful static methods.
@@ -115,6 +118,66 @@ public class Config {
 
     public boolean getBoolean(String key, boolean def) {
         return configuration.getBoolean(key, def);
+    }
+
+    public void setProperty(String key, Object value) {
+        configuration.setProperty(key, value);
+    }
+
+    public void debug() {
+        if (log.isDebugEnabled()) {
+            log.debug("Running with options:");
+            Iterator<String> keys = keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                log.debug(" - {}: {}", key, getProperty(key));
+            }
+        }
+    }
+
+    public void toFile(String filename) {
+        File file = new File(filename);
+        try {
+            if (file.exists()) {
+                // TODO: ensure we're actually overwriting and not just appending
+                log.warn("Config file '{}' already exists, overwriting...");
+            }
+            if (!file.createNewFile()) {
+                throw new GraftException("Could not create new file '" + filename + "'");
+            }
+            toFile(file);
+        } catch (IOException e) {
+            throw new GraftException("Cannot write config to file '" + filename + "'", e);
+        }
+    }
+
+    private void toFile(File file) throws IOException {
+        if (file.exists()) {
+            log.warn("File '{}' already exists, overwriting", file.getName());
+        }
+
+        FileWriter out = new FileWriter(file);
+        out.write(PROPERTIES_HEADER);
+
+        // TODO: this won't handle arrays and ref types
+        Iterator<String> keys = keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            out.write(key + " = " + getProperty(key) + "\n");
+        }
+
+        // TODO NB XXX
+        // This resource isn't closed on error paths in the enclosing try-catch block in toFile(String)
+        // See if we can actually pick this up with Graft?
+        out.close();
+    }
+
+    public void toFile(Path path) {
+        try {
+            toFile(path.toFile());
+        } catch (IOException e) {
+            throw new GraftException("Cannot write config to file '" + path.toFile().getName() + "'", e);
+        }
     }
 
     // ********************************************************************************************

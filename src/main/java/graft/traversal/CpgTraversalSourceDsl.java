@@ -24,6 +24,12 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         super(graph);
     }
 
+    public CpgTraversal<Vertex, Vertex> cpgRoot() {
+        return getV()
+                .hasLabel(CPG_ROOT)
+                .has(NODE_TYPE, CPG_ROOT);
+    }
+
     /**
      * Get all assign statements of the form x = new T(), where x is a local
      * variable.

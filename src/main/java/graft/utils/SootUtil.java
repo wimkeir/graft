@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import soot.PhaseOptions;
 import soot.Scene;
+import soot.jimple.Stmt;
+import soot.tagkit.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ public class SootUtil {
 
 
     public static void configureSoot() {
-        soot.options.Options.v().set_soot_classpath(Options.v().getString(OPT_SOOT_OPTIONS_CLASSPATH));
+        soot.options.Options.v().set_soot_classpath(Options.v().getString(OPT_CLASSPATH));
         soot.options.Options.v().set_prepend_classpath(true);
 //        soot.options.Options.v().set_whole_program(true);
         soot.options.Options.v().set_keep_line_number(true);
@@ -70,6 +72,34 @@ public class SootUtil {
         log.debug("Loading classes...");
         Scene.v().loadBasicClasses();
         Scene.v().loadNecessaryClasses();
+    }
+
+    public static int getLineNr(Stmt stmt) {
+        if (stmt == null) {
+            return -1;
+        }
+        if (stmt.getTag("SourceLnPosTag") != null) {
+            return ((SourceLnPosTag) stmt.getTag("SourceLnPosTag")).startLn();
+        } else if (stmt.getTag("JimpleLineNumberTag") != null) {
+            return ((JimpleLineNumberTag) stmt.getTag("JimpleLineNumberTag")).getLineNumber();
+        } else if (stmt.getTag("LineNumberTag") != null) {
+            return ((LineNumberTag) stmt.getTag("LineNumberTag")).getLineNumber();
+        } else if (stmt.getTag("SourceLineNumberTag") != null) {
+            return ((SourceLineNumberTag) stmt.getTag("SourceLineNumberTag")).getLineNumber();
+        } else {
+            return -1;
+        }
+    }
+
+    public static String getSourceFile(Stmt stmt) {
+        if (stmt == null) {
+            return UNKNOWN;
+        }
+        if (stmt.getTag("SourceFileTag") != null) {
+            return ((SourceFileTag) stmt.getTag("SourceFileTag")).getSourceFile();
+        } else {
+            return UNKNOWN;
+        }
     }
 
 }
