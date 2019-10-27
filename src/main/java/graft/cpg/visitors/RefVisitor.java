@@ -9,9 +9,10 @@ import soot.SootField;
 import soot.Value;
 import soot.jimple.*;
 
-import graft.cpg.AstBuilder;
+import graft.Graft;
 
 import static graft.Const.*;
+import static graft.cpg.AstBuilder.*;
 import static graft.cpg.CpgUtil.*;
 
 /**
@@ -31,23 +32,34 @@ public class RefVisitor extends AbstractRefSwitch {
 
     @Override
     public void caseArrayRef(ArrayRef ref) {
-        Vertex refVertex = AstBuilder.genRefNode(ARRAY_REF, getTypeString(ref.getType()), ref.toString());
 
-        Vertex baseVertex = AstBuilder.genValueNode(ref.getBase());
-        AstBuilder.genAstEdge(refVertex, baseVertex, BASE, BASE);
+        Vertex refNode = (Vertex) Graft.cpg().traversal()
+                .addRefNode(ARRAY_REF, ref.toString(), getTypeString(ref.getType()))
+                .next();
+
+        Graft.cpg().traversal()
+                .addAstE(BASE, BASE)
+                .from(refNode)
+                .to(genValueNode(ref.getBase()))
+                .iterate();
 
         if (ref.getIndex() != null) {
-            Vertex idxVertex = AstBuilder.genValueNode(ref.getIndex());
-            AstBuilder.genAstEdge(refVertex, idxVertex, INDEX, INDEX);
+            Graft.cpg().traversal()
+                    .addAstE(INDEX, INDEX)
+                    .from(refNode)
+                    .to(genValueNode(ref.getIndex()))
+                    .iterate();
         }
 
-        setResult(refVertex);
+        setResult(refNode);
     }
 
     @Override
     public void caseCaughtExceptionRef(CaughtExceptionRef ref) {
-        Vertex refVertex = AstBuilder.genRefNode(EXCEPTION_REF, getTypeString(ref.getType()), ref.toString());
-        setResult(refVertex);
+        setResult(Graft.cpg().traversal()
+                .addRefNode(EXCEPTION_REF, ref.toString(), getTypeString(ref.getType()))
+                .next()
+        );
     }
 
     @Override
@@ -57,9 +69,11 @@ public class RefVisitor extends AbstractRefSwitch {
 
     @Override
     public void caseParameterRef(ParameterRef ref) {
-        Vertex refVertex = AstBuilder.genRefNode(PARAM_REF, getTypeString(ref.getType()), ref.toString());
-        addNodeProperty(refVertex, INDEX, ref.getIndex());
-        setResult(refVertex);
+        setResult(Graft.cpg().traversal()
+                .addRefNode(PARAM_REF, ref.toString(), getTypeString(ref.getType()))
+                .property(INDEX, ref.getIndex())
+                .next()
+        );
     }
 
     @Override
@@ -69,8 +83,10 @@ public class RefVisitor extends AbstractRefSwitch {
 
     @Override
     public void caseThisRef(ThisRef ref) {
-        Vertex refVertex = AstBuilder.genRefNode(THIS_REF, getTypeString(ref.getType()), ref.toString());
-        setResult(refVertex);
+        setResult(Graft.cpg().traversal()
+                .addRefNode(THIS_REF, ref.toString(), getTypeString(ref.getType()))
+                .next()
+        );
     }
 
     @Override
@@ -80,14 +96,23 @@ public class RefVisitor extends AbstractRefSwitch {
 
     // Generates an AST node for a field reference (and the base object for instance field refs)
     private void caseFieldRef(SootField field, Value base) {
-        Vertex refVertex = AstBuilder.genFieldRefNode(field, field.toString());
+        String fieldType = field.isStatic() ? STATIC_FIELD_REF : INSTANCE_FIELD_REF;
+        Vertex refNode = (Vertex) Graft.cpg().traversal()
+                .addRefNode(FIELD_REF, field.toString(), getTypeString(field.getType()))
+                .property(FIELD_REF_TYPE, fieldType)
+                .property(FIELD_NAME, field.getName())
+                .property(FIELD_SIG, field.getSignature())
+                .next();
 
         if (base != null) {
-            Vertex baseVertex = AstBuilder.genValueNode(base);
-            AstBuilder.genAstEdge(refVertex, baseVertex, BASE, BASE);
+            Graft.cpg().traversal()
+                    .addAstE(BASE, BASE)
+                    .from(refNode)
+                    .to(genValueNode(base))
+                    .iterate();
         }
 
-        setResult(refVertex);
+        setResult(refNode);
     }
 
     private void setResult(Object object) {

@@ -3,7 +3,6 @@ package graft.cpg;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -19,8 +18,6 @@ import soot.toolkits.scalar.SimpleLocalDefs;
 
 import graft.Graft;
 import graft.traversal.CpgTraversalSource;
-
-import static graft.Const.*;
 
 /**
  * Handles construction of intraprocedural PDG edges.
@@ -58,31 +55,13 @@ public class PdgBuilder {
                 Local local = (Local) value;
                 for (Unit defSite : localDefs.getDefsOfAt(local, unit)) {
                     Vertex defVertex = g.V(unitNodes.get(defSite)).next();
-                    genDataDepEdge(defVertex, unitVertex, local.getName(), local.getName());
+                    Graft.cpg().traversal()
+                            .addDataDepE(local.getName())
+                            .from(defVertex).to(unitVertex)
+                            .iterate();
                 }
             }
         }
-    }
-
-    /**
-     * Generate a data dependency PDG edge for the given variable, between the two given CFG nodes.
-     *
-     * @param from the start node of the edge
-     * @param to the end node of the edge
-     * @param varName the name of the dependent variable
-     * @param textLabel a text label for the node
-     * @return the generated PDG edge
-     */
-    public static Edge genDataDepEdge(Vertex from, Vertex to, String varName, String textLabel) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        Edge edge = g.addE(PDG_EDGE)
-                .from(from).to(to)
-                .property(EDGE_TYPE, DATA_DEP)
-                .property(VAR_NAME, varName)
-                .property(TEXT_LABEL, textLabel)
-                .next();
-        // Graft.cpg().tx().commit();
-        return edge;
     }
 
 }

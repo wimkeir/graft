@@ -6,6 +6,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
@@ -29,6 +30,156 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .hasLabel(CPG_ROOT)
                 .has(NODE_TYPE, CPG_ROOT);
     }
+
+    // ********************************************************************************************
+    // addV traversals
+    // ********************************************************************************************
+
+    public CpgTraversal<Vertex, Vertex> addCpgRoot(String name, String target, String classpath) {
+        return (CpgTraversal<Vertex, Vertex>) addV(CPG_ROOT)
+                .property(NODE_TYPE, CPG_ROOT)
+                .property(PROJECT_NAME, name)
+                .property(TARGET_DIR, target)
+                .property(CLASSPATH, classpath)
+                .property(TEXT_LABEL, name);
+    }
+
+    // Control flow graph
+
+    public CpgTraversal<Vertex, Vertex> addCfgV() {
+        return (CpgTraversal<Vertex, Vertex>) addV(CFG_NODE);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addCfgV(String nodeType, String textLabel) {
+        return addCfgV()
+                .property(NODE_TYPE, nodeType)
+                .property(TEXT_LABEL, textLabel);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addStmtNode(String nodeType, String textLabel, int line) {
+        return addCfgV(nodeType, textLabel)
+                .property(SRC_LINE_NO, line);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addEntryNode(String name, String signature, String type) {
+        return addCfgV(ENTRY, name)
+                .property(METHOD_NAME, name)
+                .property(METHOD_SIG, signature)
+                .property(JAVA_TYPE, type);
+    }
+
+    // Abstract syntax tree
+
+    public CpgTraversal<Vertex, Vertex> addAstV() {
+        return (CpgTraversal<Vertex, Vertex>) addV(AST_NODE);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addAstV(String nodeType, String textLabel) {
+        return addAstV()
+                .property(NODE_TYPE, nodeType)
+                .property(TEXT_LABEL, textLabel);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addExprNode(String exprType, String textLabel, String javaType) {
+        return addAstV(EXPR, textLabel)
+                .property(EXPR_TYPE, exprType)
+                .property(JAVA_TYPE, javaType);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addConstNode(String javaType, String textLabel, String value) {
+        return addAstV(CONSTANT, textLabel)
+                .property(JAVA_TYPE, javaType)
+                .property(VALUE, value);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addRefNode(String refType, String textLabel, String javaType) {
+        return addAstV(REF, textLabel)
+                .property(REF_TYPE, refType)
+                .property(JAVA_TYPE, javaType);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addLocalNode(String javaType, String textLabel, String name) {
+        return addAstV(LOCAL_VAR, textLabel)
+                .property(JAVA_TYPE, javaType)
+                .property(NAME, name);
+    }
+
+    // ********************************************************************************************
+    // addE traversals
+    // ********************************************************************************************
+
+    // Control flow graph
+
+    public CpgTraversal<Edge, Edge> addCfgE() {
+        return (CpgTraversal<Edge, Edge>) addE(CFG_EDGE);
+    }
+
+    public CpgTraversal<Edge, Edge> addCfgE(String edgeType, String textLabel, boolean interproc) {
+        return addCfgE()
+                .property(EDGE_TYPE, edgeType)
+                .property(TEXT_LABEL, textLabel)
+                .property(INTERPROC, interproc);
+    }
+
+    public CpgTraversal<Edge, Edge> addEmptyEdge() {
+        return addCfgE(EMPTY, EMPTY, false);
+    }
+
+    public CpgTraversal<Edge, Edge> addCondEdge(String condition) {
+        return addCfgE(CONDITION, condition, false)
+                .property(CONDITION, condition);
+    }
+
+    public CpgTraversal<Edge, Edge> genCallEdge(String context) {
+        return addCfgE(CALL, CALL + ":" + context, true)
+                .property(CONTEXT, context);
+    }
+
+    public CpgTraversal<Edge, Edge> genRetEdge(String context) {
+        return addCfgE(RET, RET + ":" + context, true)
+                .property(CONTEXT, context);
+    }
+
+    // Abstract syntax tree
+
+    public CpgTraversal<Edge, Edge> addAstE() {
+        return (CpgTraversal<Edge, Edge>) addE(AST_EDGE);
+    }
+
+    public CpgTraversal<Edge, Edge> addAstE(String edgeType, String textLabel) {
+        return addAstE()
+                .property(EDGE_TYPE, edgeType)
+                .property(TEXT_LABEL, textLabel);
+    }
+
+    // Program dependence graph
+
+    public CpgTraversal<Edge, Edge> addPdgE() {
+        return (CpgTraversal<Edge, Edge>) addE(AST_EDGE);
+    }
+
+    public CpgTraversal<Edge, Edge> addPdgE(String edgeType, String textLabel) {
+        return addPdgE()
+                .property(EDGE_TYPE, edgeType)
+                .property(TEXT_LABEL, textLabel);
+    }
+
+    public CpgTraversal<Edge, Edge> addDataDepE(String var) {
+        return addPdgE(DATA_DEP, var)
+                .property(VAR_NAME, var);
+    }
+
+    public CpgTraversal<Edge, Edge> addArgDepE() {
+        return addPdgE(ARG_DEP, ARG_DEP);
+    }
+
+    public CpgTraversal<Edge, Edge> addRetDepE() {
+        return addPdgE(RET_DEP, RET_DEP);
+    }
+
+    // ********************************************************************************************
+    //
+    // ********************************************************************************************
 
     /**
      * Get all assign statements of the form x = new T(), where x is a local

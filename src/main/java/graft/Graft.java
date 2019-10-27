@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
 
+import graft.cpg.Interproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +82,8 @@ public class Graft {
     }
 
     private static void initNewDb() {
+        checkOrExit(DB_FOLDER.toFile().mkdir(), "Could not create DB folder");
+
         switch (getDbImplementation()) {
             case TINKERGRAPH:
                 String dbFile = DB_FOLDER.resolve(dbFileName()).toString();
@@ -131,18 +134,19 @@ public class Graft {
         // prompt user for project options
         userOpts();
 
-        // write project configuration to properties file
-        Options.v().debug();
-        Options.v().toFile(PROPERTIES_FILE);
-
         // set up new database
         initNewDb();
 
         // generate the root node of the CPG
-        CpgBuilder.genCpgRoot(
+        cpg.traversal().addCpgRoot(
                 Options.v().getString(OPT_PROJECT_NAME),
                 Options.v().getString(OPT_TARGET_DIR),
-                Options.v().getString(OPT_CLASSPATH));
+                Options.v().getString(OPT_CLASSPATH)
+        ).iterate();
+
+        // write project configuration to properties file
+        Options.v().debug();
+        Options.v().toFile(PROPERTIES_FILE);
 
         log.info("Graft project '{}' initialised", Options.v().getString(OPT_PROJECT_NAME));
         log.info("Run 'graft build' to build CPG");
@@ -177,6 +181,8 @@ public class Graft {
         }
 
         CpgBuilder.buildCpg();
+        Interproc.genInterprocEdges();
+
         shutdown();
     }
 
@@ -230,6 +236,13 @@ public class Graft {
         initOpts(PROPERTIES_FILE.toString());
         cpg = GraphUtil.getCpg();
         SootUtil.configureSoot();
+
+        if (log.isDebugEnabled()) {
+            long V = cpg.traversal().V().count().next();
+            log.debug("Node count: {}", V);
+            long E = cpg.traversal().E().count().next();
+            log.debug("Edge count: {}", E);
+        }
     }
 
     private static void shutdown() {

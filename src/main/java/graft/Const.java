@@ -38,7 +38,7 @@ public class Const {
 
     // regular expressions
     public static final String CLASS_FILE_REGEX = "[a-zA-Z_$]+[a-zA-Z_1-9$]*.class";
-    public static final String PROJECT_NAME_REGEX = "[a-zA-Z0-9_-$]+";
+    public static final String PROJECT_NAME_REGEX = "[a-zA-Z0-9_-]+";
 
     // defaults
     public static final String DEFAULT_DB_DIRECTORY = ".db";
@@ -51,7 +51,6 @@ public class Const {
     public static final String OPT_DB_IMPLEMENTATION = "db.implementation";
     public static final String OPT_PROJECT_NAME = "project-name";
     public static final String OPT_CLASSPATH = "soot.options.classpath";
-    public static final String OPT_DB_LOAD_FROM = "db.load-from";
     public static final String OPT_TAINT_SOURCE = "taint.source";
     public static final String OPT_TAINT_SINK = "taint.sink";
     public static final String OPT_TAINT_SANITIZER = "taint.sanitizer";
@@ -79,8 +78,8 @@ public class Const {
     public static final String FALSE = "false";
 
     // general property keys
-    public static final String NODE_TYPE = "type";
-    public static final String EDGE_TYPE = "type";
+    public static final String NODE_TYPE = "node-type";
+    public static final String EDGE_TYPE = "edge-type";
     public static final String TEXT_LABEL = "text-label";
 
     // graph implementations
@@ -240,8 +239,10 @@ public class Const {
     public static final String PDG_EDGE = "pdg-edge";
 
     // PDG edge types
+    public static final String ARG_DEP = "<arg>";
     public static final String DATA_DEP = "data-dep";
     public static final String CONTROL_DEP = "control-dep";
+    public static final String RET_DEP = "<ret>";
 
     // PDG edge property keys
     public static final String VAR_NAME = "var-name";

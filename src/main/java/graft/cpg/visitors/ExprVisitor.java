@@ -1,6 +1,5 @@
 package graft.cpg.visitors;
 
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -9,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import soot.Value;
 import soot.jimple.*;
 
+import graft.Graft;
 import graft.cpg.AstBuilder;
 
 import static graft.Const.*;
@@ -176,58 +176,81 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     @Override
     public void caseNewExpr(NewExpr expr) {
-        Vertex exprVertex = AstBuilder.genNewExprNode(NEW_EXPR, expr.toString(), getTypeString(expr.getType()));
-        addNodeProperty(exprVertex, BASE_TYPE, getTypeString(expr.getBaseType()));
-        setResult(exprVertex);
+        setResult(Graft.cpg().traversal()
+            .addExprNode(NEW_EXPR, expr.toString(), getTypeString(expr.getType()))
+            .property(NEW_EXPR_TYPE, NEW_EXPR)
+            .next()
+        );
     }
 
     @Override
     public void caseNewArrayExpr(NewArrayExpr expr) {
-        Vertex exprVertex = AstBuilder.genNewExprNode(NEW_ARRAY_EXPR, expr.toString(), getTypeString(expr.getType()));
-        addNodeProperty(exprVertex, BASE_TYPE, getTypeString(expr.getBaseType()));
+        Vertex exprNode = (Vertex) Graft.cpg().traversal()
+                .addExprNode(NEW_EXPR, expr.toString(), getTypeString(expr.getType()))
+                .property(NEW_EXPR_TYPE, NEW_ARRAY_EXPR)
+                .property(BASE_TYPE, getTypeString(expr.getBaseType()))
+                .next();
 
-        Vertex sizeVertex = AstBuilder.genValueNode(expr.getSize());
-        Edge sizeEdge = AstBuilder.genAstEdge(exprVertex, sizeVertex, SIZE, SIZE);
-        addEdgeProperty(sizeEdge, DIM, 0);
+        Graft.cpg().traversal()
+                .addAstE(SIZE, SIZE)
+                .from(exprNode)
+                .to(AstBuilder.genValueNode(expr.getSize()))
+                .iterate();
 
-        setResult(exprVertex);
+        setResult(exprNode);
     }
 
     @Override
     public void caseNewMultiArrayExpr(NewMultiArrayExpr expr) {
-        Vertex exprVertex = AstBuilder.genNewExprNode(NEW_ARRAY_EXPR, expr.toString(), getTypeString(expr.getType()));
-        addNodeProperty(exprVertex, BASE_TYPE, getTypeString(expr.getBaseType()));
+        Vertex exprNode = (Vertex) Graft.cpg().traversal()
+                .addExprNode(NEW_EXPR, expr.toString(), getTypeString(expr.getType()))
+                .property(NEW_EXPR_TYPE, NEW_ARRAY_EXPR)
+                .property(BASE_TYPE, getTypeString(expr.getBaseType()))
+                .next();
 
         int i = 0;
         for (Value size : expr.getSizes()) {
-            Vertex sizeVertex = AstBuilder.genValueNode(size);
-            Edge sizeEdge = AstBuilder.genAstEdge(exprVertex, sizeVertex, SIZE, SIZE);
-            addEdgeProperty(sizeEdge, DIM, i++);
+            Graft.cpg().traversal()
+                    .addAstE(SIZE, SIZE)
+                    .from(exprNode)
+                    .to(AstBuilder.genValueNode(size))
+                    .property(DIM, i++)
+                    .iterate();
         }
 
-        setResult(exprVertex);
+        setResult(exprNode);
     }
 
     @Override
     public void caseInstanceOfExpr(InstanceOfExpr expr) {
-        Vertex exprVertex = AstBuilder.genExprNode(INSTANCEOF_EXPR, expr.toString(), getTypeString(expr.getType()));
-        addNodeProperty(exprVertex, CHECK_TYPE, getTypeString(expr.getCheckType()));
+        Vertex exprNode = (Vertex) Graft.cpg().traversal()
+                .addExprNode(INSTANCEOF_EXPR, expr.toString(), getTypeString(expr.getType()))
+                .property(CHECK_TYPE, getTypeString(expr.getCheckType()))
+                .next();
 
-        Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
-        AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
+        Graft.cpg().traversal()
+                .addAstE(OPERAND, OPERAND)
+                .from(exprNode)
+                .to(AstBuilder.genValueNode(expr.getOp()))
+                .iterate();
 
-        setResult(exprVertex);
+        setResult(exprNode);
     }
 
     @Override
     public void caseCastExpr(CastExpr expr) {
-        Vertex exprVertex = AstBuilder.genExprNode(CAST_EXPR, expr.toString(), getTypeString(expr.getType()));
-        addNodeProperty(exprVertex, CAST_TYPE, getTypeString(expr.getCastType()));
+        Vertex exprNode = (Vertex) Graft.cpg().traversal()
+                .addExprNode(CAST_EXPR, expr.toString(), getTypeString(expr.getType()))
+                .property(CAST_TYPE, getTypeString(expr.getCastType()))
+                .next();
 
-        Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
-        AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
+        Graft.cpg().traversal()
+                .addAstE(OPERAND, OPERAND)
+                .from(exprNode)
+                .to(AstBuilder.genValueNode(expr.getOp()))
+                .iterate();
 
-        setResult(exprVertex);
+        setResult(exprNode);
     }
 
     // ********************************************************************************************
@@ -245,48 +268,70 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     // Generates an AST subtree for a binary expression and its operands
     private void caseBinaryExpr(BinopExpr expr, String operator) {
-        Vertex exprVertex = AstBuilder.genExprNode(BINARY_EXPR, expr.toString(), getTypeString(expr.getType()));
-        addNodeProperty(exprVertex, OPERATOR, operator);
+        Vertex exprNode = (Vertex) Graft.cpg().traversal()
+                .addExprNode(BINARY_EXPR, expr.toString(), getTypeString(expr.getType()))
+                .property(OPERATOR, operator)
+                .next();
 
-        Vertex lopVertex = AstBuilder.genValueNode(expr.getOp1());
-        Vertex ropVertex = AstBuilder.genValueNode(expr.getOp2());
-        AstBuilder.genAstEdge(exprVertex, lopVertex, LEFT_OPERAND, LEFT_OPERAND);
-        AstBuilder.genAstEdge(exprVertex, ropVertex, RIGHT_OPERAND, RIGHT_OPERAND);
+        Graft.cpg().traversal()
+                .addAstE(LEFT_OPERAND, LEFT_OPERAND)
+                .from(exprNode)
+                .to(AstBuilder.genValueNode(expr.getOp1()))
+                .iterate();
 
-        setResult(exprVertex);
+        Graft.cpg().traversal()
+                .addAstE(RIGHT_OPERAND, RIGHT_OPERAND)
+                .from(exprNode)
+                .to(AstBuilder.genValueNode(expr.getOp2()))
+                .iterate();
+
+        setResult(exprNode);
     }
 
     // Generates an AST subtree for a unary expression and its operand
     private void caseUnaryExpr(UnopExpr expr, String operator) {
-        Vertex exprVertex = AstBuilder.genExprNode(UNARY_EXPR, expr.toString(), getTypeString(expr.getType()));
-        addNodeProperty(exprVertex, OPERATOR, operator);
+        Vertex exprNode = (Vertex) Graft.cpg().traversal()
+                .addExprNode(UNARY_EXPR, expr.toString(), getTypeString(expr.getType()))
+                .property(OPERATOR, operator)
+                .next();
 
-        Vertex opVertex = AstBuilder.genValueNode(expr.getOp());
-        AstBuilder.genAstEdge(exprVertex, opVertex, OPERAND, OPERAND);
+        Graft.cpg().traversal()
+                .addAstE(LEFT_OPERAND, LEFT_OPERAND)
+                .from(exprNode)
+                .to(AstBuilder.genValueNode(expr.getOp()))
+                .iterate();
 
-        setResult(exprVertex);
+        setResult(exprNode);
     }
 
     // Generates an AST subtree for an invoke expression and possibly its base and args
     private void caseInvokeExpr(InvokeExpr expr, String invokeType, Value base) {
-        Vertex exprVertex = AstBuilder.genExprNode(INVOKE_EXPR, expr.toString(), getTypeString(expr.getType()));
-        addNodeProperty(exprVertex, INVOKE_TYPE, invokeType);
-        // TODO: rename this property to INVOKES
-        addNodeProperty(exprVertex, METHOD_SIG, expr.getMethod().getSignature());
+        // TODO: use INVOKES instead of METHOD_SIG
+        Vertex exprNode = (Vertex) Graft.cpg().traversal()
+                .addExprNode(INVOKE_EXPR, expr.toString(), getTypeString(expr.getType()))
+                .property(INVOKE_TYPE, invokeType)
+                .property(METHOD_SIG, expr.getMethod().getSignature())
+                .next();
 
         if (base != null) {
-            Vertex baseVertex = AstBuilder.genValueNode(base);
-            AstBuilder.genAstEdge(exprVertex, baseVertex, BASE, BASE);
+            Graft.cpg().traversal()
+                    .addAstE(BASE, BASE)
+                    .from(exprNode)
+                    .to(AstBuilder.genValueNode(base))
+                    .iterate();
         }
 
         int i = 0;
         for (Value arg : expr.getArgs()) {
-            Vertex argVertex = AstBuilder.genValueNode(arg);
-            Edge argEdge = AstBuilder.genAstEdge(exprVertex, argVertex, ARG, ARG);
-            addEdgeProperty(argEdge, INDEX, i++);
+            Graft.cpg().traversal()
+                    .addAstE(ARG, ARG)
+                    .from(exprNode)
+                    .to(AstBuilder.genValueNode(arg))
+                    .property(INDEX, i++)
+                    .iterate();
         }
 
-        setResult(exprVertex);
+        setResult(exprNode);
     }
 
 }

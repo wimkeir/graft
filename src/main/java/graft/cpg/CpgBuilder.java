@@ -22,7 +22,6 @@ import graft.traversal.CpgTraversalSource;
 import graft.utils.FileUtil;
 import graft.utils.SootUtil;
 
-
 import static graft.Const.*;
 
 /**
@@ -66,7 +65,10 @@ public class CpgBuilder {
             log.debug("Building CPG of class '{}'", classNames.get(i));
             SootClass cls = Scene.v().loadClassAndSupport(classNames.get(i));
             Vertex classNode = buildCpg(cls, classFiles.get(i));
-            AstBuilder.genAstEdge(cpgRoot, classNode, CLASS, CLASS);
+            Graft.cpg().traversal()
+                    .addAstE(CLASS, CLASS)
+                    .from(cpgRoot).to(classNode)
+                    .iterate();
         }
 
         banner.println("CPG constructed successfully");
@@ -77,22 +79,29 @@ public class CpgBuilder {
 
     public static Vertex buildCpg(SootClass cls, File classFile) {
         // TODO: how does this handle interfaces, extensions, enums etc?
-        Vertex classNode = AstBuilder.genAstNode(CLASS, cls.getShortName());
-        CpgUtil.addNodeProperty(classNode, SHORT_NAME, cls.getShortName());
-        CpgUtil.addNodeProperty(classNode, FULL_NAME, cls.getName());
-        CpgUtil.addNodeProperty(classNode, FILE_NAME, classFile.getName());
-        CpgUtil.addNodeProperty(classNode, FILE_PATH, classFile.getPath());
-        CpgUtil.addNodeProperty(classNode, FILE_HASH, FileUtil.hashFile(classFile));
+        Vertex classNode = (Vertex) Graft.cpg().traversal()
+                .addAstV(CLASS, cls.getShortName())
+                .property(SHORT_NAME, cls.getShortName())
+                .property(FULL_NAME, cls.getName())
+                .property(FILE_NAME, classFile.getName())
+                .property(FILE_PATH, classFile.getPath())
+                .property(FILE_HASH, FileUtil.hashFile(classFile))
+                .next();
 
         for (SootMethod method : cls.getMethods()) {
             try {
                 Body body = method.retrieveActiveBody();
                 Vertex methodEntry = buildCpg(body);
                 if (method.isConstructor()) {
-                    AstBuilder.genAstEdge(classNode, methodEntry, CONSTRUCTOR, CONSTRUCTOR);
+                    Graft.cpg().traversal()
+                            .addAstE(CONSTRUCTOR, CONSTRUCTOR)
+                            .from(classNode).to(methodEntry)
+                            .iterate();
                 } else {
-                    AstBuilder.genAstEdge(classNode, methodEntry, METHOD, METHOD);
-                }
+                    Graft.cpg().traversal()
+                            .addAstE(METHOD, METHOD)
+                            .from(classNode).to(methodEntry)
+                            .iterate();                }
             } catch (RuntimeException e) {
                 log.warn("No body for method '{}'", method.getSignature(), e);
             }
@@ -186,19 +195,10 @@ public class CpgBuilder {
         }
 
         Vertex classNode = buildCpg(cls, classFile);
-        AstBuilder.genAstEdge(cpgRoot, classNode, CLASS, CLASS);
-    }
-
-    public static void genCpgRoot(String projName, String targetDir, String classpath) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        assert g.V().count().next() == 0; // XXX
-        g.addV(CPG_ROOT)
-                .property(NODE_TYPE, CPG_ROOT)
-                .property(TEXT_LABEL, projName)
-                .property(PROJECT_NAME, projName)
-                .property(TARGET_DIR, targetDir)
-                .property(CLASSPATH, classpath)
-                .next();
+        Graft.cpg().traversal()
+                .addAstE(CLASS, CLASS)
+                .from(cpgRoot).to(classNode)
+                .iterate();
     }
 
 }

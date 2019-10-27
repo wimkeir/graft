@@ -1,8 +1,5 @@
 package graft.cpg;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -39,15 +36,6 @@ public class CpgUtil {
                 .values(FILE_PATH).next().toString();
     }
 
-    public static Vertex genCpgRoot(String targetDir) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        return g.addV(CPG_ROOT)
-                .property(NODE_TYPE, CPG_ROOT)
-                .property(TARGET, targetDir)
-                .property(TEXT_LABEL, targetDir)
-                .next();
-    }
-
     /**
      * Get the number of nodes currently in the CPG.
      *
@@ -66,30 +54,6 @@ public class CpgUtil {
     public static long getEdgeCount() {
         CpgTraversalSource g = Graft.cpg().traversal();
         return g.E().count().next();
-    }
-
-    /**
-     * Adds a string property to the given node.
-     *
-     * @param node the node to add the property to
-     * @param key the property key
-     * @param value the property value
-     */
-    public static void addNodeProperty(Vertex node, String key, Object value) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        g.V(node).property(key, value).iterate();
-    }
-
-    /**
-     * Adds a string property to the given edge.
-     *
-     * @param edge the edge to add the property to
-     * @param key the property key
-     * @param value the property value
-     */
-    public static void addEdgeProperty(Edge edge, String key, Object value) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        g.E(edge).property(key, value).iterate();
     }
 
     public static void dropCfg(SootMethod method) {
@@ -150,77 +114,6 @@ public class CpgUtil {
                 .repeat(in(AST_EDGE))
                 .until(hasLabel(CFG_NODE))
                 .next();
-    }
-
-    /**
-     * Returns all invoke expression nodes in the AST subtree of the current node.
-     *
-     * @param vertex the root of the AST subtree to search for invoke expressions
-     * @return a list of all invoke expressions found in the subtree
-     */
-    public static List<Vertex> getInvokeExprs(Vertex vertex) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        List<Vertex> invokeExprs = new ArrayList<>();
-
-        g.V(vertex).repeat(
-                sideEffect(x -> {
-                    Vertex v = (Vertex) x.get();
-                    if (v.value(NODE_TYPE).equals(INVOKE_EXPR)) {
-                        invokeExprs.add(v);
-                    }
-                }).out(AST_EDGE)
-        ).iterate();
-
-        return invokeExprs;
-    }
-
-    /**
-     * Returns all invoke expression nodes in the AST subtree of the current node that match the given
-     * name and scope regex patterns.
-     *
-     * @param vertex the root of the AST subtree to search for invoke expressions
-     * @param sigPattern the regex to match the method name against
-     * @return a list of all invoke expression nodes in the AST subtree
-     */
-    public static List<Vertex> getInvokeExprs(Vertex vertex, String sigPattern) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        List<Vertex> invokeExprs = new ArrayList<>();
-
-        g.V(vertex).repeat(
-                sideEffect(x -> {
-                    Vertex v = (Vertex) x.get();
-                    if (v.value(NODE_TYPE).equals(INVOKE_EXPR) &&
-                        v.value(METHOD_SIG).toString().matches(sigPattern)) {
-                        invokeExprs.add(v);
-                    }
-                }).out(AST_EDGE)
-        ).iterate();
-
-        return invokeExprs;
-    }
-
-    /**
-     * Returns all local variable nodes in the AST subtree of the current node.
-     *
-     * @param vertex the root of the AST subtree to search for variable nodes
-     * @return a list of all local variable nodes in the AST subtree
-     */
-    public static List<Vertex> getLocals(Vertex vertex) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        List<Vertex> locals = new ArrayList<>();
-
-        if (vertex.value(NODE_TYPE).equals(LOCAL_VAR)) {
-            locals.add(vertex);
-        }
-
-        g.V(vertex).repeat(out(AST_EDGE)
-                .choose(
-                        values(NODE_TYPE).is(LOCAL_VAR),
-                        sideEffect(it -> locals.add(it.get()))
-                )
-        );
-
-        return locals;
     }
 
     /**

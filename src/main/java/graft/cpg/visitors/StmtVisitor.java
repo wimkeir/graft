@@ -8,8 +8,9 @@ import org.slf4j.LoggerFactory;
 import soot.Value;
 import soot.jimple.*;
 
+import graft.Graft;
 import graft.cpg.AstBuilder;
-import graft.cpg.CfgBuilder;
+import graft.utils.SootUtil;
 
 import static graft.Const.*;
 
@@ -32,8 +33,9 @@ public class StmtVisitor extends AbstractStmtSwitch {
     public void caseBreakpointStmt(BreakpointStmt stmt) {
         log.trace("Visiting BreakpointStmt");
         log.info("Encountered breakpoint instruction during CFG construction");
-        Vertex bpVertex = CfgBuilder.genStmtNode(stmt, BREAKPOINT_STMT, stmt.toString());
-        setResult(bpVertex);
+        setResult(Graft.cpg().traversal()
+                .addStmtNode(BREAKPOINT_STMT, stmt.toString(), SootUtil.getLineNr(stmt))
+                .next());
     }
 
     @Override
@@ -85,8 +87,9 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseRetStmt(RetStmt stmt) {
         log.trace("Visiting RetStmt");
-        Vertex retVertex = CfgBuilder.genStmtNode(stmt, RETURN_STMT, stmt.toString());
-        setResult(retVertex);
+        setResult(Graft.cpg().traversal()
+                .addStmtNode(RETURN_STMT, stmt.toString(), SootUtil.getLineNr(stmt))
+                .next());
     }
 
     @Override
@@ -98,8 +101,9 @@ public class StmtVisitor extends AbstractStmtSwitch {
     @Override
     public void caseReturnVoidStmt(ReturnVoidStmt stmt) {
         log.trace("Visiting ReturnVoidStmt");
-        Vertex retVertex = CfgBuilder.genStmtNode(stmt, RETURN_STMT, stmt.toString());
-        setResult(retVertex);
+        setResult(Graft.cpg().traversal()
+                .addStmtNode(RETURN_STMT, stmt.toString(), SootUtil.getLineNr(stmt))
+                .next());
     }
 
     @Override
@@ -122,22 +126,37 @@ public class StmtVisitor extends AbstractStmtSwitch {
 
     // Generate CFG node for definition statements, with AST nodes for the target and value
     private void caseDefinitionStmt(DefinitionStmt stmt) {
-        Vertex assignVertex = CfgBuilder.genStmtNode(stmt, ASSIGN_STMT, stmt.toString());
+        Vertex stmtNode = (Vertex) Graft.cpg().traversal()
+                .addStmtNode(BREAKPOINT_STMT, stmt.toString(), SootUtil.getLineNr(stmt))
+                .next();
 
-        Vertex leftOpVertex = AstBuilder.genValueNode(stmt.getLeftOp());
-        Vertex rightOpVertex = AstBuilder.genValueNode(stmt.getRightOp());
-        AstBuilder.genAstEdge(assignVertex, leftOpVertex, TARGET, TARGET);
-        AstBuilder.genAstEdge(assignVertex, rightOpVertex, VALUE, VALUE);
+        Graft.cpg().traversal()
+                .addAstE(TARGET, TARGET)
+                .from(stmtNode)
+                .to(AstBuilder.genValueNode(stmt.getLeftOp()))
+                .iterate();
+        Graft.cpg().traversal()
+                .addAstE(VALUE, VALUE)
+                .from(stmtNode)
+                .to(AstBuilder.genValueNode(stmt.getRightOp()))
+                .iterate();
 
-        setResult(assignVertex);
+        setResult(stmtNode);
     }
 
     // Generates a CFG node for a statement of the given type with an operand of the given type
     private void caseStmtWithOp(Stmt stmt, String stmtType, Value op, String opType) {
-        Vertex stmtVertex = CfgBuilder.genStmtNode(stmt, stmtType, stmt.toString());
-        Vertex opVertex = AstBuilder.genValueNode(op);
-        AstBuilder.genAstEdge(stmtVertex, opVertex, opType, opType);
-        setResult(stmtVertex);
+        Vertex stmtNode = (Vertex) Graft.cpg().traversal()
+                .addStmtNode(stmtType, stmt.toString(), SootUtil.getLineNr(stmt))
+                .next();
+
+        Graft.cpg().traversal()
+                .addAstE(opType, opType)
+                .from(stmtNode)
+                .to(AstBuilder.genValueNode(op))
+                .iterate();
+
+        setResult(stmtNode);
     }
 
 }

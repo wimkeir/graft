@@ -28,7 +28,7 @@ public class Interproc {
      * Generate interprocedural call and return edges between call sites and method entries / returns.
      */
     public static void genInterprocEdges() {
-        log.debug("Generating interprocedural edges...");
+        log.info("Generating interprocedural edges...");
         // TODO NB: context sensitivity
         CpgTraversalSource g = Graft.cpg().traversal();
         CpgTraversal invokeExprs = g.V()
@@ -61,7 +61,10 @@ public class Interproc {
                 assert !methodEntries.hasNext();
 
                 // generate call edge
-                CfgBuilder.genCallEdge(callSite, methodEntry, "");  // TODO: context!
+                Graft.cpg().traversal()
+                        .genCallEdge("")
+                        .from(callSite).to(methodEntry)
+                        .iterate();
 
                 if (retSite != null) {
                     // generate ret edge
@@ -69,7 +72,10 @@ public class Interproc {
                             .V(methodEntry)
                             .repeat(out(CFG_EDGE)).until(has(NODE_TYPE, RETURN_STMT))
                             .next();
-                    CfgBuilder.genRetEdge(retStmt, retSite, "");    // TODO: context!
+                    Graft.cpg().traversal()
+                            .genRetEdge("")
+                            .from(retStmt).to(retSite)
+                            .iterate();
                 } else {
                     log.warn("No ret site for call at vertex '{}'", callSite.value(TEXT_LABEL).toString());
                 }
@@ -94,7 +100,10 @@ public class Interproc {
                 ).iterate();
 
         for (Vertex param : params) {
-            PdgBuilder.genDataDepEdge(callSite, param, ARG, ARG);
+            Graft.cpg().traversal()
+                    .addArgDepE()
+                    .from(callSite).to(param)
+                    .iterate();
         }
     }
 
@@ -109,7 +118,10 @@ public class Interproc {
 
         for (Vertex ret : returns) {
             if (g.V(ret).outE(AST_EDGE).count().next() > 0) {
-                PdgBuilder.genDataDepEdge(ret, callSite, RET, RET);
+                Graft.cpg().traversal()
+                        .addRetDepE()
+                        .from(ret).to(callSite)
+                        .iterate();
             }
         }
     }

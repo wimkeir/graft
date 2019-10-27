@@ -1,13 +1,12 @@
 package graft.cpg.visitors;
 
-import org.apache.tinkerpop.gremlin.structure.Vertex;
+import graft.Graft;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import soot.jimple.*;
 
-import graft.cpg.AstBuilder;
 import graft.cpg.CpgUtil;
 
 import static graft.Const.*;
@@ -65,8 +64,10 @@ public class ConstantVisitor extends AbstractConstantSwitch {
 
     // Generate an AST node for a constant value
     private void caseConstant(String type, Object value) {
-        Vertex constVertex = AstBuilder.genConstantNode(type, value.toString(), value.toString());
-        setResult(constVertex);
+        setResult(Graft.cpg().traversal()
+            .addConstNode(type, value.toString(), value.toString())
+            .next()
+        );
     }
 
 }

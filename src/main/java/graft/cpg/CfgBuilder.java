@@ -3,7 +3,6 @@ package graft.cpg;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -17,10 +16,9 @@ import soot.toolkits.graph.UnitGraph;
 import graft.Graft;
 import graft.cpg.visitors.StmtVisitor;
 import graft.traversal.CpgTraversalSource;
-import graft.utils.SootUtil;
 
 import static graft.Const.*;
-import static graft.traversal.__.*;
+import static graft.cpg.CpgUtil.*;
 
 /**
  * Generate the control flow graph.
@@ -46,57 +44,19 @@ public class CfgBuilder {
     public static Vertex buildCfg(UnitGraph unitGraph, Map<Unit, Vertex> generatedNodes) {
         SootMethod method = unitGraph.getBody().getMethod();
         log.debug("Building CFG for method '{}'", method.getName());
-        Vertex entryNode = genMethodEntry(method);
+        Vertex entryNode = (Vertex) Graft.cpg().traversal()
+                .addEntryNode(method.getName(), method.getSignature(), getTypeString(method.getReturnType()))
+                .next();
 
         for (Unit head : unitGraph.getHeads()) {
             Vertex headVertex = genUnitNode(head, unitGraph, generatedNodes);
-            genEmptyEdge(entryNode, headVertex);
+            Graft.cpg().traversal()
+                    .addEmptyEdge()
+                    .from(entryNode).to(headVertex)
+                    .iterate();
         }
 
         return entryNode;
-    }
-
-    /**
-     * Generate a base CFG node for the given Jimple statement.
-     *
-     * @param stmt the statement to generate a node for
-     * @param nodeType the node type
-     * @param textLabel the node's text label
-     * @return the newly generated node
-     */
-    public static Vertex genStmtNode(Stmt stmt, String nodeType, String textLabel) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        Vertex node = g.addV(CFG_NODE)
-                .property(NODE_TYPE, nodeType)
-                .property(TEXT_LABEL, textLabel)
-                .property(SRC_LINE_NO, SootUtil.getLineNr(stmt))
-                .next();
-        // Graft.cpg().commit();
-        return node;
-    }
-
-    /**
-     * Generate an interprocedural call edge between two CFG nodes.
-     *
-     * @param from the start vertex
-     * @param to the end vertex
-     * @param context the calling context
-     * @return the newly generated edge
-     */
-    static Edge genCallEdge(Vertex from, Vertex to, String context) {
-        return genInterprocEdge(from, to, CALL, context);
-    }
-
-    /**
-     * Generate an interprocedural return edge between two CFG nodes.
-     *
-     * @param from the start vertex
-     * @param to the end vertex
-     * @param context the calling context
-     * @return the newly generated edge
-     */
-    static Edge genRetEdge(Vertex from, Vertex to, String context) {
-        return genInterprocEdge(from, to, RET, context);
     }
 
     // ********************************************************************************************
@@ -129,7 +89,10 @@ public class CfgBuilder {
 
         if (succs.size() == 1) {
             Vertex succNode = genUnitNode(succs.get(0), unitGraph, generated);
-            genEmptyEdge(unitVertex, succNode);
+            Graft.cpg().traversal()
+                    .addEmptyEdge()
+                    .from(unitVertex).to(succNode)
+                    .iterate();
         } else {
             if (!(unit instanceof RetStmt || unit instanceof ReturnStmt || unit instanceof ReturnVoidStmt)) {
                 log.warn("Non-return node with no children: '{}'", unit.toString());
@@ -143,9 +106,15 @@ public class CfgBuilder {
         for (Unit succ : unitGraph.getSuccsOf(ifStmt)) {
             Vertex succNode = genUnitNode(succ, unitGraph, generated);
             if (succ.equals(ifStmt.getTarget())) {
-                genConditionalEdge(ifNode, succNode, TRUE);
+                Graft.cpg().traversal()
+                        .addCondEdge(TRUE)
+                        .from(ifNode).to(succNode)
+                        .iterate();
             } else {
-                genConditionalEdge(ifNode, succNode, FALSE);
+                Graft.cpg().traversal()
+                        .addCondEdge(FALSE)
+                        .from(ifNode).to(succNode)
+                        .iterate();
             }
         }
         return ifNode;
@@ -159,11 +128,17 @@ public class CfgBuilder {
         for (int i = 0; i < switchStmt.getTargetCount(); i++) {
             Vertex targetNode = genUnitNode(switchStmt.getTarget(i), unitGraph, generated);
             // TODO: how to handle lookup values?
-            genConditionalEdge(switchNode, targetNode, switchStmt.getLookupValue(i) + "");
+            Graft.cpg().traversal()
+                    .addCondEdge(switchStmt.getLookupValue(i) + "")
+                    .from(switchNode).to(targetNode)
+                    .iterate();
         }
         if (switchStmt.getDefaultTarget() != null) {
             Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget(), unitGraph, generated);
-            genConditionalEdge(switchNode, defaultNode, DEFAULT_TARGET);
+            Graft.cpg().traversal()
+                    .addCondEdge(DEFAULT_TARGET)
+                    .from(switchNode).to(defaultNode)
+                    .iterate();
         }
         return switchNode;
     }
@@ -181,11 +156,16 @@ public class CfgBuilder {
             }
             Vertex targetNode = genUnitNode(switchStmt.getTarget(i), unitGraph, generated);
             // TODO: how to handle table values?
-            genConditionalEdge(switchNode, targetNode, i + "");
-        }
+            Graft.cpg().traversal()
+                    .addCondEdge(i + "")
+                    .from(switchNode).to(targetNode)
+                    .iterate();         }
         if (switchStmt.getDefaultTarget() != null) {
             Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget(), unitGraph, generated);
-            genConditionalEdge(switchNode, defaultNode, DEFAULT_TARGET);
+            Graft.cpg().traversal()
+                    .addCondEdge(DEFAULT_TARGET)
+                    .from(switchNode).to(defaultNode)
+                    .iterate();
         }
         return switchNode;
     }
@@ -201,73 +181,6 @@ public class CfgBuilder {
             generated.put(unit, node);
         }
         return node;
-    }
-
-    private static Vertex genMethodEntry(SootMethod method) {
-        // TODO: param AST nodes?
-        CpgTraversalSource g = Graft.cpg().traversal();
-        Vertex node = g.addV(CFG_NODE)
-                .property(NODE_TYPE, ENTRY)
-                .property(TEXT_LABEL, method.getName())
-                .property(METHOD_NAME, method.getName())
-                .property(METHOD_SIG, method.getSignature())
-                .property(JAVA_TYPE, CpgUtil.getTypeString(method.getReturnType()))
-                .property(SRC_LINE_NO, -1)
-                .next();
-        // Graft.cpg().commit();
-        return node;
-    }
-
-    private static Edge genEmptyEdge(Vertex from, Vertex to) {
-        // see https://stackoverflow.com/a/52447622
-        // we have to watch out that we're not creating duplicate edges here
-        assert from != null;
-        assert to != null;
-        CpgTraversalSource g = Graft.cpg().traversal();
-        Edge edge = g.V(from).as("v").V(to)
-                .coalesce(
-                        inE(CFG_EDGE).where(outV().as("v")),
-                        addE(CFG_EDGE)
-                                .from("v").to(to)
-                                .property(EDGE_TYPE, EMPTY)
-                                .property(TEXT_LABEL, EMPTY)
-                                .property(INTERPROC, false))
-                .next();
-        // Graft.cpg().commit();
-        return edge;
-    }
-
-    private static Edge genConditionalEdge(Vertex from, Vertex to, String condition) {
-        // TODO: condition object rather?
-        assert from != null;
-        assert to != null;
-        CpgTraversalSource g = Graft.cpg().traversal();
-        Edge edge = g.addE(CFG_EDGE)
-                .from(from).to(to)
-                .property(EDGE_TYPE, CONDITION)
-                .property(TEXT_LABEL, condition)
-                .property(INTERPROC, false)
-                .property(CONDITION, condition)
-                .next();
-        // Graft.cpg().commit();
-        return edge;
-    }
-
-    private static Edge genInterprocEdge(Vertex from, Vertex to, String edgeType, String context) {
-        // TODO: context object rather?
-        assert from != null;
-        assert to != null;
-        assert edgeType.equals(CALL) || edgeType.equals(RET);
-        CpgTraversalSource g = Graft.cpg().traversal();
-        Edge edge = g.addE(CFG_EDGE)
-                .from(from).to(to)
-                .property(EDGE_TYPE, edgeType)
-                .property(TEXT_LABEL, edgeType) // TODO: include context in label
-                .property(INTERPROC, TRUE)
-                .property(CONTEXT, context)
-                .next();
-        // Graft.cpg().commit();
-        return edge;
     }
 
 }
