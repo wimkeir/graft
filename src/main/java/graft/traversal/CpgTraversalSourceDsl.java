@@ -31,6 +31,13 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .has(NODE_TYPE, CPG_ROOT);
     }
 
+    public CpgTraversal<Vertex, Vertex> entryOf(String methodSig) {
+        return getV()
+                .hasLabel(CFG_NODE)
+                .has(NODE_TYPE, ENTRY)
+                .has(METHOD_SIG, methodSig);
+    }
+
     // ********************************************************************************************
     // addV traversals
     // ********************************************************************************************
@@ -155,7 +162,7 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
     // Program dependence graph
 
     public CpgTraversal<Edge, Edge> addPdgE() {
-        return (CpgTraversal<Edge, Edge>) addE(AST_EDGE);
+        return (CpgTraversal<Edge, Edge>) addE(PDG_EDGE);
     }
 
     public CpgTraversal<Edge, Edge> addPdgE(String edgeType, String textLabel) {

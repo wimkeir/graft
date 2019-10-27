@@ -155,6 +155,7 @@ public class Const {
     public static final String RIGHT_OPERAND = "right-op";
     public static final String RETURNS = "returns";
     public static final String SIZE = "size";
+    public static final String STATEMENT = "statement";
     public static final String SWITCH_KEY = "switch-key";
     public static final String TARGET = "target";
     public static final String THROWS = "throws";

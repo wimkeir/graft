@@ -117,9 +117,9 @@ public class CpgBuilder {
      */
     public static Vertex buildCpg(Body body) {
         UnitGraph unitGraph = new BriefUnitGraph(body);
-        Map<Unit, Vertex> unitNodes = new HashMap<>();
-        Vertex methodEntry = CfgBuilder.buildCfg(unitGraph, unitNodes);
-        PdgBuilder.buildPdg(unitGraph, unitNodes);
+        CfgBuilder cfgBuilder = new CfgBuilder(unitGraph);
+        Vertex methodEntry = cfgBuilder.buildCfg();
+        PdgBuilder.buildPdg(unitGraph, cfgBuilder.generatedNodes());
 
         // TODO: make sure to do this everywhere its needed
         if (Options.v().getString(OPT_DB_IMPLEMENTATION).equals(NEO4J)) {

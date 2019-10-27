@@ -1,5 +1,6 @@
 package graft.cpg;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
 import static graft.cpg.CpgUtil.*;
+import static graft.traversal.__.*;
 
 /**
  * Generate the control flow graph.
@@ -29,27 +31,28 @@ public class CfgBuilder {
 
     private static Logger log = LoggerFactory.getLogger(CfgBuilder.class);
 
+    private Map<Unit, Vertex> generatedNodes;
+    private UnitGraph unitGraph;
+    private Vertex entryNode;
+
+    public CfgBuilder(UnitGraph unitGraph) {
+        this.unitGraph = unitGraph;
+        this.generatedNodes = new HashMap<>();
+    }
+
     // ********************************************************************************************
     // public methods
     // ********************************************************************************************
 
-    /**
-     * Build a CFG with AST subtrees from the given unit graph, storing the generated nodes in a
-     * map with their corresponding units as keys.
-     *
-     * @param unitGraph the unit graph
-     * @param generatedNodes the map to store the generated nodes in
-     * @return the method entry vertex of the CFG (ie. the root of this method's CFG)
-     */
-    public static Vertex buildCfg(UnitGraph unitGraph, Map<Unit, Vertex> generatedNodes) {
+    public Vertex buildCfg() {
         SootMethod method = unitGraph.getBody().getMethod();
         log.debug("Building CFG for method '{}'", method.getName());
-        Vertex entryNode = (Vertex) Graft.cpg().traversal()
+        entryNode = (Vertex) Graft.cpg().traversal()
                 .addEntryNode(method.getName(), method.getSignature(), getTypeString(method.getReturnType()))
                 .next();
 
         for (Unit head : unitGraph.getHeads()) {
-            Vertex headVertex = genUnitNode(head, unitGraph, generatedNodes);
+            Vertex headVertex = genUnitNode(head);
             Graft.cpg().traversal()
                     .addEmptyEdge()
                     .from(entryNode).to(headVertex)
@@ -59,40 +62,48 @@ public class CfgBuilder {
         return entryNode;
     }
 
+    public Map<Unit, Vertex> generatedNodes() {
+        return generatedNodes;
+    }
+
     // ********************************************************************************************
     // private methods
     // ********************************************************************************************
 
     // Generate a CFG node for the given unit, with its successors
-    private static Vertex genUnitNode(Unit unit, UnitGraph unitGraph, Map<Unit, Vertex> generated) {
+    @SuppressWarnings("unchecked")
+    private Vertex genUnitNode(Unit unit) {
         if (unit instanceof GotoStmt) {
             // collapse goto statements
-            return genUnitNode(((GotoStmt) unit).getTarget(), unitGraph, generated);
+            return genUnitNode(((GotoStmt) unit).getTarget());
         }
 
         CpgTraversalSource g = Graft.cpg().traversal();
         log.trace("Generating Unit '{}'", unit.toString());
 
-        Vertex unitVertex = getOrGenUnitNode(unit, generated);
+        Vertex unitVertex = getOrGenUnitNode(unit);
 
         // handle possible conditional edges
         if (unit instanceof IfStmt) {
-            return genIfAndSuccs(unitGraph, unitVertex, (IfStmt) unit, generated);
+            return genIfAndSuccs(unitVertex, (IfStmt) unit);
         } else if (unit instanceof LookupSwitchStmt) {
-            return genLookupSwitchAndSuccs(unitGraph, unitVertex, (LookupSwitchStmt) unit, generated);
+            return genLookupSwitchAndSuccs(unitVertex, (LookupSwitchStmt) unit);
         } else if (unit instanceof TableSwitchStmt) {
-            return genTableSwitchAndSuccs(unitGraph, unitVertex, (TableSwitchStmt) unit, generated);
+            return genTableSwitchAndSuccs(unitVertex, (TableSwitchStmt) unit);
         }
 
         List<Unit> succs = unitGraph.getSuccsOf(unit);
         assert succs.size() <= 1;
 
         if (succs.size() == 1) {
-            Vertex succNode = genUnitNode(succs.get(0), unitGraph, generated);
+            Vertex succNode = genUnitNode(succs.get(0));
             Graft.cpg().traversal()
-                    .addEmptyEdge()
-                    .from(unitVertex).to(succNode)
-                    .iterate();
+                    .V(unitVertex).as("v")
+                    .V(succNode)
+                    .coalesce(
+                            inE(CFG_EDGE).where(outV().as("v")),
+                            addEmptyEdge().from("v")
+                    ).iterate();
         } else {
             if (!(unit instanceof RetStmt || unit instanceof ReturnStmt || unit instanceof ReturnVoidStmt)) {
                 log.warn("Non-return node with no children: '{}'", unit.toString());
@@ -102,9 +113,9 @@ public class CfgBuilder {
         return unitVertex;
     }
 
-    private static Vertex genIfAndSuccs(UnitGraph unitGraph, Vertex ifNode, IfStmt ifStmt, Map<Unit, Vertex> generated) {
+    private Vertex genIfAndSuccs(Vertex ifNode, IfStmt ifStmt) {
         for (Unit succ : unitGraph.getSuccsOf(ifStmt)) {
-            Vertex succNode = genUnitNode(succ, unitGraph, generated);
+            Vertex succNode = genUnitNode(succ);
             if (succ.equals(ifStmt.getTarget())) {
                 Graft.cpg().traversal()
                         .addCondEdge(TRUE)
@@ -120,13 +131,10 @@ public class CfgBuilder {
         return ifNode;
     }
 
-    private static Vertex genLookupSwitchAndSuccs(UnitGraph unitGraph,
-                                                  Vertex switchNode,
-                                                  LookupSwitchStmt switchStmt,
-                                                  Map<Unit, Vertex> generated) {
+    private Vertex genLookupSwitchAndSuccs(Vertex switchNode, LookupSwitchStmt switchStmt) {
         assert switchStmt.getTargetCount() == unitGraph.getSuccsOf(switchStmt).size();
         for (int i = 0; i < switchStmt.getTargetCount(); i++) {
-            Vertex targetNode = genUnitNode(switchStmt.getTarget(i), unitGraph, generated);
+            Vertex targetNode = genUnitNode(switchStmt.getTarget(i));
             // TODO: how to handle lookup values?
             Graft.cpg().traversal()
                     .addCondEdge(switchStmt.getLookupValue(i) + "")
@@ -134,7 +142,7 @@ public class CfgBuilder {
                     .iterate();
         }
         if (switchStmt.getDefaultTarget() != null) {
-            Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget(), unitGraph, generated);
+            Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget());
             Graft.cpg().traversal()
                     .addCondEdge(DEFAULT_TARGET)
                     .from(switchNode).to(defaultNode)
@@ -143,10 +151,7 @@ public class CfgBuilder {
         return switchNode;
     }
 
-    private static Vertex genTableSwitchAndSuccs(UnitGraph unitGraph,
-                                                 Vertex switchNode,
-                                                 TableSwitchStmt switchStmt,
-                                                 Map<Unit, Vertex> generated) {
+    private Vertex genTableSwitchAndSuccs(Vertex switchNode, TableSwitchStmt switchStmt) {
         assert (switchStmt.getLowIndex() - switchStmt.getLowIndex()) == unitGraph.getSuccsOf(switchStmt).size();
         for (int i = switchStmt.getLowIndex(); i < switchStmt.getHighIndex(); i++) {
             if (switchStmt.getTarget(i) == null) {
@@ -154,14 +159,14 @@ public class CfgBuilder {
                 log.debug("Ignoring non-existent table switch target");
                 continue;
             }
-            Vertex targetNode = genUnitNode(switchStmt.getTarget(i), unitGraph, generated);
+            Vertex targetNode = genUnitNode(switchStmt.getTarget(i));
             // TODO: how to handle table values?
             Graft.cpg().traversal()
                     .addCondEdge(i + "")
                     .from(switchNode).to(targetNode)
                     .iterate();         }
         if (switchStmt.getDefaultTarget() != null) {
-            Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget(), unitGraph, generated);
+            Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget());
             Graft.cpg().traversal()
                     .addCondEdge(DEFAULT_TARGET)
                     .from(switchNode).to(defaultNode)
@@ -170,15 +175,20 @@ public class CfgBuilder {
         return switchNode;
     }
 
-    // Try to get the node from the map of generated nodes - if it's not there, generate it using the statement visitor
-    private static Vertex getOrGenUnitNode(Unit unit, Map<Unit, Vertex> generated) {
-        Vertex node = generated.get(unit);
+    private Vertex getOrGenUnitNode(Unit unit) {
+        Vertex node = generatedNodes.get(unit);
         if (node == null) {
             StmtVisitor visitor = new StmtVisitor();
             unit.apply(visitor);
             node = (Vertex) visitor.getResult();
-            assert node != null;
-            generated.put(unit, node);
+
+            // AST statement edge from entry node
+            Graft.cpg().traversal()
+                    .addAstE(STATEMENT, STATEMENT)
+                    .from(entryNode).to(node)
+                    .iterate();
+
+            generatedNodes.put(unit, node);
         }
         return node;
     }
