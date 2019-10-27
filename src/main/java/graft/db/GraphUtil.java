@@ -44,8 +44,11 @@ public abstract class GraphUtil {
     private static Graph tinkerGraph() {
         log.debug("Initialising TinkerGraph implementation");
         if (Options.v().containsKey(OPT_DB_LOAD_FROM)) {
-            return TinkerGraphUtil.fromFile(Options.v().getString(OPT_DB_LOAD_FROM));
+            String filename = Options.v().getString(OPT_DB_LOAD_FROM);
+            log.debug("Loading TinkerGraph from file '{}'", filename);
+            return TinkerGraphUtil.fromFile(filename);
         }
+        log.debug("Initialising new TinkerGraph instance");
         return TinkerGraph.open();
     }
 

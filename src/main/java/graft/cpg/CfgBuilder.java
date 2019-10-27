@@ -131,7 +131,9 @@ public class CfgBuilder {
             Vertex succNode = genUnitNode(succs.get(0), unitGraph, generated);
             genEmptyEdge(unitVertex, succNode);
         } else {
-            assert unit instanceof RetStmt || unit instanceof ReturnStmt || unit instanceof ReturnVoidStmt;
+            if (!(unit instanceof RetStmt || unit instanceof ReturnStmt || unit instanceof ReturnVoidStmt)) {
+                log.warn("Non-return node with no children: '{}'", unit.toString());
+            }
         }
 
         return unitVertex;

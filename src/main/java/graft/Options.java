@@ -9,16 +9,17 @@ public class Options {
 
     private static Logger log = LoggerFactory.getLogger(Options.class);
 
+    // TODO: option consts here
+
     private static Config options;
 
-    static void init(Config config, CLI cli) {
+    static void init(Config config) {
         if (options != null) {
             throw new GraftException("Options already initialized");
         }
         options = config.copy();
-        // TODO: CLI args
 
-        if (log.isInfoEnabled()) {
+        if (log.isDebugEnabled()) {
             log.info("Running with options:");
             Iterator<String> keys = config.keys();
             while (keys.hasNext()) {
