@@ -306,7 +306,6 @@ public class Graft {
                 log.error("Unrecognised command '{}'", cmd);
                 System.exit(1);
         }
-
     }
 
 }

@@ -51,6 +51,7 @@ public class Const {
     public static final String OPT_DB_IMPLEMENTATION = "db.implementation";
     public static final String OPT_PROJECT_NAME = "project-name";
     public static final String OPT_CLASSPATH = "soot.options.classpath";
+    public static final String OPT_DB_LOAD_FROM = "db.load-from";
     public static final String OPT_TAINT_SOURCE = "taint.source";
     public static final String OPT_TAINT_SINK = "taint.sink";
     public static final String OPT_TAINT_SANITIZER = "taint.sanitizer";

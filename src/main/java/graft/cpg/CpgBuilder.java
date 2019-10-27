@@ -35,8 +35,7 @@ public class CpgBuilder {
     private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);
 
     public static void buildCpg() {
-        Vertex cpgRoot = Graft.cpg().traversal().cpgRoot().next();
-
+        Vertex cpgRoot = (Vertex) Graft.cpg().traversal().cpgRoot().next();
         String targetDirName = Options.v().getString(OPT_TARGET_DIR);
         File targetDir = new File(targetDirName);
 
