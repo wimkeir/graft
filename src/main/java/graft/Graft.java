@@ -255,7 +255,7 @@ public class Graft {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        checkOrExit(0, args.length < 1, "Invalid command line arguments");
+        checkOrExit(0, args.length >= 1, "Invalid command line arguments");
 
         String cmd = args[0];
         startup();
