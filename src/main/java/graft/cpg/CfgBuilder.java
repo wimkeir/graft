@@ -119,10 +119,6 @@ public class CfgBuilder {
                             inE(CFG_EDGE).where(outV().as("v")),
                             addEmptyEdge().from("v")
                     ).iterate();
-        } else {
-            if (!(unit instanceof RetStmt || unit instanceof ReturnStmt || unit instanceof ReturnVoidStmt)) {
-                log.warn("Non-return node with no children: '{}'", unit.toString());
-            }
         }
 
         return unitVertex;
@@ -147,7 +143,6 @@ public class CfgBuilder {
     }
 
     private Vertex genLookupSwitchAndSuccs(Vertex switchNode, LookupSwitchStmt switchStmt) {
-        assert switchStmt.getTargetCount() == unitGraph.getSuccsOf(switchStmt).size();
         for (int i = 0; i < switchStmt.getTargetCount(); i++) {
             Vertex targetNode = genUnitNode(switchStmt.getTarget(i));
             // TODO: how to handle lookup values?
@@ -167,7 +162,6 @@ public class CfgBuilder {
     }
 
     private Vertex genTableSwitchAndSuccs(Vertex switchNode, TableSwitchStmt switchStmt) {
-        assert (switchStmt.getLowIndex() - switchStmt.getLowIndex()) == unitGraph.getSuccsOf(switchStmt).size();
         for (int i = switchStmt.getLowIndex(); i < switchStmt.getHighIndex(); i++) {
             if (switchStmt.getTarget(i) == null) {
                 // TODO: can this happen? fake labels to fill holes...
@@ -179,7 +173,8 @@ public class CfgBuilder {
             Graft.cpg().traversal()
                     .addCondEdge(i + "")
                     .from(switchNode).to(targetNode)
-                    .iterate();         }
+                    .iterate();
+        }
         if (switchStmt.getDefaultTarget() != null) {
             Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget());
             Graft.cpg().traversal()
