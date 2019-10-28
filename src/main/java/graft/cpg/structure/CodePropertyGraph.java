@@ -1,11 +1,13 @@
 package graft.cpg.structure;
 
+import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 
 import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import graft.GraftException;
+import graft.db.Neo4jUtil;
 import graft.db.TinkerGraphUtil;
 import graft.traversal.CpgTraversalSource;
 import graft.utils.DotUtil;
@@ -61,7 +63,7 @@ public class CodePropertyGraph {
     }
 
     public void commit() {
-        if (g instanceof Neo4jGraph) {
+        if (g.features().graph().supportsTransactions()) {
             g.tx().commit();
         }
     }
@@ -106,6 +108,14 @@ public class CodePropertyGraph {
 
     public static CodePropertyGraph fromGraph(Graph g) {
         return new CodePropertyGraph(g);
+    }
+
+    public static CodePropertyGraph fromDir(String dirName) {
+        Configuration neo4jConfig = new BaseConfiguration();
+        neo4jConfig.setProperty("gremlin.neo4j.directory", dirName);
+        neo4jConfig.setProperty("gremlin.neo4j.conf.dbms.auto_index.nodes.enabled", "true");
+        neo4jConfig.setProperty("gremlin.neo4j.conf.dbms.auto_index.relationships.enabled", "true");
+        return new CodePropertyGraph(Neo4jUtil.fromConfig(neo4jConfig));
     }
 
 }
