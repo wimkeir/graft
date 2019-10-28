@@ -162,16 +162,12 @@ public class CfgBuilder {
     }
 
     private Vertex genTableSwitchAndSuccs(Vertex switchNode, TableSwitchStmt switchStmt) {
-        for (int i = switchStmt.getLowIndex(); i < switchStmt.getHighIndex(); i++) {
-            if (switchStmt.getTarget(i) == null) {
-                // TODO: can this happen? fake labels to fill holes...
-                log.debug("Ignoring non-existent table switch target");
-                continue;
-            }
-            Vertex targetNode = genUnitNode(switchStmt.getTarget(i));
+        for (Unit target : switchStmt.getTargets()) {
+            Vertex targetNode = genUnitNode(target);
             // TODO: how to handle table values?
             Graft.cpg().traversal()
-                    .addCondEdge(i + "")
+                    // TODO NB
+                    .addCondEdge(UNKNOWN)
                     .from(switchNode).to(targetNode)
                     .iterate();
         }

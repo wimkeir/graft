@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import graft.Banner;
 import graft.Graft;
-import graft.Options;
 import graft.cpg.CpgUtil;
 import graft.traversal.CpgTraversal;
 
@@ -30,59 +29,41 @@ public class TaintAnalysis implements GraftAnalysis {
 
     private static Logger log = LoggerFactory.getLogger(TaintAnalysis.class);
 
-    private CpgTraversal sourceDescr;
-    private CpgTraversal sinkDescr;
-    private CpgTraversal sanDescr;
+    private String descrFile;
 
-    private Set<Vertex> sanitizers;
-
-    public TaintAnalysis() { }
+    public TaintAnalysis(String descrFile) {
+        this.descrFile = descrFile;
+    }
 
     @Override
     public void doAnalysis() {
         log.info("Running taint analysis...");
+        CpgTraversal source, sink, sanitizer;
 
         log.debug("Loading taint descriptions");
         Binding binding = new Binding();
         GroovyShell shell = new GroovyShell(binding);
-        binding.setProperty("cpg", Graft.cpg());
 
         try {
-            sourceDescr = (CpgTraversal) shell.evaluate(new File(Options.v().getString(OPT_TAINT_SOURCE)));
-            sinkDescr = (CpgTraversal) shell.evaluate(new File(Options.v().getString(OPT_TAINT_SINK)));
-            sanDescr = (CpgTraversal) shell.evaluate(new File(Options.v().getString(OPT_TAINT_SANITIZER)));
+            shell.evaluate(new File(descrFile));
+            source = (CpgTraversal) shell.getVariable("source");
+            sink = (CpgTraversal) shell.getVariable("sink");
+            sanitizer = (CpgTraversal) shell.getVariable("sanitizer");
         } catch (IOException e) {
             log.error("Unable to read taint descriptions, failure", e);
             return;
         }
 
-        sanitizers = sanDescr.toSet();
+        List<Path> dataFlows = Graft.cpg().traversal()
+                .dataFlowsBetween(source, sink)
+                .toList();
 
-        // TODO: ideally we want the source vertices as well as the tainted vars in a map
-        List<Vertex> sources = sourceDescr.toList();
-        List<Vertex> sinks = sinkDescr.toList();
-
-        log.debug("{} potential sources found", sources.size());
-        log.debug("{} potential sinks found", sinks.size());
-
-        for (Vertex srcVertex : sources) {
-            for (Vertex sinkVertex : sinks) {
-                List<Path> pdgPaths = Graft.cpg().traversal()
-                        .pathsBetween(srcVertex, sinkVertex, PDG_EDGE)
-                        .toList();
-                log.debug("{} PDG paths between vertex '{}' and vertex '{}'",
-                        pdgPaths.size(),
-                        srcVertex.value(TEXT_LABEL),
-                        sinkVertex.value(TEXT_LABEL));
-                for (Path pdgPath : pdgPaths) {
-                    if (!isSanitized(pdgPath)) {
-                        reportTaintedPath(pdgPath);
-                    } else {
-                        log.debug("Path is sanitized");
-                    }
-                }
+        for (Path dataFlow : dataFlows) {
+            if (!isSanitized(dataFlow, sanitizer)) {
+                reportTaintedPath(dataFlow);
             }
         }
+
     }
 
     private void reportTaintedPath(Path pdgPath) {
@@ -101,21 +82,28 @@ public class TaintAnalysis implements GraftAnalysis {
 
     }
 
-    private boolean isSanitized(Path pdgPath) {
-        log.debug("Checking path for sanitization");
-        for (int i = 0; i < pdgPath.size() - 1; i++) {
+    private boolean isSanitized(Path pdgPath, CpgTraversal sanitizer) {
+        log.debug("Checking path for sanitization: {}", pdgPath);
+        for (int i = 0; i < pdgPath.size() - 2; i += 2) {
             List<Path> cfgPaths = Graft.cpg().traversal()
-                    .pathsBetween(pdgPath.get(i), pdgPath.get(i + 1), CFG_EDGE)
+                    .pathsBetween(pdgPath.get(i), pdgPath.get(i + 2), CFG_EDGE)
                     .toList();
             for (Path cfgPath : cfgPaths) {
+                boolean cfgSanitized = false;
                 for (int j = 0; j < cfgPath.size(); j++) {
-                    if (sanitizers.contains(cfgPath.get(j))) {
-                        return true;
+                    if (Graft.cpg().traversal()
+                            .V(((Vertex) cfgPath.get(j)).id())
+                            .where(sanitizer.copy())
+                            .count().next() > 0) {
+                        cfgSanitized = true;
                     }
+                }
+                if (!cfgSanitized) {
+                    return false;
                 }
             }
         }
-        return false;
+        return true;
     }
 
 }

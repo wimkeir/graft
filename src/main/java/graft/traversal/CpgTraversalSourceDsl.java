@@ -337,14 +337,10 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
     }
 
     @SuppressWarnings("unchecked")
-    public CpgTraversal<Vertex, ?> dataFlowsBetween(CpgTraversal sources, CpgTraversal sinks) {
-        Set<Vertex> sinkSet = sinks.toSet();
-        return (CpgTraversal<Vertex, ?>) V(sources.toList())
-                .repeat(timeLimit(1000).outE(PDG_EDGE).has(EDGE_TYPE, DATA_DEP).inV().simplePath())
-                .until(t -> {
-                    Vertex v = (Vertex) t.get();
-                    return sinkSet.contains(v);
-                })
+    public CpgTraversal<Vertex, Path> dataFlowsBetween(CpgTraversal source, CpgTraversal sink) {
+        return getV().where(source)
+                .repeat(timeLimit(1000).outDataDep().simplePath())
+                .until(sink)
                 .path();
     }
 

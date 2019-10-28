@@ -54,6 +54,13 @@ public class PdgBuilder {
                 }
                 Local local = (Local) value;
                 for (Unit defSite : localDefs.getDefsOfAt(local, unit)) {
+                    if (unitNodes.get(defSite) == null) {
+                        // TODO: this should probably never be the case
+                        log.warn("No def site for local '{}' in method '{}'",
+                                local.getName(),
+                                unitGraph.getBody().getMethod().getSignature());
+                        continue;
+                    }
                     Vertex defVertex = g.V(unitNodes.get(defSite)).next();
                     Graft.cpg().traversal()
                             .addDataDepE(local.getName())

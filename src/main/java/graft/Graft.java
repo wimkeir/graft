@@ -209,7 +209,8 @@ public class Graft {
         GraftAnalysis analysis;
         switch (analysisClass) {
             case TAINT_ANALYSIS:
-                analysis = new TaintAnalysis();
+                // TODO XXX
+                analysis = new TaintAnalysis("etc/demo/taint/taint.groovy");
                 break;
             case ALIAS_ANALYSIS:
                 analysis = new AliasAnalysis();

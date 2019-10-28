@@ -4,14 +4,25 @@ public class Simple {
 
     public static void main(String[] args) {
 
+//        int[] a = new int[5];
+//        int c = a[source() * 2];
+//
         int a = source();
         if (Math.random() > 1) {
             sanitizer(a);
         } else {
             // comment out this line so tainted variable a propagates to sink
-            sanitizer(attr);
+//            sanitizer(attr);
         }
         sink(a - 1);
+
+        for (int i = 1; i < source(); i++) {
+            int b = i + 2;
+        }
+
+        for (int i = 1; i < source(); i++) {
+            int b = i - 2;
+        }
     }
 
     public static int source() {
