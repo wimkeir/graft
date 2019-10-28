@@ -69,6 +69,8 @@ public class CpgBuilder {
                     .iterate();
         }
 
+        Graft.cpg().commit();
+
         banner.println("CPG constructed successfully");
         banner.println("Nodes: " + CpgUtil.getNodeCount());
         banner.println("Edges: " + CpgUtil.getEdgeCount());
@@ -87,8 +89,16 @@ public class CpgBuilder {
                 .next();
 
         for (SootMethod method : cls.getMethods()) {
+            Body body;
             try {
-                Body body = method.retrieveActiveBody();
+                body = method.retrieveActiveBody();
+            } catch (RuntimeException e) {
+                // no active bodies for interface methods, abstract methods etc.
+                log.debug(e.getMessage());
+                continue;
+            }
+            if (body == null) continue;
+            try {
                 Vertex methodEntry = buildCpg(body);
                 if (method.isConstructor()) {
                     Graft.cpg().traversal()
@@ -100,10 +110,12 @@ public class CpgBuilder {
                             .addAstE(METHOD, METHOD)
                             .from(classNode).to(methodEntry)
                             .iterate();                }
-            } catch (RuntimeException e) {
-                log.warn("No body for method '{}'", method.getSignature(), e);
+            } catch (SootMethodRefImpl.ClassResolutionFailedException e) {
+                log.debug(e.getMessage());
             }
         }
+
+        Graft.cpg().commit();
 
         return classNode;
     }
@@ -118,11 +130,6 @@ public class CpgBuilder {
         CfgBuilder cfgBuilder = new CfgBuilder(unitGraph, new AstBuilder());
         Vertex methodEntry = cfgBuilder.buildCfg();
         PdgBuilder.buildPdg(unitGraph, cfgBuilder.generatedNodes());
-
-        // TODO: make sure to do this everywhere its needed
-        if (Options.v().getString(OPT_DB_IMPLEMENTATION).equals(NEO4J)) {
-            Graft.cpg().commit();
-        }
 
         return methodEntry;
     }
@@ -169,6 +176,8 @@ public class CpgBuilder {
             CpgBuilder.amendCpg(cpgRoot, cls, amendedClasses.get(i));
         }
 
+        Graft.cpg().commit();
+
         banner.println("CPG amended successfully");
         banner.println("Nodes: " + CpgUtil.getNodeCount() + " (prev " + prevNodes + ")");
         banner.println("Edges: " + CpgUtil.getEdgeCount() + " (prev " + prevEdges + ")");
@@ -192,6 +201,8 @@ public class CpgBuilder {
                 .addAstE(CLASS, CLASS)
                 .from(cpgRoot).to(classNode)
                 .iterate();
+
+        Graft.cpg().commit();
     }
 
     public static List<File> amendedClasses() {

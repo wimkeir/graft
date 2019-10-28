@@ -151,6 +151,8 @@ public class Graft {
                 Options.v().getString(OPT_CLASSPATH)
         ).iterate();
 
+        cpg.commit();
+
         // write project configuration to properties file
         Options.v().debug();
         Options.v().toFile(PROPERTIES_FILE);
@@ -270,6 +272,7 @@ public class Graft {
 
     private static void shutdown() {
         assert cpg != null;
+        cpg.commit();
         if (getDbImplementation().equals(TINKERGRAPH)) {
             String graphFile = Options.v().getString(OPT_DB_FILE);
             assert graphFile != null;

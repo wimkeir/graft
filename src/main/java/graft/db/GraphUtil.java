@@ -31,11 +31,11 @@ public class GraphUtil {
      */
     public static CodePropertyGraph getCpg() {
         log.debug("Initializing graph...");
-        switch (Options.v().getString(OPT_DB_IMPLEMENTATION)) {
+        switch (getDbImplementation()) {
             case TINKERGRAPH:
                 return CodePropertyGraph.fromGraph(tinkerGraph());
             case NEO4J:
-                return CodePropertyGraph.fromGraph(neo4jGraph());
+                return CodePropertyGraph.fromDir(Options.v().getString(OPT_DB_DIRECTORY));
             default:
                 throw new GraftException("Unknown graph implementation '"
                                          + Options.v().getString(OPT_DB_IMPLEMENTATION)
@@ -48,7 +48,7 @@ public class GraphUtil {
     }
 
     public static CodePropertyGraph newNeo4jCpg(String dir) {
-        if (Paths.get(dir).toFile().exists()) {
+        if (Paths.get(dir).toFile().listFiles().length != 0) {
             throw new GraftException("Folder '" + dir + "' already contains Neo4j database");
         }
         Configuration config = new BaseConfiguration();
@@ -70,12 +70,12 @@ public class GraphUtil {
         String format = Options.v().getString(OPT_DB_FILE_FORMAT);
         switch (format) {
             case "json":
-                return DB_FILE_NAME + ".json";
+                return Options.v().getString(DB_FILE_NAME) + ".json";
             case "xml":
             case "graphml":
-                return DB_FILE_NAME + ".xml";
+                return Options.v().getString(DB_FILE_NAME) + ".xml";
             case "kryo":
-                return DB_FILE_NAME + ".kryo";
+                return Options.v().getString(DB_FILE_NAME) + ".kryo";
             default:
                 throw new GraftException("Unrecognised DB file format '" + format);
         }
