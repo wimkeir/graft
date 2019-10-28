@@ -1,7 +1,5 @@
 package graft.analysis;
 
-import graft.cpg.structure.CodePropertyGraph;
-
 /**
  * Base interface for analysis runs.
  *
@@ -9,6 +7,6 @@ import graft.cpg.structure.CodePropertyGraph;
  */
 public interface GraftAnalysis {
 
-    void doAnalysis(CodePropertyGraph cpg);
+    void doAnalysis();
 
 }

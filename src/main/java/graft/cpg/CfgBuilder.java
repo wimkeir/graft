@@ -16,7 +16,6 @@ import soot.toolkits.graph.UnitGraph;
 
 import graft.Graft;
 import graft.cpg.visitors.StmtVisitor;
-import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
 import static graft.cpg.CpgUtil.*;
@@ -31,12 +30,14 @@ public class CfgBuilder {
 
     private static Logger log = LoggerFactory.getLogger(CfgBuilder.class);
 
+    private AstBuilder astBuilder;
     private Map<Unit, Vertex> generatedNodes;
     private UnitGraph unitGraph;
     private Vertex entryNode;
 
-    public CfgBuilder(UnitGraph unitGraph) {
+    public CfgBuilder(UnitGraph unitGraph, AstBuilder astBuilder) {
         this.unitGraph = unitGraph;
+        this.astBuilder = astBuilder;
         this.generatedNodes = new HashMap<>();
     }
 
@@ -78,10 +79,24 @@ public class CfgBuilder {
             return genUnitNode(((GotoStmt) unit).getTarget());
         }
 
-        CpgTraversalSource g = Graft.cpg().traversal();
         log.trace("Generating Unit '{}'", unit.toString());
 
-        Vertex unitVertex = getOrGenUnitNode(unit);
+        Vertex unitVertex = generatedNodes.get(unit);
+        if (unitVertex == null) {
+            StmtVisitor visitor = new StmtVisitor(astBuilder);
+            unit.apply(visitor);
+            unitVertex = (Vertex) visitor.getResult();
+
+            // AST statement edge from entry node
+            Graft.cpg().traversal()
+                    .addAstE(STATEMENT, STATEMENT)
+                    .from(entryNode).to(unitVertex)
+                    .iterate();
+
+            generatedNodes.put(unit, unitVertex);
+        } else {
+            return unitVertex;
+        }
 
         // handle possible conditional edges
         if (unit instanceof IfStmt) {
@@ -173,24 +188,6 @@ public class CfgBuilder {
                     .iterate();
         }
         return switchNode;
-    }
-
-    private Vertex getOrGenUnitNode(Unit unit) {
-        Vertex node = generatedNodes.get(unit);
-        if (node == null) {
-            StmtVisitor visitor = new StmtVisitor();
-            unit.apply(visitor);
-            node = (Vertex) visitor.getResult();
-
-            // AST statement edge from entry node
-            Graft.cpg().traversal()
-                    .addAstE(STATEMENT, STATEMENT)
-                    .from(entryNode).to(node)
-                    .iterate();
-
-            generatedNodes.put(unit, node);
-        }
-        return node;
     }
 
 }

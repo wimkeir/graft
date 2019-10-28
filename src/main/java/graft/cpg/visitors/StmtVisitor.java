@@ -23,6 +23,12 @@ public class StmtVisitor extends AbstractStmtSwitch {
 
     private static Logger log = LoggerFactory.getLogger(StmtVisitor.class);
 
+    private AstBuilder astBuilder;
+
+    public StmtVisitor(AstBuilder astBuilder) {
+        this.astBuilder = astBuilder;
+    }
+
     @Override
     public void caseAssignStmt(AssignStmt stmt) {
         log.trace("Visiting AssignStmt");
@@ -127,18 +133,18 @@ public class StmtVisitor extends AbstractStmtSwitch {
     // Generate CFG node for definition statements, with AST nodes for the target and value
     private void caseDefinitionStmt(DefinitionStmt stmt) {
         Vertex stmtNode = (Vertex) Graft.cpg().traversal()
-                .addStmtNode(BREAKPOINT_STMT, stmt.toString(), SootUtil.getLineNr(stmt))
+                .addStmtNode(ASSIGN_STMT, stmt.toString(), SootUtil.getLineNr(stmt))
                 .next();
 
         Graft.cpg().traversal()
                 .addAstE(TARGET, TARGET)
                 .from(stmtNode)
-                .to(AstBuilder.genValueNode(stmt.getLeftOp()))
+                .to(astBuilder.genValueNode(stmt.getLeftOp()))
                 .iterate();
         Graft.cpg().traversal()
                 .addAstE(VALUE, VALUE)
                 .from(stmtNode)
-                .to(AstBuilder.genValueNode(stmt.getRightOp()))
+                .to(astBuilder.genValueNode(stmt.getRightOp()))
                 .iterate();
 
         setResult(stmtNode);
@@ -153,7 +159,7 @@ public class StmtVisitor extends AbstractStmtSwitch {
         Graft.cpg().traversal()
                 .addAstE(opType, opType)
                 .from(stmtNode)
-                .to(AstBuilder.genValueNode(op))
+                .to(astBuilder.genValueNode(op))
                 .iterate();
 
         setResult(stmtNode);

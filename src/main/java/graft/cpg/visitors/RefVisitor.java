@@ -10,9 +10,9 @@ import soot.Value;
 import soot.jimple.*;
 
 import graft.Graft;
+import graft.cpg.AstBuilder;
 
 import static graft.Const.*;
-import static graft.cpg.AstBuilder.*;
 import static graft.cpg.CpgUtil.*;
 
 /**
@@ -25,6 +25,11 @@ public class RefVisitor extends AbstractRefSwitch {
     private static Logger log = LoggerFactory.getLogger(RefVisitor.class);
 
     private Object result;
+    private AstBuilder astBuilder;
+
+    public RefVisitor(AstBuilder astBuilder) {
+        this.astBuilder = astBuilder;
+    }
 
     public Object getResult() {
         return result;
@@ -40,14 +45,14 @@ public class RefVisitor extends AbstractRefSwitch {
         Graft.cpg().traversal()
                 .addAstE(BASE, BASE)
                 .from(refNode)
-                .to(genValueNode(ref.getBase()))
+                .to(astBuilder.genValueNode(ref.getBase()))
                 .iterate();
 
         if (ref.getIndex() != null) {
             Graft.cpg().traversal()
                     .addAstE(INDEX, INDEX)
                     .from(refNode)
-                    .to(genValueNode(ref.getIndex()))
+                    .to(astBuilder.genValueNode(ref.getIndex()))
                     .iterate();
         }
 
@@ -108,7 +113,7 @@ public class RefVisitor extends AbstractRefSwitch {
             Graft.cpg().traversal()
                     .addAstE(BASE, BASE)
                     .from(refNode)
-                    .to(genValueNode(base))
+                    .to(astBuilder.genValueNode(base))
                     .iterate();
         }
 

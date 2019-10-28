@@ -13,6 +13,11 @@ public class Const {
     // general constants
     // ********************************************************************************************
 
+    /**
+     * The maximum size of a call string context.
+     */
+    public static final int K_LIMIT = 100;
+
     public static final String CPG_ROOT = "cpg-root";
 
     public static final String GRAFT_DIR_NAME = ".graft";
@@ -27,8 +32,11 @@ public class Const {
     public static final String CMD_RUN = "run";
     public static final String CMD_SHELL = "shell";
     public static final String CMD_DOT = "dot";
+    public static final String CMD_DUMP = "dump";
+    public static final String CMD_STATUS = "status";
 
     // analyses
+    public static final String ALIAS_ANALYSIS = "alias";
     public static final String TAINT_ANALYSIS = "taint";
 
     // project metadata

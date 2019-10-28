@@ -2,9 +2,7 @@ package graft.cpg;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
@@ -117,7 +115,7 @@ public class CpgBuilder {
      */
     public static Vertex buildCpg(Body body) {
         UnitGraph unitGraph = new BriefUnitGraph(body);
-        CfgBuilder cfgBuilder = new CfgBuilder(unitGraph);
+        CfgBuilder cfgBuilder = new CfgBuilder(unitGraph, new AstBuilder());
         Vertex methodEntry = cfgBuilder.buildCfg();
         PdgBuilder.buildPdg(unitGraph, cfgBuilder.generatedNodes());
 
@@ -144,18 +142,13 @@ public class CpgBuilder {
             return;
         }
 
-        List<File> amendedClasses = new ArrayList<>();
+        List<File> amendedClasses = amendedClasses();
         List<String> classNames = new ArrayList<>();
         banner.println("Files changed:");
-        for (File classFile : classFiles) {
+        for (File classFile : amendedClasses) {
             String className = FileUtil.getClassName(targetDir, classFile);
-            String hash = FileUtil.hashFile(classFile);
-            if (!hash.equals(CpgUtil.getClassHash(className))) {
-                log.info("Class '{}' has been changed", className);
-                banner.println("- " + classFile.getName() + " (" + className + ")");
-                amendedClasses.add(classFile);
-                classNames.add(className);
-            }
+            banner.println("- " + classFile.getName() + " (" + className + ")");
+            classNames.add(className);
         }
 
         if (amendedClasses.size() == 0) {
@@ -199,6 +192,24 @@ public class CpgBuilder {
                 .addAstE(CLASS, CLASS)
                 .from(cpgRoot).to(classNode)
                 .iterate();
+    }
+
+    public static List<File> amendedClasses() {
+        String targetDirName = Options.v().getString(OPT_TARGET_DIR);
+        File targetDir = new File(targetDirName);
+
+        List<File> classFiles = SootUtil.getClassFiles(targetDir);
+
+        List<File> amendedClasses = new ArrayList<>();
+        for (File classFile : classFiles) {
+            String className = FileUtil.getClassName(targetDir, classFile);
+            String hash = FileUtil.hashFile(classFile);
+            if (!hash.equals(CpgUtil.getClassHash(className))) {
+                amendedClasses.add(classFile);
+            }
+        }
+
+        return amendedClasses;
     }
 
 }

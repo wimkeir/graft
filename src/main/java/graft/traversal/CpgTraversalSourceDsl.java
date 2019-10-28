@@ -6,11 +6,14 @@ import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
+
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import graft.cpg.structure.VertexDescription;
+
+import java.util.Set;
 
 import static graft.Const.*;
 import static graft.traversal.__.*;
@@ -25,6 +28,22 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         super(graph);
     }
 
+    public CpgTraversal<Vertex, Vertex> locals(String varName) {
+        // TODO: specify method sig too
+        return getV()
+                .hasLabel(AST_NODE)
+                .has(NODE_TYPE, LOCAL_VAR)
+                .has(NAME, varName);
+    }
+
+    public CpgTraversal<Vertex, Vertex> arg(String sigPattern, int index) {
+        return callsTo(sigPattern)
+                .outE(AST_EDGE)
+                .has(EDGE_TYPE, ARG)
+                .has(INDEX, index)
+                .inV();
+    }
+
     public CpgTraversal<Vertex, Vertex> cpgRoot() {
         return getV()
                 .hasLabel(CPG_ROOT)
@@ -36,6 +55,15 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .hasLabel(CFG_NODE)
                 .has(NODE_TYPE, ENTRY)
                 .has(METHOD_SIG, methodSig);
+    }
+
+    @SuppressWarnings("unchecked")
+    public CpgTraversal<Vertex, Vertex> callsTo(String sigPattern) {
+        return (CpgTraversal<Vertex, Vertex>) getV()
+                .hasLabel(AST_NODE)
+                .has(NODE_TYPE, EXPR)
+                .has(EXPR_TYPE, INVOKE_EXPR)
+                .hasPattern(METHOD_SIG, sigPattern);
     }
 
     // ********************************************************************************************
@@ -210,14 +238,14 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
      */
     public CpgTraversal<Vertex, Vertex> getRefAssignStmts() {
         return getAssignStmts()
-                .getVal()
-                .has(NODE_TYPE, LOCAL_VAR)
-                .has(REF_TYPE, true)
-                .in(AST_EDGE)
-                .getTgt()
-                .has(NODE_TYPE, LOCAL_VAR)
-                .has(REF_TYPE, true)
-                .in(AST_EDGE);
+                .where(and(
+                        getVal()
+                        .has(NODE_TYPE, LOCAL_VAR)
+                        .has(REF_TYPE, true),
+                        getTgt()
+                        .has(NODE_TYPE, LOCAL_VAR)
+                        .has(REF_TYPE, true)
+                ));
     }
 
     /**
@@ -308,18 +336,34 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .path();
     }
 
-    /**
-     * Get all invoke expressions that invoke a method matching the given signature pattern.
-     *
-     * @param sigPattern a regex specifying the method signature pattern
-     * @return a traversal containing all invoke expressions nodes of the matching methods
-     */
     @SuppressWarnings("unchecked")
-    public CpgTraversal<Vertex, Vertex> getCallsTo(String sigPattern) {
-        return (CpgTraversal<Vertex, Vertex>) getV()
-                .hasLabel(AST_NODE)
-                .has(NODE_TYPE, INVOKE_EXPR)
-                .hasPattern(METHOD_SIG, sigPattern);
+    public CpgTraversal<Vertex, ?> dataFlowsBetween(CpgTraversal sources, CpgTraversal sinks) {
+        Set<Vertex> sinkSet = sinks.toSet();
+        return (CpgTraversal<Vertex, ?>) V(sources.toList())
+                .repeat(timeLimit(1000).outE(PDG_EDGE).has(EDGE_TYPE, DATA_DEP).inV().simplePath())
+                .until(t -> {
+                    Vertex v = (Vertex) t.get();
+                    return sinkSet.contains(v);
+                })
+                .path();
+    }
+
+//    @SuppressWarnings("unchecked")
+//    public CpgTraversal<Vertex, Path> controlFlowsBetween(CpgTraversal sources, CpgTraversal sinks) {
+//        // TODO: only intraproc!
+//        return (CpgTraversal<Vertex, Path>) sources.copy()
+//                .repeat(timeLimit(1000).outE(CFG_EDGE).has(INTERPROC, false).simplePath())
+//                .until(sinks.copy())
+//                .path();
+//    }
+
+    @SuppressWarnings("unchecked")
+    public CpgTraversal<Vertex, Path> controlFlowsBetween(Vertex v, Vertex w) {
+        // TODO: only intraproc!
+        return (CpgTraversal<Vertex, Path>) V(v)
+                .repeat(timeLimit(1000).outEmpty().simplePath())
+                .until(is(w))
+                .path();
     }
 
     protected CpgTraversal<Vertex, Vertex> getV() {

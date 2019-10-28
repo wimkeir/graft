@@ -23,6 +23,12 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     private static Logger log = LoggerFactory.getLogger(ExprVisitor.class);
 
+    private AstBuilder astBuilder;
+
+    public ExprVisitor(AstBuilder astBuilder) {
+        this.astBuilder = astBuilder;
+    }
+
     // ********************************************************************************************
     // binary expressions
     // ********************************************************************************************
@@ -194,7 +200,7 @@ public class ExprVisitor extends AbstractExprSwitch {
         Graft.cpg().traversal()
                 .addAstE(SIZE, SIZE)
                 .from(exprNode)
-                .to(AstBuilder.genValueNode(expr.getSize()))
+                .to(astBuilder.genValueNode(expr.getSize()))
                 .iterate();
 
         setResult(exprNode);
@@ -213,7 +219,7 @@ public class ExprVisitor extends AbstractExprSwitch {
             Graft.cpg().traversal()
                     .addAstE(SIZE, SIZE)
                     .from(exprNode)
-                    .to(AstBuilder.genValueNode(size))
+                    .to(astBuilder.genValueNode(size))
                     .property(DIM, i++)
                     .iterate();
         }
@@ -231,7 +237,7 @@ public class ExprVisitor extends AbstractExprSwitch {
         Graft.cpg().traversal()
                 .addAstE(OPERAND, OPERAND)
                 .from(exprNode)
-                .to(AstBuilder.genValueNode(expr.getOp()))
+                .to(astBuilder.genValueNode(expr.getOp()))
                 .iterate();
 
         setResult(exprNode);
@@ -247,7 +253,7 @@ public class ExprVisitor extends AbstractExprSwitch {
         Graft.cpg().traversal()
                 .addAstE(OPERAND, OPERAND)
                 .from(exprNode)
-                .to(AstBuilder.genValueNode(expr.getOp()))
+                .to(astBuilder.genValueNode(expr.getOp()))
                 .iterate();
 
         setResult(exprNode);
@@ -276,13 +282,13 @@ public class ExprVisitor extends AbstractExprSwitch {
         Graft.cpg().traversal()
                 .addAstE(LEFT_OPERAND, LEFT_OPERAND)
                 .from(exprNode)
-                .to(AstBuilder.genValueNode(expr.getOp1()))
+                .to(astBuilder.genValueNode(expr.getOp1()))
                 .iterate();
 
         Graft.cpg().traversal()
                 .addAstE(RIGHT_OPERAND, RIGHT_OPERAND)
                 .from(exprNode)
-                .to(AstBuilder.genValueNode(expr.getOp2()))
+                .to(astBuilder.genValueNode(expr.getOp2()))
                 .iterate();
 
         setResult(exprNode);
@@ -298,7 +304,7 @@ public class ExprVisitor extends AbstractExprSwitch {
         Graft.cpg().traversal()
                 .addAstE(LEFT_OPERAND, LEFT_OPERAND)
                 .from(exprNode)
-                .to(AstBuilder.genValueNode(expr.getOp()))
+                .to(astBuilder.genValueNode(expr.getOp()))
                 .iterate();
 
         setResult(exprNode);
@@ -317,7 +323,7 @@ public class ExprVisitor extends AbstractExprSwitch {
             Graft.cpg().traversal()
                     .addAstE(BASE, BASE)
                     .from(exprNode)
-                    .to(AstBuilder.genValueNode(base))
+                    .to(astBuilder.genValueNode(base))
                     .iterate();
         }
 
@@ -326,7 +332,7 @@ public class ExprVisitor extends AbstractExprSwitch {
             Graft.cpg().traversal()
                     .addAstE(ARG, ARG)
                     .from(exprNode)
-                    .to(AstBuilder.genValueNode(arg))
+                    .to(astBuilder.genValueNode(arg))
                     .property(INDEX, i++)
                     .iterate();
         }

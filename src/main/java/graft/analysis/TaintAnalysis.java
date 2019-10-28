@@ -14,9 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import graft.Banner;
+import graft.Graft;
 import graft.Options;
 import graft.cpg.CpgUtil;
-import graft.cpg.structure.CodePropertyGraph;
 import graft.traversal.CpgTraversal;
 
 import static graft.Const.*;
@@ -39,13 +39,13 @@ public class TaintAnalysis implements GraftAnalysis {
     public TaintAnalysis() { }
 
     @Override
-    public void doAnalysis(CodePropertyGraph cpg) {
+    public void doAnalysis() {
         log.info("Running taint analysis...");
 
         log.debug("Loading taint descriptions");
         Binding binding = new Binding();
         GroovyShell shell = new GroovyShell(binding);
-        binding.setProperty("cpg", cpg);
+        binding.setProperty("cpg", Graft.cpg());
 
         try {
             sourceDescr = (CpgTraversal) shell.evaluate(new File(Options.v().getString(OPT_TAINT_SOURCE)));
@@ -67,7 +67,7 @@ public class TaintAnalysis implements GraftAnalysis {
 
         for (Vertex srcVertex : sources) {
             for (Vertex sinkVertex : sinks) {
-                List<Path> pdgPaths = cpg.traversal()
+                List<Path> pdgPaths = Graft.cpg().traversal()
                         .pathsBetween(srcVertex, sinkVertex, PDG_EDGE)
                         .toList();
                 log.debug("{} PDG paths between vertex '{}' and vertex '{}'",
@@ -75,7 +75,7 @@ public class TaintAnalysis implements GraftAnalysis {
                         srcVertex.value(TEXT_LABEL),
                         sinkVertex.value(TEXT_LABEL));
                 for (Path pdgPath : pdgPaths) {
-                    if (!isSanitized(cpg, pdgPath)) {
+                    if (!isSanitized(pdgPath)) {
                         reportTaintedPath(pdgPath);
                     } else {
                         log.debug("Path is sanitized");
@@ -101,10 +101,10 @@ public class TaintAnalysis implements GraftAnalysis {
 
     }
 
-    private boolean isSanitized(CodePropertyGraph cpg, Path pdgPath) {
+    private boolean isSanitized(Path pdgPath) {
         log.debug("Checking path for sanitization");
         for (int i = 0; i < pdgPath.size() - 1; i++) {
-            List<Path> cfgPaths = cpg.traversal()
+            List<Path> cfgPaths = Graft.cpg().traversal()
                     .pathsBetween(pdgPath.get(i), pdgPath.get(i + 1), CFG_EDGE)
                     .toList();
             for (Path cfgPath : cfgPaths) {

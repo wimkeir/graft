@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import soot.Local;
+import soot.RefType;
 import soot.Value;
 import soot.jimple.Constant;
 import soot.jimple.Expr;
@@ -16,6 +17,10 @@ import graft.cpg.visitors.ConstantVisitor;
 import graft.cpg.visitors.ExprVisitor;
 import graft.cpg.visitors.RefVisitor;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static graft.Const.*;
 import static graft.cpg.CpgUtil.*;
 
 /**
@@ -27,9 +32,15 @@ public class AstBuilder {
 
     private static Logger log = LoggerFactory.getLogger(AstBuilder.class);
 
+    private Map<Local, Vertex> locals;
+
     // ********************************************************************************************
     // public methods
     // ********************************************************************************************
+
+    public AstBuilder() {
+        this.locals = new HashMap<>();
+    }
 
     /**
      * Generate an AST node (possibly a subtree) for the given Soot value.
@@ -37,7 +48,7 @@ public class AstBuilder {
      * @param value the Soot value
      * @return the generated AST node
      */
-    public static Vertex genValueNode(Value value) {
+    public Vertex genValueNode(Value value) {
         if (value instanceof Local) {
             return genLocalNode((Local) value);
         } else if (value instanceof Constant) {
@@ -57,29 +68,37 @@ public class AstBuilder {
     // ********************************************************************************************
 
     // Generates an AST node for a local variable
-    private static Vertex genLocalNode(Local local) {
-        return (Vertex) Graft.cpg().traversal()
-                .addLocalNode(getTypeString(local.getType()), local.toString(), local.getName())
-                .next();
+    private Vertex genLocalNode(Local local) {
+        System.out.println(local.getName() + ": " + local.getNumber());
+        Vertex localNode = locals.get(local);
+        if (localNode == null) {
+            boolean refType = local.getType() instanceof RefType;
+            localNode = (Vertex) Graft.cpg().traversal()
+                    .addLocalNode(getTypeString(local.getType()), local.toString(), local.getName())
+                    .property(REF_TYPE, refType)
+                    .next();
+//            locals.put(local, localNode);
+        }
+        return localNode;
     }
 
     // Generates an AST node for a constant value using the ConstantVisitor
-    private static Vertex genConstantNode(Constant constant) {
+    private Vertex genConstantNode(Constant constant) {
         ConstantVisitor visitor = new ConstantVisitor();
         constant.apply(visitor);
         return (Vertex) visitor.getResult();
     }
 
     // Generates an AST node for an expression using the ExprVisitor
-    private static Vertex genExprNode(Expr expr) {
-        ExprVisitor visitor = new ExprVisitor();
+    private Vertex genExprNode(Expr expr) {
+        ExprVisitor visitor = new ExprVisitor(this);
         expr.apply(visitor);
         return (Vertex) visitor.getResult();
     }
 
     // Generates an AST node for a reference using the RefVisitor
-    private static Vertex genRefNode(Ref ref) {
-        RefVisitor visitor = new RefVisitor();
+    private Vertex genRefNode(Ref ref) {
+        RefVisitor visitor = new RefVisitor(this);
         ref.apply(visitor);
         return (Vertex) visitor.getResult();
     }

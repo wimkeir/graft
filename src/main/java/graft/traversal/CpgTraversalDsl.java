@@ -1,11 +1,16 @@
 package graft.traversal;
 
+import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.GremlinDsl;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import graft.cpg.structure.VertexDescription;
+
+import java.util.List;
+import java.util.Set;
 
 import static graft.Const.*;
 
@@ -16,6 +21,91 @@ import static graft.Const.*;
  */
 @GremlinDsl(traversalSource = "graft.traversal.CpgTraversalSourceDsl")
 public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
+
+    default GraphTraversal<S, Vertex> locals(String varName) {
+        // TODO: specify method sig too
+        return (CpgTraversal<S, Vertex>) V()
+                .hasLabel(AST_NODE)
+                .has(NODE_TYPE, LOCAL_VAR)
+                .has(NAME, varName);
+    }
+
+    @SuppressWarnings("unchecked")
+    default GraphTraversal<S, Vertex> source() {
+        CpgTraversal g = (CpgTraversal) this.clone();
+        String[] varName = new String[]{};
+        return g.hasLabel(AST_NODE)
+                .has(NODE_TYPE, LOCAL_VAR)
+                .sideEffect(t -> {
+                    Vertex v = (Vertex) t;
+                    varName[0] = v.value(NAME);
+                })
+                .inDataDep(varName[0]);
+    }
+
+    @SuppressWarnings("unchecked")
+    default GraphTraversal<S, Path> controlFlowsTo(Vertex w) {
+        // TODO: only intraproc!
+        return repeat((CpgTraversal) timeLimit(1000).outE(CFG_EDGE).has(INTERPROC, false).inV().simplePath())
+                .until(is(w))
+                .path();
+    }
+
+    @SuppressWarnings("unchecked")
+    default GraphTraversal<S, Vertex> unsanitized(CpgTraversal sanitizer) {
+        Set<Vertex> sanitizers = sanitizer.toSet();
+        CpgTraversal g = (CpgTraversal) this.clone();
+        return (CpgTraversal<S, Vertex>) filter(t -> {
+            Path dataFlowPath = (Path) t.get();
+            for (int i = 0; i < dataFlowPath.size() - 2; i += 2) {
+                CpgTraversal start = (CpgTraversal) g.clone().V(dataFlowPath.get(i));
+                List<Path> controlFlowPaths = start.controlFlowsTo(dataFlowPath.get(i + 2)).toList();
+                for (Path cfgPath : controlFlowPaths) {
+                    for (int j = 0; j < cfgPath.size(); j++) {
+                        if (sanitizers.contains(cfgPath.get(j))) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        });
+    }
+
+//    default GraphTraversal<S, Path> unsanitizedDataFlows(CpgTraversal sanitizer) {
+//        return filter(t -> {
+//            Path dataFlow = (Path) t.get();
+//            for (int i = 0; i < dataFlow.size() - 2; i += 2) {
+//
+//            }
+//        })
+//    }
+//
+//    default GraphTraversal<S, Path> unsanitizedControlFlows(CpgTraversal sanitizer) {
+//        return filter(t -> {
+//
+//        })
+//    }
+
+    default GraphTraversal<S, Vertex> inDataDep() {
+        return inE(PDG_EDGE).has(EDGE_TYPE, DATA_DEP).outV();
+    }
+
+    default GraphTraversal<S, Vertex> inDataDep(String varName) {
+        return inDataDep().has(VAR_NAME, varName);
+    }
+
+    default GraphTraversal<S, Vertex> outDataDep() {
+        return outE(PDG_EDGE).has(EDGE_TYPE, DATA_DEP).inV();
+    }
+
+    default GraphTraversal<S, Vertex> outDataDep(String varName) {
+        return outDataDep().has(VAR_NAME, varName);
+    }
+
+    default GraphTraversal<S, Vertex> outEmpty() {
+        return outE(CFG_EDGE).has(EDGE_TYPE, EMPTY).inV();
+    }
 
     // ********************************************************************************************
     // addV traversals
@@ -243,6 +333,10 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                 return false;
             }
         });
+    }
+
+    default GraphTraversal<S, ?> copy() {
+        return this.clone();
     }
 
 }

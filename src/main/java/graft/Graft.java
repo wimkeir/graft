@@ -1,21 +1,28 @@
 package graft;
 
+import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Scanner;
 
-import graft.cpg.Interproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import graft.analysis.AliasAnalysis;
 import graft.analysis.GraftAnalysis;
 import graft.analysis.TaintAnalysis;
+
 import graft.cpg.CpgBuilder;
+import graft.cpg.Interproc;
 import graft.cpg.structure.CodePropertyGraph;
+
 import graft.db.GraphUtil;
+
 import graft.utils.LogUtil;
 import graft.utils.SootUtil;
+
 
 import static graft.Const.*;
 import static graft.db.GraphUtil.*;
@@ -166,6 +173,8 @@ public class Graft {
             System.out.print("CPG already exists for project '" + Options.v().getString(OPT_PROJECT_NAME) + "'...");
             System.out.print("overwrite? y/n: ");
 
+            // TODO: we need to actually overwrite here...
+
             Scanner in = new Scanner(new InputStreamReader(System.in));
             String choice = in.next();
             while (!(choice.equals("y") || choice.equals("n"))) {
@@ -200,6 +209,9 @@ public class Graft {
             case TAINT_ANALYSIS:
                 analysis = new TaintAnalysis();
                 break;
+            case ALIAS_ANALYSIS:
+                analysis = new AliasAnalysis();
+                break;
             default:
                 // TODO: try and load class dynamically
                 throw new RuntimeException("NOT IMPLEMENTED");
@@ -210,7 +222,7 @@ public class Graft {
         Options.v().setProperty(OPT_TAINT_SINK, "etc/demo/simple/sink.groovy");
         Options.v().setProperty(OPT_TAINT_SOURCE, "etc/demo/simple/source.groovy");
 
-        analysis.doAnalysis(cpg);
+        analysis.doAnalysis();
 
         shutdown();
     }
@@ -221,8 +233,13 @@ public class Graft {
 
     private static void dot(String filename) {
         startup();
-        cpg = GraphUtil.getCpg();
         cpg.toDot(filename);
+        shutdown();
+    }
+
+    private static void dump(String filename) {
+        startup();
+        cpg.dump(filename);
         shutdown();
     }
 
@@ -242,6 +259,12 @@ public class Graft {
             log.debug("Node count: {}", V);
             long E = cpg.traversal().E().count().next();
             log.debug("Edge count: {}", E);
+        }
+
+        List<File> amendedClasses = CpgBuilder.amendedClasses();
+        if (amendedClasses.size() != 0) {
+            log.info("{} classes changed since CPG construction", amendedClasses.size());
+            log.info("Run 'graft update' to update CPG");
         }
     }
 
@@ -309,11 +332,12 @@ public class Graft {
                 shell();
                 break;
             case CMD_DOT:
-                if (args.length < 2) {
-                    log.error("No dotfile provided");
-                    System.exit(0);
-                }
+                checkOrExit(0, args.length == 2, "No dotfile provided");
                 dot(args[1]);
+                break;
+            case CMD_DUMP:
+                checkOrExit(0, args.length == 2, "No dump file provided");
+                dump(args[1]);
                 break;
             default:
                 log.error("Unrecognised command '{}'", cmd);
