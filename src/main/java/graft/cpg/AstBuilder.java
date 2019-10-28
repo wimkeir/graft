@@ -69,7 +69,6 @@ public class AstBuilder {
 
     // Generates an AST node for a local variable
     private Vertex genLocalNode(Local local) {
-        System.out.println(local.getName() + ": " + local.getNumber());
         Vertex localNode = locals.get(local);
         if (localNode == null) {
             boolean refType = local.getType() instanceof RefType;
