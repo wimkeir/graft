@@ -26,8 +26,4 @@ bin/
 .graft/
 
 # other stuff
-etc/dot/*.dot
-etc/dot/*.png
-etc/dumps/*.xml
-etc/dumps/*.kryo
-etc/dumps/*.json
+etc/
