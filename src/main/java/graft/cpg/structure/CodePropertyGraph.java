@@ -1,5 +1,6 @@
 package graft.cpg.structure;
 
+import graft.Options;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 
@@ -11,6 +12,8 @@ import graft.db.Neo4jUtil;
 import graft.db.TinkerGraphUtil;
 import graft.traversal.CpgTraversalSource;
 import graft.utils.DotUtil;
+
+import static graft.Const.*;
 
 /**
  * An implementation of the code property graph.
@@ -36,29 +39,25 @@ public class CodePropertyGraph {
     private CodePropertyGraph(Graph g) {
         assert g != null;
         this.g = g;
-        assert isCpg();
     }
 
     // ********************************************************************************************
     // public instance methods
     // ********************************************************************************************
 
-    public boolean isCpg() {
-        // TODO: validate schema
-        return true;
-    }
-
     public CpgTraversalSource traversal() {
         return g.traversal(CpgTraversalSource.class);
     }
 
     public void toDot(String filename) {
-        // TODO: graph name
-        DotUtil.graphToDot(this, filename, "graphName");
+        String graphName = Options.v().getString(OPT_PROJECT_NAME);
+        if (graphName == null) {
+            graphName = "cpg";
+        }
+        DotUtil.graphToDot(this, filename, graphName);
     }
 
     public void dump(String filename) {
-        // TODO: robustify
         g.traversal().io(filename).write().iterate();
     }
 

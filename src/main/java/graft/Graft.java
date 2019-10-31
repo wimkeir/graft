@@ -217,7 +217,7 @@ public class Graft {
         GraftAnalysis analysis;
         switch (analysisClass) {
             case TAINT_ANALYSIS:
-                // TODO XXX
+                // XXX
                 analysis = new TaintAnalysis("etc/taint.groovy");
                 break;
             case ALIAS_ANALYSIS:
@@ -225,7 +225,7 @@ public class Graft {
                 break;
             default:
                 // TODO: try and load class dynamically
-                throw new RuntimeException("NOT IMPLEMENTED");
+                throw new RuntimeException("Unrecognised analysis class");
         }
 
         analysis.doAnalysis();
@@ -233,7 +233,7 @@ public class Graft {
     }
 
     private static void shell() {
-        // TODO
+        // TODO: use this instead of graft-shell script
     }
 
     private static void dot(String filename) {
