@@ -61,7 +61,7 @@ public class TaintAnalysis implements GraftAnalysis {
 
         List<Path> dataFlows = Graft.cpg().traversal()
                 .V().where(source)
-                .repeat(timeLimit(100).outE(PDG_EDGE).inV().simplePath())
+                .repeat(timeLimit(50000).outE(PDG_EDGE).inV().simplePath())
                 .until(sink)
                 .path()
                 .toList();

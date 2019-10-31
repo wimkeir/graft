@@ -24,6 +24,7 @@ import graft.utils.SootUtil;
 
 
 import static graft.Const.*;
+import static graft.cpg.CpgUtil.*;
 import static graft.db.GraphUtil.*;
 
 /**
@@ -249,7 +250,15 @@ public class Graft {
 
     private static void status() {
         startup();
-        // TODO: display status info here
+        Banner banner = new Banner("Project: " + Options.v().getString(OPT_PROJECT_NAME));
+        banner.println(nrNodes() + " nodes "
+                + "(" + nrNodes(CFG_NODE) + " CFG, "
+                + nrNodes(AST_NODE) + " AST)");
+        banner.println(nrEdges() + " edges "
+                + "(" + nrEdges(CFG_EDGE) + " CFG, "
+                + nrEdges(AST_EDGE) + " AST, "
+                + nrEdges(PDG_EDGE) + " PDG)");
+        banner.display();
         shutdown();
     }
 

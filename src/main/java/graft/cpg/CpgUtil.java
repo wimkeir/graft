@@ -27,9 +27,24 @@ public class CpgUtil {
 
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
+    public static long nrNodes() {
+        return Graft.cpg().traversal().V().count().next();
+    }
+
+    public static long nrNodes(String label) {
+        return Graft.cpg().traversal().V().hasLabel(label).count().next();
+    }
+
+    public static long nrEdges() {
+        return Graft.cpg().traversal().E().count().next();
+    }
+
+    public static long nrEdges(String label) {
+        return Graft.cpg().traversal().E().hasLabel(label).count().next();
+    }
+
     public static String getFileName(Vertex v) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        return g.V(v)
+        return Graft.cpg().traversal().V(v)
                 .until(hasLabel(CFG_NODE)).repeat(in())
                 .until(has(NODE_TYPE, ENTRY)).repeat(in(CFG_EDGE))
                 .until(has(NODE_TYPE, CLASS)).repeat(in(AST_EDGE))

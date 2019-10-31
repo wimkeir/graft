@@ -44,8 +44,8 @@ public class Interproc {
 
         if (nrReturns == 0) {
             // this shouldn't happen
-            return;
-//            throw new GraftRuntimeException("No returns for method " + methodSig);
+            //log.warn("No returns for method {}", methodSig);
+            //throw new GraftRuntimeException("No returns for method " + methodSig);
         }
 
         // the next node after the caller in the CFG
@@ -65,7 +65,7 @@ public class Interproc {
                 .iterate();
 
         // generate return edges from returns to ret sites
-        if (nrRetSites > 0) {
+        if (nrRetSites > 0 && nrReturns > 0) {
             Graft.cpg().traversal()
                     .genRetEdge("")
                     .from(returns.copy())

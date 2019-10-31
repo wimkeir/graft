@@ -10,8 +10,10 @@ import java.util.*;
 import graft.Graft;
 import graft.traversal.CpgTraversal;
 
+import graft.Banner;
 import static graft.Const.*;
 import static graft.traversal.__.*;
+import static graft.utils.DisplayUtil.*;
 
 public class AliasAnalysis implements GraftAnalysis {
 
@@ -30,10 +32,13 @@ public class AliasAnalysis implements GraftAnalysis {
      * Context, flow insensitive, very rudimentary.
      */
     private void mayAlias() {
+        Banner banner = new Banner("Alias analysis");
+
         // TODO: do this locally within a method (use stmt edges)
         log.debug("Running mayAlias");
         Map<String, Set<String>> pts = new HashMap<>();
 
+        long start = System.currentTimeMillis();
         CpgTraversal refAssigns = Graft.cpg().traversal().getRefAssignStmts();
         log.debug("{} ref assigns", refAssigns.clone().count().next());
 
@@ -52,11 +57,14 @@ public class AliasAnalysis implements GraftAnalysis {
             addToSet(pts, tgtName, valName);
         }
 
+        banner.println(pts.keySet().size() + " refs analysed");
+        int nrEdges = 0;
         for (String key : pts.keySet()) {
             log.debug("Points to set of {}", key);
             for (String val : pts.get(key)) {
                 log.debug(val);
                 log.debug("Adding may-alias edge between {} and {}", key, val);
+                nrEdges++;
                 Graft.cpg().traversal()
                         .locals(key).as("v")
                         .locals(val)
@@ -70,6 +78,9 @@ public class AliasAnalysis implements GraftAnalysis {
             }
         }
 
+        banner.println(nrEdges + " may-alias edges added");
+        banner.println("Time elapsed: " + displayMillis(System.currentTimeMillis() - start));
+        banner.display();
     }
 
     private void addToSet(Map<String, Set<String>> map, String key, String val) {

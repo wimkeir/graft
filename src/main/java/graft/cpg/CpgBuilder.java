@@ -19,6 +19,7 @@ import graft.traversal.CpgTraversalSource;
 import graft.utils.SootUtil;
 
 import static graft.Const.*;
+import static graft.utils.DisplayUtil.*;
 import static graft.utils.FileUtil.*;
 
 /**
@@ -131,11 +132,6 @@ public class CpgBuilder {
         }
 
         return classFiles;
-    }
-
-    private static String displayMillis(long millis) {
-        // TODO
-        return millis + "ms";
     }
 
     public static Vertex buildCpg(SootClass cls, File classFile) {
