@@ -1,6 +1,5 @@
 package graft.traversal;
 
-
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -13,12 +12,14 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import graft.cpg.structure.VertexDescription;
 
-import java.util.Set;
-
 import static graft.Const.*;
 import static graft.traversal.__.*;
 
 public class CpgTraversalSourceDsl extends GraphTraversalSource {
+
+    // ********************************************************************************************
+    // constructors
+    // ********************************************************************************************
 
     public CpgTraversalSourceDsl(Graph graph, TraversalStrategies traversalStrategies) {
         super(graph, traversalStrategies);
@@ -26,6 +27,16 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
 
     public CpgTraversalSourceDsl(Graph graph) {
         super(graph);
+    }
+
+    // ********************************************************************************************
+    // TODO: categorise these traversals
+    // ********************************************************************************************
+
+    public CpgTraversal<Vertex, Vertex> cpgRoot() {
+        return getV()
+                .hasLabel(CPG_ROOT)
+                .has(NODE_TYPE, CPG_ROOT);
     }
 
     public CpgTraversal<Vertex, Vertex> locals(String varName) {
@@ -44,26 +55,111 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .inV();
     }
 
-    public CpgTraversal<Vertex, Vertex> cpgRoot() {
-        return getV()
-                .hasLabel(CPG_ROOT)
-                .has(NODE_TYPE, CPG_ROOT);
+    public CpgTraversal<Vertex, Vertex> classNodes() {
+        return astV(CLASS);
+    }
+
+    public CpgTraversal<Vertex, Vertex> entries() {
+        return cfgV(ENTRY);
     }
 
     public CpgTraversal<Vertex, Vertex> entryOf(String methodSig) {
-        return getV()
-                .hasLabel(CFG_NODE)
-                .has(NODE_TYPE, ENTRY)
-                .has(METHOD_SIG, methodSig);
+        return entries().has(METHOD_SIG, methodSig);
+    }
+
+    public CpgTraversal<Vertex, Vertex> returns() {
+        return cfgV(RETURN_STMT);
+    }
+
+    public CpgTraversal<Vertex, Vertex> returnsOf(String methodSig) {
+        return entryOf(methodSig).astOut(STATEMENT).has(NODE_TYPE, RETURN_STMT);
     }
 
     @SuppressWarnings("unchecked")
     public CpgTraversal<Vertex, Vertex> callsTo(String sigPattern) {
-        return (CpgTraversal<Vertex, Vertex>) getV()
-                .hasLabel(AST_NODE)
-                .has(NODE_TYPE, EXPR)
-                .has(EXPR_TYPE, INVOKE_EXPR)
-                .hasPattern(METHOD_SIG, sigPattern);
+        return (CpgTraversal<Vertex, Vertex>) invokeExprs().hasPattern(METHOD_SIG, sigPattern);
+    }
+
+    public CpgTraversal<Vertex, Vertex> invokeExprs() {
+        return astV(EXPR).has(EXPR_TYPE, INVOKE_EXPR);
+    }
+
+    public CpgTraversal<Vertex, Vertex> invokesOf(String methodSig) {
+        return invokeExprs().has(METHOD_SIG, methodSig);
+    }
+
+    // ********************************************************************************************
+    // V traversals
+    // ********************************************************************************************
+
+    // Control flow graph
+
+    public CpgTraversal<Vertex, Vertex> cfgV() {
+        return getV().hasLabel(CFG_NODE);
+    }
+
+    public CpgTraversal<Vertex, Vertex> cfgV(String nodeType) {
+        return cfgV().has(NODE_TYPE, nodeType);
+    }
+
+    // Abstract syntax tree
+
+    public CpgTraversal<Vertex, Vertex> astV() {
+        return getV().hasLabel(AST_NODE);
+    }
+
+    public CpgTraversal<Vertex, Vertex> astV(String nodeType) {
+        return astV().has(NODE_TYPE, nodeType);
+    }
+
+    // ********************************************************************************************
+    // E traversals
+    // ********************************************************************************************
+
+    // Control flow graph
+
+    public CpgTraversal<Edge, Edge> cfgE() {
+        return getE().hasLabel(CFG_EDGE);
+    }
+
+    public CpgTraversal<Edge, Edge> cfgE(boolean interproc) {
+        return cfgE().has(INTERPROC, interproc);
+    }
+
+    public CpgTraversal<Edge, Edge> cfgE(String edgeType) {
+        return cfgE().has(EDGE_TYPE, edgeType);
+    }
+
+    public CpgTraversal<Edge, Edge> cfgE(String edgeType, boolean interproc) {
+        return cfgE(interproc).has(EDGE_TYPE, edgeType);
+    }
+
+    // Abstract syntax tree
+
+    public CpgTraversal<Edge, Edge> astE() {
+        return getE().hasLabel(AST_EDGE);
+    }
+
+    public CpgTraversal<Edge, Edge> astE(String edgeType) {
+        return astE().has(EDGE_TYPE, edgeType);
+    }
+
+    // Program dependence graph
+
+    public CpgTraversal<Edge, Edge> pdgE() {
+        return getE().hasLabel(PDG_EDGE);
+    }
+
+    public CpgTraversal<Edge, Edge> pdgE(boolean interproc) {
+        return pdgE().has(INTERPROC, interproc);
+    }
+
+    public CpgTraversal<Edge, Edge> pdgE(String edgeType) {
+        return pdgE().has(EDGE_TYPE, edgeType);
+    }
+
+    public CpgTraversal<Edge, Edge> pdgE(String edgeType, boolean interproc) {
+        return pdgE(interproc).has(EDGE_TYPE, edgeType);
     }
 
     // ********************************************************************************************
@@ -306,8 +402,7 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
      * @return all field refs in the graph
      */
     public CpgTraversal<Vertex, Vertex> getFieldRefs() {
-        return getV()
-                .hasLabel(AST_NODE)
+        return astV()
                 .or(
                     has(NODE_TYPE, INSTANCE_FIELD_REF),
                     has(NODE_TYPE, STATIC_FIELD_REF)
@@ -320,9 +415,7 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
      * @return all assign statements in the graph
      */
     public CpgTraversal<Vertex, Vertex> getAssignStmts() {
-        return getV()
-                .hasLabel(CFG_NODE)
-                .has(NODE_TYPE, ASSIGN_STMT);
+        return cfgV(ASSIGN_STMT);
     }
 
     public CpgTraversal<Vertex, Vertex> getMatches(VertexDescription descr) {
@@ -368,6 +461,16 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
 
         CpgTraversal<Vertex, Vertex> traversal = new DefaultCpgTraversal<>(clone);
         traversal.asAdmin().addStep(new GraphStep<>(traversal.asAdmin(), Vertex.class, true));
+
+        return traversal;
+    }
+
+    protected CpgTraversal<Edge, Edge> getE() {
+        CpgTraversalSource clone = (CpgTraversalSource) this.clone();
+        clone.getBytecode().addStep(GraphTraversal.Symbols.E);
+
+        CpgTraversal<Edge, Edge> traversal = new DefaultCpgTraversal<>(clone);
+        traversal.asAdmin().addStep(new GraphStep<>(traversal.asAdmin(), Edge.class, true));
 
         return traversal;
     }

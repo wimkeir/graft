@@ -9,9 +9,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import graft.cpg.structure.VertexDescription;
 
-import java.util.List;
-import java.util.Set;
-
 import static graft.Const.*;
 
 /**
@@ -31,6 +28,15 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
     }
 
     @SuppressWarnings("unchecked")
+    default GraphTraversal<S, Vertex> entries() {
+        return (CpgTraversal) V().hasLabel(CFG_NODE).has(NODE_TYPE, ENTRY);
+    }
+
+    default GraphTraversal<S, Vertex> entryOf(String methodSig) {
+        return entries().has(METHOD_SIG, methodSig);
+    }
+
+    @SuppressWarnings("unchecked")
     default GraphTraversal<S, Vertex> source() {
         CpgTraversal g = (CpgTraversal) this.clone();
         String[] varName = new String[]{};
@@ -40,7 +46,7 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                     Vertex v = (Vertex) t;
                     varName[0] = v.value(NAME);
                 })
-                .inDataDep(varName[0]);
+                .dataDepIn(varName[0]);
     }
 
     @SuppressWarnings("unchecked")
@@ -52,47 +58,170 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
     }
 
     @SuppressWarnings("unchecked")
-    default GraphTraversal<S, Vertex> unsanitized(CpgTraversal sanitizer) {
-        Set<Vertex> sanitizers = sanitizer.toSet();
-        CpgTraversal g = (CpgTraversal) this.clone();
-        return (CpgTraversal<S, Vertex>) filter(t -> {
-            Path dataFlowPath = (Path) t.get();
-            for (int i = 0; i < dataFlowPath.size() - 2; i += 2) {
-                CpgTraversal start = (CpgTraversal) g.clone().V(dataFlowPath.get(i));
-                List<Path> controlFlowPaths = start.controlFlowsTo(dataFlowPath.get(i + 2)).toList();
-                for (Path cfgPath : controlFlowPaths) {
-                    for (int j = 0; j < cfgPath.size(); j++) {
-                        if (sanitizers.contains(cfgPath.get(j))) {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        });
+    default GraphTraversal<S, Vertex> stmtRoot() {
+        // TODO: really get this working
+        // TODO: make sure this works for AST nodes "above" the statements
+        return until(label().is(CFG_NODE))
+                .repeat((CpgTraversal) __.timeLimit(5).astIn());
     }
 
-//    default GraphTraversal<S, Path> unsanitizedDataFlows(CpgTraversal sanitizer) {
-//        return filter(t -> {
-//            Path dataFlow = (Path) t.get();
-//            for (int i = 0; i < dataFlow.size() - 2; i += 2) {
-//
-//            }
-//        })
-//    }
-//
-//    default GraphTraversal<S, Path> unsanitizedControlFlows(CpgTraversal sanitizer) {
-//        return filter(t -> {
-//
-//        })
-//    }
+    /**
+     * Gather all AST nodes in the AST subtree rooted at the current vertex.
+     *
+     * @return all nodes in the AST subtree rooted at the current vertex
+     */
+    @SuppressWarnings("unchecked")
+    default GraphTraversal<S, Vertex> astNodes() {
+        // TODO: really get this working
+        return choose(label().is(AST_NODE), store("a"))
+                .repeat((CpgTraversal) __.timeLimit(5).astOut().store("a"))
+//                .until(astOut().count().is(0))
+                .cap("a")
+                .unfold();
+    }
 
-    default GraphTraversal<S, Vertex> inDataDep() {
+    @SuppressWarnings("unchecked")
+    default GraphTraversal<S, Vertex> cfgRoot() {
+        return until(label().is(CFG_NODE)).repeat(((CpgTraversal) timeLimit(100)).astIn());
+    }
+
+    default GraphTraversal<S, ?> matches(String regex) {
+        return filter(t -> t.get().toString().matches(regex));
+    }
+
+    // TODO: this was WORKING in the shell
+//    cpg.traversal().V(v)
+//      .choose(hasLabel(AST_NODE), store("a"))
+//      .repeat(timeLimit(1000).astOut().store("a"))
+//      .until(astOut().count().is(0))
+//      .cap("a")
+//      .unfold()
+
+    // ********************************************************************************************
+    // in traversals
+    // ********************************************************************************************
+
+    // Control flow graph
+
+    default GraphTraversal<S, Vertex> cfgIn() {
+        return in(CFG_EDGE);
+    }
+
+    default GraphTraversal<S, Vertex> cfgIn(boolean interproc) {
+        return inE(CFG_EDGE).has(INTERPROC, interproc).outV();
+    }
+
+    default GraphTraversal<S, Vertex> cfgIn(String edgeType) {
+        return inE(CFG_EDGE).has(EDGE_TYPE, edgeType).outV();
+    }
+
+    default GraphTraversal<S, Vertex> cfgIn(boolean interproc, String edgeType) {
+        return inE(CFG_EDGE)
+                .has(INTERPROC, interproc)
+                .has(EDGE_TYPE, edgeType)
+                .outV();
+    }
+
+    // Abstract syntax tree
+
+    default GraphTraversal<S, Vertex> astIn() {
+        return in(AST_EDGE);
+    }
+
+    default GraphTraversal<S, Vertex> astIn(String edgeType) {
+        return inE(AST_EDGE).has(EDGE_TYPE, edgeType).outV();
+    }
+
+    // Program dependence graph
+
+    default GraphTraversal<S, Vertex> pdgIn() {
+        return in(PDG_EDGE);
+    }
+
+    default GraphTraversal<S, Vertex> pdgIn(boolean interproc) {
+        return inE(PDG_EDGE).has(INTERPROC, interproc).outV();
+    }
+
+    default GraphTraversal<S, Vertex> pdgIn(String edgeType) {
+        return inE(PDG_EDGE).has(EDGE_TYPE, edgeType).outV();
+    }
+
+    default GraphTraversal<S, Vertex> pdgIn(boolean interproc, String edgeType) {
+        return inE(PDG_EDGE)
+                .has(INTERPROC, interproc)
+                .has(EDGE_TYPE, edgeType)
+                .outV();
+    }
+
+    default GraphTraversal<S, Vertex> dataDepIn() {
         return inE(PDG_EDGE).has(EDGE_TYPE, DATA_DEP).outV();
     }
 
-    default GraphTraversal<S, Vertex> inDataDep(String varName) {
-        return inDataDep().has(VAR_NAME, varName);
+    default GraphTraversal<S, Vertex> dataDepIn(String varName) {
+        return inE(PDG_EDGE)
+                .has(EDGE_TYPE, DATA_DEP)
+                .has(VAR_NAME, varName)
+                .outV();
+    }
+
+    // ********************************************************************************************
+    // out traversals
+    // ********************************************************************************************
+
+    // Control flow graph
+
+    default GraphTraversal<S, Vertex> cfgOut() {
+        return out(CFG_EDGE);
+    }
+
+    default GraphTraversal<S, Vertex> cfgOut(boolean interproc) {
+        return outE(CFG_EDGE).has(INTERPROC, interproc).inV();
+    }
+
+    default GraphTraversal<S, Vertex> cfgOut(String edgeType) {
+        return outE(CFG_EDGE).has(EDGE_TYPE, edgeType).inV();
+    }
+
+    default GraphTraversal<S, Vertex> cfgOut(boolean interproc, String edgeType) {
+        return outE(CFG_EDGE)
+                .has(INTERPROC, interproc)
+                .has(EDGE_TYPE, edgeType)
+                .outV();
+    }
+
+    default GraphTraversal<S, Vertex> outEmpty() {
+        return outE(CFG_EDGE).has(EDGE_TYPE, EMPTY).inV();
+    }
+
+    // Abstract syntax tree
+
+    default GraphTraversal<S, Vertex> astOut() {
+        return out(AST_EDGE);
+    }
+
+    default GraphTraversal<S, Vertex> astOut(String edgeType) {
+        return outE(AST_EDGE).has(EDGE_TYPE, edgeType).inV();
+    }
+
+    // Program dependence graph
+
+    default GraphTraversal<S, Vertex> pdgOut() {
+        return out(PDG_EDGE);
+    }
+
+    default GraphTraversal<S, Vertex> pdgOut(boolean interproc) {
+        return outE(PDG_EDGE).has(INTERPROC, interproc).inV();
+    }
+
+    default GraphTraversal<S, Vertex> pdgOut(String edgeType) {
+        return outE(PDG_EDGE).has(EDGE_TYPE, edgeType).inV();
+    }
+
+    default GraphTraversal<S, Vertex> pdgOut(boolean interproc, String edgeType) {
+        return outE(PDG_EDGE)
+                .has(INTERPROC, interproc)
+                .has(EDGE_TYPE, edgeType)
+                .inV();
     }
 
     default GraphTraversal<S, Vertex> outDataDep() {
@@ -100,11 +229,7 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
     }
 
     default GraphTraversal<S, Vertex> outDataDep(String varName) {
-        return outDataDep().has(VAR_NAME, varName);
-    }
-
-    default GraphTraversal<S, Vertex> outEmpty() {
-        return outE(CFG_EDGE).has(EDGE_TYPE, EMPTY).inV();
+        return outE(PDG_EDGE).has(VAR_NAME, varName).inV();
     }
 
     // ********************************************************************************************

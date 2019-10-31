@@ -15,7 +15,6 @@ import graft.analysis.GraftAnalysis;
 import graft.analysis.TaintAnalysis;
 
 import graft.cpg.CpgBuilder;
-import graft.cpg.Interproc;
 import graft.cpg.structure.CodePropertyGraph;
 
 import graft.db.GraphUtil;
@@ -52,7 +51,7 @@ public class Graft {
      */
     public static CodePropertyGraph cpg() {
         if (cpg == null) {
-            throw new GraftException("CPG not initialised");
+            throw new GraftRuntimeException("CPG not initialised");
         }
         return cpg;
     }
@@ -104,7 +103,7 @@ public class Graft {
                 break;
             default:
                 log.error("Cannot initialise new database");
-                throw new GraftException("Unrecognised database implementation '" + getDbImplementation() + "'");
+                throw new GraftRuntimeException("Unrecognised database implementation '" + getDbImplementation() + "'");
         }
     }
 
@@ -157,8 +156,11 @@ public class Graft {
         Options.v().debug();
         Options.v().toFile(PROPERTIES_FILE);
 
-        log.info("Graft project '{}' initialised", Options.v().getString(OPT_PROJECT_NAME));
-        log.info("Run 'graft build' to build CPG");
+        Banner banner = new Banner("New Graft project: " + Options.v().getString(OPT_PROJECT_NAME));
+        banner.println("Target directory: " + Options.v().getString(OPT_TARGET_DIR));
+        banner.println("Database: " + Options.v().getString(OPT_DB_IMPLEMENTATION));
+        banner.display();
+
         shutdown();
     }
 
@@ -169,6 +171,10 @@ public class Graft {
      */
     private static void build() {
         startup();
+
+        String targetDir = Options.v().getString(OPT_TARGET_DIR);
+        checkOrExit(1, targetDir != null, "Target directory not set");
+        CpgBuilder cpgBuilder;
 
         // If the CPG already exists, we can overwrite it or cancel
         if (cpg.traversal().V().count().next() > 1) {
@@ -185,14 +191,15 @@ public class Graft {
             }
 
             if (choice.equals("y")) {
-                CpgBuilder.buildCpg();
+                cpgBuilder = new CpgBuilder();
+                cpgBuilder.buildCpg(targetDir);
             }
 
             shutdown();
         }
 
-        CpgBuilder.buildCpg();
-        Interproc.genInterprocEdges();
+        cpgBuilder = new CpgBuilder();
+        cpgBuilder.buildCpg(targetDir);
 
         shutdown();
     }
@@ -210,7 +217,7 @@ public class Graft {
         switch (analysisClass) {
             case TAINT_ANALYSIS:
                 // TODO XXX
-                analysis = new TaintAnalysis("etc/demo/taint/taint.groovy");
+                analysis = new TaintAnalysis("etc/taint.groovy");
                 break;
             case ALIAS_ANALYSIS:
                 analysis = new AliasAnalysis();
@@ -220,13 +227,7 @@ public class Graft {
                 throw new RuntimeException("NOT IMPLEMENTED");
         }
 
-        // XXX
-        Options.v().setProperty(OPT_TAINT_SANITIZER, "etc/demo/simple/sanitizer.groovy");
-        Options.v().setProperty(OPT_TAINT_SINK, "etc/demo/simple/sink.groovy");
-        Options.v().setProperty(OPT_TAINT_SOURCE, "etc/demo/simple/source.groovy");
-
         analysis.doAnalysis();
-
         shutdown();
     }
 
@@ -247,7 +248,9 @@ public class Graft {
     }
 
     private static void status() {
-        // TODO
+        startup();
+        // TODO: display status info here
+        shutdown();
     }
 
     private static void startup() {
@@ -342,6 +345,9 @@ public class Graft {
             case CMD_DUMP:
                 checkOrExit(0, args.length == 2, "No dump file provided");
                 dump(args[1]);
+                break;
+            case CMD_STATUS:
+                status();
                 break;
             default:
                 log.error("Unrecognised command '{}'", cmd);

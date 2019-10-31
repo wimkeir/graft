@@ -9,7 +9,7 @@ import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import graft.GraftException;
+import graft.GraftRuntimeException;
 import graft.Options;
 import graft.cpg.structure.CodePropertyGraph;
 
@@ -37,7 +37,7 @@ public class GraphUtil {
             case NEO4J:
                 return CodePropertyGraph.fromDir(Options.v().getString(OPT_DB_DIRECTORY));
             default:
-                throw new GraftException("Unknown graph implementation '"
+                throw new GraftRuntimeException("Unknown graph implementation '"
                                          + Options.v().getString(OPT_DB_IMPLEMENTATION)
                                          + "'");
         }
@@ -49,7 +49,7 @@ public class GraphUtil {
 
     public static CodePropertyGraph newNeo4jCpg(String dir) {
         if (Paths.get(dir).toFile().listFiles().length != 0) {
-            throw new GraftException("Folder '" + dir + "' already contains Neo4j database");
+            throw new GraftRuntimeException("Folder '" + dir + "' already contains Neo4j database");
         }
         Configuration config = new BaseConfiguration();
         config.setProperty("gremlin.neo4j.directory", dir);
@@ -77,7 +77,7 @@ public class GraphUtil {
             case "kryo":
                 return Options.v().getString(DB_FILE_NAME) + ".kryo";
             default:
-                throw new GraftException("Unrecognised DB file format '" + format);
+                throw new GraftRuntimeException("Unrecognised DB file format '" + format);
         }
     }
 

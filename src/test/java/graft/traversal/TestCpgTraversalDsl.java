@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 
 public class TestCpgTraversalDsl {
 
-    private static final String CPG_PATH = "src/test/resources/simple_cpg.json";
+    private static final String CPG_PATH = "src/test/resources/simple.json";
     private static CodePropertyGraph cpg;
 
     @BeforeClass
@@ -23,19 +23,7 @@ public class TestCpgTraversalDsl {
 
     @Test
     public void testMatches() {
-        // TODO: test w/ parent, child descriptions
-//        String regex = "[a-zA-Z_]*";
-//        VertexDescription descr = new VertexDescription("entry-nodes", CFG_NODE);
-//        descr.setPropPattern(NODE_TYPE, ENTRY);
-//        descr.setPropPattern(TEXT_LABEL, regex);
-//
-//        List<Vertex> matches = cpg.traversal().V().matches(descr).toList();
-//        assertEquals(4, matches.size());
-//
-//        for (Vertex match : matches) {
-//            assertEquals(ENTRY, match.value(NODE_TYPE));
-//            assertTrue(match.value(TEXT_LABEL).toString().matches(regex));
-//        }
+
     }
 
 }

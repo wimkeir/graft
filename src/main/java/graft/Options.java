@@ -15,7 +15,7 @@ public class Options {
 
     public static void init(Config config) {
         if (options != null) {
-            throw new GraftException("Options already initialized");
+            throw new GraftRuntimeException("Options already initialized");
         }
         options = config.copy();
 
@@ -31,7 +31,7 @@ public class Options {
 
     public static Config v() {
         if (options == null) {
-            throw new GraftException("Options not initialized");
+            throw new GraftRuntimeException("Options not initialized");
         }
         return options;
     }

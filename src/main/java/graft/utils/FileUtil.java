@@ -1,6 +1,5 @@
 package graft.utils;
 
-import graft.GraftException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +8,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
+import graft.GraftException;
+
 public class FileUtil {
 
     private static Logger log = LoggerFactory.getLogger(FileUtil.class);
@@ -16,8 +17,15 @@ public class FileUtil {
     private static final int BUFFER_SIZE = 8192;
     private static final String HASH_ALGORITHM = "SHA-256";
 
-    // see https://stackoverflow.com/a/32032908/6208351
-    public static String hashFile(File file) {
+    /**
+     * Hash the contents of a file.
+     *
+     * @param file the file to hash
+     * @return the hash of the file
+     * @throws GraftException if the operation fails
+     */
+    public static String hashFile(File file) throws GraftException {
+        // see https://stackoverflow.com/a/32032908/6208351
         byte[] buffer = new byte[BUFFER_SIZE];
         int count;
 
@@ -30,17 +38,19 @@ public class FileUtil {
             in.close();
             byte[] hash = digest.digest();
             return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Invalid hash algorithm", e);
-        } catch (FileNotFoundException e) {
-            log.error("Could not find file '{}' to hash", file.getName(), e);
-        } catch (IOException e) {
-            log.error("Could not read file '{}' to hash", file.getName(), e);
+        } catch (NoSuchAlgorithmException | IOException e) {
+            throw new GraftException("Could not hash file '" + file.getName() + "'", e);
         }
-
-        throw new GraftException("Could not hash file '" + file.getName() + "'");
     }
 
+    /**
+     * Get the full name of the Java class in a given class file, relative to the given package
+     * root directory.
+     *
+     * @param rootDir the package root directory
+     * @param classFile the class file
+     * @return the full Java class name
+     */
     public static String getClassName(File rootDir, File classFile) {
         return rootDir.toURI()
                 .relativize(classFile.toURI())

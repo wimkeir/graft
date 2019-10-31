@@ -143,11 +143,11 @@ public class Config {
                 log.warn("Config file '{}' already exists, overwriting...");
             }
             if (!file.createNewFile()) {
-                throw new GraftException("Could not create new file '" + filename + "'");
+                throw new GraftRuntimeException("Could not create new file '" + filename + "'");
             }
             toFile(file);
         } catch (IOException e) {
-            throw new GraftException("Cannot write config to file '" + filename + "'", e);
+            throw new GraftRuntimeException("Cannot write config to file '" + filename + "'", e);
         }
     }
 
@@ -176,7 +176,7 @@ public class Config {
         try {
             toFile(path.toFile());
         } catch (IOException e) {
-            throw new GraftException("Cannot write config to file '" + path.toFile().getName() + "'", e);
+            throw new GraftRuntimeException("Cannot write config to file '" + path.toFile().getName() + "'", e);
         }
     }
 
@@ -190,8 +190,8 @@ public class Config {
         try {
             File file = new File(url.toURI());
             return fromFile(file);
-        } catch (URISyntaxException|GraftException e) {
-            throw new GraftException("Could not load default config file");
+        } catch (URISyntaxException| GraftRuntimeException e) {
+            throw new GraftRuntimeException("Could not load default config file");
         }
     }
 
@@ -200,17 +200,17 @@ public class Config {
             Configuration configuration = new PropertiesConfiguration(file);
             return new Config(configuration);
         } catch (ConfigurationException e) {
-            throw new GraftException("Cannot read config file '" + file.getName() + "'");
+            throw new GraftRuntimeException("Cannot read config file '" + file.getName() + "'");
         }
     }
 
     static Config fromFile(String filename) {
         File file = new File(filename);
         if (!file.exists()) {
-            throw new GraftException("No such config file '" + filename + "'");
+            throw new GraftRuntimeException("No such config file '" + filename + "'");
         }
         if (!file.isFile()) {
-            throw new GraftException("Cannot open config file '" + filename + "'");
+            throw new GraftRuntimeException("Cannot open config file '" + filename + "'");
         }
         return fromFile(file);
     }
