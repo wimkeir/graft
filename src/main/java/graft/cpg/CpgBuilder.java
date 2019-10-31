@@ -92,7 +92,7 @@ public class CpgBuilder {
             long timeToInter = interproc - built;
             banner.println("Class(es) loaded in " + displayMillis(timeToLoad));
             banner.println("Individual CPGs built in " + displayMillis(timeToBuild));
-            banner.println("Interprocedural edges generated in " + displayMillis(interproc));
+            banner.println("Interprocedural edges generated in " + displayMillis(timeToInter));
             banner.println("Total elapsed time: " + displayMillis(timeToLoad + timeToBuild + timeToInter));
 
             // CPG stats
