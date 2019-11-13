@@ -17,11 +17,8 @@ import graft.analysis.TaintAnalysis;
 import graft.cpg.CpgBuilder;
 import graft.cpg.structure.CodePropertyGraph;
 
-import graft.db.GraphUtil;
-
 import graft.utils.LogUtil;
 import graft.utils.SootUtil;
-
 
 import static graft.Const.*;
 import static graft.cpg.CpgUtil.*;
@@ -34,7 +31,6 @@ public class Graft {
 
     private static Logger log = LoggerFactory.getLogger(Graft.class);
 
-    private static final Path USER_HOME_DIR   = Paths.get(System.getProperty("user.home")).toAbsolutePath();
     private static final Path WORKING_DIR     = Paths.get("").toAbsolutePath();
     private static final Path GRAFT_DIR       = WORKING_DIR.resolve(GRAFT_DIR_NAME);
     private static final Path DB_FOLDER       = GRAFT_DIR.resolve(DB_FOLDER_NAME);
@@ -95,12 +91,12 @@ public class Graft {
             case TINKERGRAPH:
                 String dbFile = DB_FOLDER.resolve(dbFileName()).toString();
                 Options.v().setProperty(OPT_DB_FILE, dbFile);
-                cpg = GraphUtil.newTinkergraphCpg();
+                cpg = newTinkergraphCpg();
                 break;
             case NEO4J:
                 String dbDir = DB_FOLDER.toString();
                 Options.v().setProperty(OPT_DB_DIRECTORY, dbDir);
-                cpg = GraphUtil.newNeo4jCpg(dbDir);
+                cpg = newNeo4jCpg(dbDir);
                 break;
             default:
                 log.error("Cannot initialise new database");
@@ -266,7 +262,7 @@ public class Graft {
         checkOrExit(GRAFT_DIR.toFile().exists(), "Directory is not a Graft project");
         checkOrExit(PROPERTIES_FILE.toFile().exists(), "No properties file in Graft directory");
         initOpts(PROPERTIES_FILE.toString());
-        cpg = GraphUtil.getCpg();
+        cpg = getCpg();
         SootUtil.configureSoot();
 
         if (log.isDebugEnabled()) {
