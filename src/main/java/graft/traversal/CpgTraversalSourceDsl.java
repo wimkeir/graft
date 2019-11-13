@@ -88,6 +88,16 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         return invokeExprs().has(METHOD_SIG, methodSig);
     }
 
+    public CpgTraversal<Vertex, Vertex> paramsOf(String methodSig) {
+        return entryOf(methodSig)
+                .astOut(STATEMENT).has(NODE_TYPE, ASSIGN_STMT)
+                .where(getVal().and(
+                        has(NODE_TYPE, REF),
+                        has(REF_TYPE, PARAM_REF)
+                )
+        );
+    }
+
     // ********************************************************************************************
     // V traversals
     // ********************************************************************************************
@@ -261,14 +271,12 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .property(CONDITION, condition);
     }
 
-    public CpgTraversal<Edge, Edge> genCallEdge(String context) {
-        return addCfgE(CALL, CALL + ":" + context, true)
-                .property(CONTEXT, context);
+    public CpgTraversal<Edge, Edge> genCallEdge() {
+        return addCfgE(CALL, CALL, true);
     }
 
-    public CpgTraversal<Edge, Edge> genRetEdge(String context) {
-        return addCfgE(RET, RET + ":" + context, true)
-                .property(CONTEXT, context);
+    public CpgTraversal<Edge, Edge> genRetEdge() {
+        return addCfgE(RET, RET, true);
     }
 
     // Abstract syntax tree

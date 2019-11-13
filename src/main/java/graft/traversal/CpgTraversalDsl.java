@@ -57,6 +57,13 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                 .path();
     }
 
+    default GraphTraversal<S, Vertex> stmt() {
+        return coalesce(
+                hasLabel(CFG_NODE),
+                repeat(((CpgTraversal) timeLimit(500)).astIn()).until(label().is(CFG_NODE))
+        );
+    }
+
     @SuppressWarnings("unchecked")
     default GraphTraversal<S, Vertex> stmtRoot() {
         // TODO: really get this working
@@ -331,14 +338,12 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                 .property(CONDITION, condition);
     }
 
-    default GraphTraversal<S, Edge> genCallEdge(String context) {
-        return addCfgE(CALL, CALL + ":" + context, true)
-                .property(CONTEXT, context);
+    default GraphTraversal<S, Edge> genCallEdge() {
+        return addCfgE(CALL, CALL, true);
     }
 
-    default GraphTraversal<S, Edge> genRetEdge(String context) {
-        return addCfgE(RET, RET + ":" + context, true)
-                .property(CONTEXT, context);
+    default GraphTraversal<S, Edge> genRetEdge() {
+        return addCfgE(RET, RET, true);
     }
 
     // Abstract syntax tree
