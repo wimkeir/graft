@@ -10,6 +10,10 @@ import static graft.Const.*;
  */
 public class Neo4jUtil {
 
+    // TODO
+    // javadocs
+    // what separates this from GraphUtil?
+
     public static Neo4jGraph fromFile(String filename) {
         return fromFile(DEFAULT_DB_DIRECTORY, filename);
     }

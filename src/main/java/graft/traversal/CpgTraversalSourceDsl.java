@@ -10,12 +10,12 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
-import graft.cpg.structure.VertexDescription;
-
 import static graft.Const.*;
 import static graft.traversal.__.*;
 
 public class CpgTraversalSourceDsl extends GraphTraversalSource {
+
+    // TODO: same as CpgTraversal
 
     // ********************************************************************************************
     // constructors
@@ -28,10 +28,6 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
     public CpgTraversalSourceDsl(Graph graph) {
         super(graph);
     }
-
-    // ********************************************************************************************
-    // TODO: categorise these traversals
-    // ********************************************************************************************
 
     public CpgTraversal<Vertex, Vertex> cpgRoot() {
         return getV()
@@ -424,10 +420,6 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
      */
     public CpgTraversal<Vertex, Vertex> getAssignStmts() {
         return cfgV(ASSIGN_STMT);
-    }
-
-    public CpgTraversal<Vertex, Vertex> getMatches(VertexDescription descr) {
-        return getV().matches(descr);
     }
 
     public CpgTraversal<Vertex, Path> pathsBetween(Vertex v, Vertex w, String edgeLabel) {

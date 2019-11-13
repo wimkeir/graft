@@ -28,6 +28,9 @@ import static graft.traversal.__.*;
  */
 public class CfgBuilder {
 
+    // TODO
+    // sort out switch business
+
     private static Logger log = LoggerFactory.getLogger(CfgBuilder.class);
 
     private AstBuilder astBuilder;

@@ -24,6 +24,8 @@ import static graft.Const.*;
  */
 public class DotUtil {
 
+    // TODO: javadoc and make sure this is good
+
     private static Logger log = LoggerFactory.getLogger(DotUtil.class);
 
     public static void graphToDot(CodePropertyGraph graph, String filename, String graphName) {

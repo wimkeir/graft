@@ -23,8 +23,11 @@ import static graft.Const.*;
  */
 public class SootUtil {
 
-    private static Logger log = LoggerFactory.getLogger(SootUtil.class);
+    // TODO
+    // cleanup, make sure this is all good, explanatory comments, javadocs
+    // error handling
 
+    private static Logger log = LoggerFactory.getLogger(SootUtil.class);
 
     public static void configureSoot() {
         soot.options.Options.v().set_soot_classpath(Options.v().getString(OPT_CLASSPATH));

@@ -32,6 +32,11 @@ import static graft.utils.FileUtil.*;
  */
 public class CpgBuilder {
 
+    // TODO
+    // serious refactoring
+    // recursive package trees between cpg root and class nodes
+    // better reporting and banners
+
     private Banner banner;
 
     private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);

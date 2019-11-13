@@ -30,6 +30,9 @@ import static graft.cpg.CpgUtil.*;
  */
 public class AstBuilder {
 
+    // TODO:
+    // sort out locals business
+
     private static Logger log = LoggerFactory.getLogger(AstBuilder.class);
 
     private Map<Local, Vertex> locals;

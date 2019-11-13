@@ -21,6 +21,10 @@ import static graft.traversal.__.*;
  */
 public class Interproc {
 
+    // TODO
+    // this is disgusting and needs some serious refactoring
+    // getting it to run faster would be great too (use traversals instead of loops)
+
     private static Logger log = LoggerFactory.getLogger(Interproc.class);
 
     private static void callsTo(Vertex calleeEntry) {

@@ -15,10 +15,24 @@ import static graft.Const.*;
 import static graft.traversal.__.*;
 import static graft.utils.DisplayUtil.*;
 
+/**
+ *
+ */
 public class AliasAnalysis implements GraftAnalysis {
+
+    // TODO:
+    // javadocs
+    // run may-alias locally per method
+    // get rid of traversal warnings?
+    // use display-millis for stats
+    // nice banner output
+    // define algorithm
 
     private static Logger log = LoggerFactory.getLogger(AliasAnalysis.class);
 
+    /**
+     *
+     */
     public AliasAnalysis() {
 
     }
@@ -28,9 +42,6 @@ public class AliasAnalysis implements GraftAnalysis {
         mayAlias();
     }
 
-    /**
-     * Context, flow insensitive, very rudimentary.
-     */
     private void mayAlias() {
         Banner banner = new Banner("Alias analysis");
 

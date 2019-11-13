@@ -26,6 +26,10 @@ import graft.traversal.CpgTraversalSource;
  */
 public class PdgBuilder {
 
+    // TODO
+    // whats up with variables not having def sites?
+    // NB control dependencies! see paper?
+
     private static Logger log = LoggerFactory.getLogger(PdgBuilder.class);
 
     /**

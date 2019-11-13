@@ -2,6 +2,11 @@ package graft;
 
 public class Banner {
 
+    // TODO:
+    // fix spacing/wrap issues (check widths)
+    // see COASTAL banner
+    // javadocs
+
     private static int DEFAULT_WIDTH = 100;
 
     private StringBuilder sb;

@@ -29,6 +29,12 @@ import static graft.db.GraphUtil.*;
  */
 public class Graft {
 
+    // TODO
+    // serious javadocs needed here
+    // better reporting (banners for every command)
+    // refactor into more modular functions and error handling
+    // graft-shell!
+
     private static Logger log = LoggerFactory.getLogger(Graft.class);
 
     private static final Path WORKING_DIR     = Paths.get("").toAbsolutePath();

@@ -1,15 +1,8 @@
 package graft.traversal;
 
 import graft.cpg.structure.CodePropertyGraph;
-import graft.cpg.structure.VertexDescription;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
-
-import static graft.Const.*;
-import static org.junit.Assert.*;
 
 public class TestCpgTraversalDsl {
 

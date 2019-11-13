@@ -23,6 +23,10 @@ import static graft.Const.*;
  */
 public class Config {
 
+    // TODO
+    // handle misc todos, comments
+    // javadocs
+
     /**
      * The path to the default configuration resource
      */

@@ -12,6 +12,8 @@ import graft.GraftException;
 
 public class FileUtil {
 
+    // TODO: logging and error handling
+
     private static Logger log = LoggerFactory.getLogger(FileUtil.class);
 
     private static final int BUFFER_SIZE = 8192;

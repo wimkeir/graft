@@ -5,7 +5,9 @@ import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 
 public class TinkerGraphUtil {
 
-    // TODO: configure IO reader
+    // TODO
+    // use this instead of GraphUtil redundant methods
+
     public static TinkerGraph fromFile(String filename) {
         TinkerGraph g = TinkerGraph.open();
         g.traversal().io(filename).read().iterate();

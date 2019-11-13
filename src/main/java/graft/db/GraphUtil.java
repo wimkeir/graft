@@ -22,6 +22,10 @@ import static graft.Const.*;
  */
 public class GraphUtil {
 
+    // TODO
+    // javadocs
+    // lots of redundancies here, sort them out
+
     private static Logger log = LoggerFactory.getLogger(GraphUtil.class);
 
     private static GraphUtil v;

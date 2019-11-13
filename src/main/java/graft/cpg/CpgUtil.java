@@ -25,6 +25,11 @@ import static graft.traversal.__.*;
  */
 public class CpgUtil {
 
+    // TODO
+    // nrNodes/edges can be moved to CodePropertyGraph
+    // javadocs
+    // more refactoring, convenience methods
+
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
     public static long nrNodes() {

@@ -22,6 +22,13 @@ import static graft.Const.*;
  */
 public class CodePropertyGraph {
 
+    // TODO
+    // javadocs
+    // use name properly
+    // handle dumping properly (error handling, file types etc.)
+    // status method that prints stats banner
+    // shorthand for V, E etc (common sources)
+
     // TODO: get name from root node or args?
     private String name;
     private Graph g;

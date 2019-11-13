@@ -7,8 +7,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
-import graft.cpg.structure.VertexDescription;
-
 import static graft.Const.*;
 
 /**
@@ -18,6 +16,12 @@ import static graft.Const.*;
  */
 @GremlinDsl(traversalSource = "graft.traversal.CpgTraversalSourceDsl")
 public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
+
+    // TODO
+    // serious cleanup here...
+    // remove dead methods
+    // implement more useful methods (including all from paper - match, astnodes etc.)
+    // document and organize well (this is user-facing)
 
     default GraphTraversal<S, Vertex> locals(String varName) {
         // TODO: specify method sig too
@@ -404,29 +408,6 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
         return hasLabel(CFG_NODE).has(NODE_TYPE, ASSIGN_STMT) // ensure we're on an assign stmt
                 .outE(AST_EDGE).has(EDGE_TYPE, TARGET)
                 .inV();
-    }
-
-    /**
-     * TODO: javadoc
-     *
-     * @param descr
-     * @return
-     */
-    @SuppressWarnings("unchecked")
-    default GraphTraversal<S, Vertex> matches(VertexDescription descr) {
-        return (GraphTraversal<S, Vertex>) hasLabel(descr.LABEL).filter(t -> {
-            Vertex v = (Vertex) t.get();
-            for (String key : descr.keys()) {
-                String pattern = descr.getPropPattern(key);
-                if (!v.keys().contains(key)) {
-                    return false;
-                }
-                if (!v.value(key).toString().matches(pattern)) {
-                    return false;
-                }
-            }
-            return true;
-        });
     }
 
     /**

@@ -312,7 +312,6 @@ public class ExprVisitor extends AbstractExprSwitch {
 
     // Generates an AST subtree for an invoke expression and possibly its base and args
     private void caseInvokeExpr(InvokeExpr expr, String invokeType, Value base) {
-        // TODO: use INVOKES instead of METHOD_SIG
         Vertex exprNode = (Vertex) Graft.cpg().traversal()
                 .addExprNode(INVOKE_EXPR, expr.toString(), getTypeString(expr.getType()))
                 .property(INVOKE_TYPE, invokeType)

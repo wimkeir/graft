@@ -29,10 +29,20 @@ import static graft.traversal.__.*;
  */
 public class TaintAnalysis implements GraftAnalysis {
 
+    // TODO
+    // javadocs
+    // handle file problems gracefully
+    // use display-millis and nice banner output
+    // use paper traversals and define algorithm
+
     private static Logger log = LoggerFactory.getLogger(TaintAnalysis.class);
 
     private String descrFile;
 
+    /**
+     *
+     * @param descrFile
+     */
     public TaintAnalysis(String descrFile) {
         this.descrFile = descrFile;
     }

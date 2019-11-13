@@ -9,6 +9,8 @@ import static graft.Const.*;
 
 public class LogUtil {
 
+    // TODO: throw exception on default, javadoc
+
     public static void setLogLevel(String logLevel) {
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 
