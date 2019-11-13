@@ -40,6 +40,7 @@ public class TaintAnalysis implements GraftAnalysis {
     @Override
     public void doAnalysis() {
         log.info("Running taint analysis...");
+        long start = System.currentTimeMillis();
         CpgTraversal source, sink, sanitizer;
 
         log.debug("Loading taint descriptions");
@@ -72,6 +73,8 @@ public class TaintAnalysis implements GraftAnalysis {
                 reportTaintedPath(dataFlow);
             }
         }
+
+        log.info("Taint analysis completed in {}ms", System.currentTimeMillis() - start);
 
     }
 
