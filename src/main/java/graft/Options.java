@@ -9,11 +9,9 @@ public class Options {
 
     private static Logger log = LoggerFactory.getLogger(Options.class);
 
-    // TODO: option consts here
-
     private static Config options;
 
-    public static void init(Config config) {
+    static void init(Config config) {
         if (options != null) {
             throw new GraftRuntimeException("Options already initialized");
         }

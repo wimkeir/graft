@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import graft.*;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import org.slf4j.Logger;
@@ -18,7 +17,11 @@ import soot.toolkits.graph.UnitGraph;
 import graft.traversal.CpgTraversalSource;
 import graft.utils.SootUtil;
 
+import graft.*;
+import graft.traversal.CpgTraversal;
+
 import static graft.Const.*;
+import static graft.traversal.__.*;
 import static graft.utils.DisplayUtil.*;
 import static graft.utils.FileUtil.*;
 
@@ -231,6 +234,8 @@ public class CpgBuilder {
         }
         banner.println(amendedClasses.size() + " classes to amend");
 
+        long start = System.currentTimeMillis();
+
         Vertex cpgRoot = Graft.cpg().traversal().V().hasLabel(CPG_ROOT).next();
         SootUtil.loadClasses(classNames.toArray(new String[0]));
         long prevNodes = CpgUtil.getNodeCount();
@@ -242,11 +247,9 @@ public class CpgBuilder {
             CpgBuilder.amendCpg(cpgRoot, cls, amendedClasses.get(i));
         }
 
-        Interproc.genInterprocEdges();
-
         Graft.cpg().commit();
 
-        banner.println("CPG amended successfully");
+        banner.println("CPG amended successfully in " + (System.currentTimeMillis() - start) + "ms");
         banner.println("Nodes: " + CpgUtil.getNodeCount() + " (prev " + prevNodes + ")");
         banner.println("Edges: " + CpgUtil.getEdgeCount() + " (prev " + prevEdges + ")");
         banner.display();
@@ -269,6 +272,17 @@ public class CpgBuilder {
                 .addAstE(CLASS, CLASS)
                 .from(cpgRoot).to(classNode)
                 .iterate();
+
+        // entry nodes of methods in amended classes
+        CpgTraversal entries = Graft.cpg().traversal().V()
+                .and(
+                        V(classNode).astOut(METHOD).store("entries"),
+                        V(classNode).astOut(CONSTRUCTOR).store("entries")
+                ).cap("entries").unfold().dedup();
+        while (entries.hasNext()) {
+            Vertex entry = (Vertex) entries.next();
+            Interproc.genInterprocEdges(entry);
+        }
 
         Graft.cpg().commit();
     }
