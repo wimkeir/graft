@@ -92,26 +92,4 @@ public class AliasAnalysis implements GraftAnalysis {
         map.put(key, set);
     }
 
-    private Set<String> union(Set<String> a, Set<String> b) {
-        HashSet<String> union = new HashSet<>();
-        if (a != null) {
-            union.addAll(a);
-        }
-        if (b != null) {
-            union.addAll(b);
-        }
-        return union;
-    }
-
-    private Set<String> diff(Set<String> a, Set<String> b) {
-        HashSet<String> diff = new HashSet<>();
-        if (a != null) {
-            diff.addAll(a);
-        }
-        if (b != null) {
-            diff.removeAll(b);
-        }
-        return diff;
-    }
-
 }
