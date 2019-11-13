@@ -78,6 +78,11 @@ public class TypeVisitor extends TypeSwitch {
     }
 
     @Override
+    public void caseShortType(ShortType type) {
+        setResult(SHORT);
+    }
+
+    @Override
     public void defaultCase(Type type) {
         log.warn("Unrecognised Type class '{}'", type.toString());
         setResult(type.toString());

@@ -203,6 +203,7 @@ public class Const {
     public static final String LONG = "long";
     public static final String NULL = "null";
     public static final String STRING = "string";
+    public static final String SHORT = "short";
     public static final String VOID = "void";
 
     // reference types
