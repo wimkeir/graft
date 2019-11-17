@@ -29,6 +29,8 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         super(graph);
     }
 
+    // TODO: CATEGORISE
+
     public CpgTraversal<Vertex, Vertex> cpgRoot() {
         return getV()
                 .hasLabel(CPG_ROOT)
@@ -166,6 +168,12 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
 
     public CpgTraversal<Edge, Edge> pdgE(String edgeType, boolean interproc) {
         return pdgE(interproc).has(EDGE_TYPE, edgeType);
+    }
+
+    // Aliasing
+
+    public CpgTraversal<Edge, Edge> aliasE() {
+        return getE().hasLabel(MAY_ALIAS);
     }
 
     // ********************************************************************************************
@@ -437,16 +445,6 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .path();
     }
 
-//    @SuppressWarnings("unchecked")
-//    public CpgTraversal<Vertex, Path> controlFlowsBetween(CpgTraversal sources, CpgTraversal sinks) {
-//        // TODO: only intraproc!
-//        return (CpgTraversal<Vertex, Path>) sources.copy()
-//                .repeat(timeLimit(1000).outE(CFG_EDGE).has(INTERPROC, false).simplePath())
-//                .until(sinks.copy())
-//                .path();
-//    }
-
-    @SuppressWarnings("unchecked")
     public CpgTraversal<Vertex, Path> controlFlowsBetween(Vertex v, Vertex w) {
         // TODO: only intraproc!
         return (CpgTraversal<Vertex, Path>) V(v)

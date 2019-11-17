@@ -11,7 +11,7 @@ public class TestCpgTraversalDsl {
 
     @BeforeClass
     public static void setUpClass() {
-        cpg = CodePropertyGraph.fromFile(CPG_PATH);
+        // cpg = CodePropertyGraph.fromFile(CPG_PATH);
     }
 
     @Test

@@ -21,7 +21,6 @@ import graft.utils.LogUtil;
 import graft.utils.SootUtil;
 
 import static graft.Const.*;
-import static graft.cpg.CpgUtil.*;
 import static graft.db.GraphUtil.*;
 
 /**
@@ -78,7 +77,7 @@ public class Graft {
 
         System.out.print("4. Database [tinkergraph, neo4j]: ");
         String impl = in.next();
-        while (!validDbImplementation(impl)) {
+        while (!(impl.equals(TINKERGRAPH) || impl.equals(NEO4J))) {
             System.out.println("Invalid database implementation '" + impl + "'");
             System.out.print("4. Database [tinkergraph, neo4j]: ");
             impl = in.next();
@@ -93,7 +92,7 @@ public class Graft {
     private static void initNewDb() {
         checkOrExit(DB_FOLDER.toFile().mkdir(), "Could not create DB folder");
 
-        switch (getDbImplementation()) {
+        switch (Options.v().getString(OPT_DB_IMPLEMENTATION)) {
             case TINKERGRAPH:
                 String dbFile = DB_FOLDER.resolve(dbFileName()).toString();
                 Options.v().setProperty(OPT_DB_FILE, dbFile);
@@ -106,7 +105,9 @@ public class Graft {
                 break;
             default:
                 log.error("Cannot initialise new database");
-                throw new GraftRuntimeException("Unrecognised database implementation '" + getDbImplementation() + "'");
+                throw new GraftRuntimeException(
+                        "Unrecognised database implementation '" +
+                        Options.v().getString(OPT_DB_IMPLEMENTATION) + "'");
         }
     }
 
@@ -240,27 +241,19 @@ public class Graft {
 
     private static void dot(String filename) {
         startup();
-        cpg.toDot(filename);
+        cpg().toDot(filename);
         shutdown();
     }
 
     private static void dump(String filename) {
         startup();
-        cpg.dump(filename);
+        cpg().dump(filename);
         shutdown();
     }
 
     private static void status() {
         startup();
-        Banner banner = new Banner("Project: " + Options.v().getString(OPT_PROJECT_NAME));
-        banner.println(nrNodes() + " nodes "
-                + "(" + nrNodes(CFG_NODE) + " CFG, "
-                + nrNodes(AST_NODE) + " AST)");
-        banner.println(nrEdges() + " edges "
-                + "(" + nrEdges(CFG_EDGE) + " CFG, "
-                + nrEdges(AST_EDGE) + " AST, "
-                + nrEdges(PDG_EDGE) + " PDG)");
-        banner.display();
+        cpg().status().display();
         shutdown();
     }
 
@@ -288,7 +281,7 @@ public class Graft {
     private static void shutdown() {
         assert cpg != null;
         cpg.commit();
-        if (getDbImplementation().equals(TINKERGRAPH)) {
+        if (Options.v().getString(OPT_DB_IMPLEMENTATION).equals(TINKERGRAPH)) {
             String graphFile = Options.v().getString(OPT_DB_FILE);
             assert graphFile != null;
             cpg.dump(graphFile);
@@ -317,6 +310,22 @@ public class Graft {
         if (!condition) {
             log.error(fmt, args);
             System.exit(code);
+        }
+    }
+
+    private static String dbFileName() {
+        String format = Options.v().getString(OPT_DB_FILE_FORMAT);
+        switch (format) {
+            case "graphson":
+            case "json":
+                return Options.v().getString(DB_FILE_NAME) + ".json";
+            case "xml":
+            case "graphml":
+                return Options.v().getString(DB_FILE_NAME) + ".xml";
+            case "kryo":
+                return Options.v().getString(DB_FILE_NAME) + ".kryo";
+            default:
+                throw new GraftRuntimeException("Unrecognised DB file format '" + format);
         }
     }
 
