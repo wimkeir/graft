@@ -98,10 +98,10 @@ public class CpgBuilder {
             long timeToLoad = loaded - start;
             long timeToBuild = built - loaded;
             long timeToInter = interproc - built;
-            banner.println("Class(es) loaded in " + displayMillis(timeToLoad));
-            banner.println("Individual CPGs built in " + displayMillis(timeToBuild));
-            banner.println("Interprocedural edges generated in " + displayMillis(timeToInter));
-            banner.println("Total elapsed time: " + displayMillis(timeToLoad + timeToBuild + timeToInter));
+            banner.println("Class(es) loaded in " + displayTime(timeToLoad));
+            banner.println("Individual CPGs built in " + displayTime(timeToBuild));
+            banner.println("Interprocedural edges generated in " + displayTime(timeToInter));
+            banner.println("Total elapsed time: " + displayTime(timeToLoad + timeToBuild + timeToInter));
 
             // CPG stats
             long nrNodes = Graft.cpg().traversal().V().count().next();

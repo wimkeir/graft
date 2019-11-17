@@ -7,10 +7,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import graft.Banner;
 import graft.Graft;
 import graft.traversal.CpgTraversal;
 
-import graft.Banner;
 import static graft.Const.*;
 import static graft.traversal.__.*;
 import static graft.utils.DisplayUtil.*;
@@ -24,7 +24,6 @@ public class AliasAnalysis implements GraftAnalysis {
     // javadocs
     // run may-alias locally per method
     // get rid of traversal warnings?
-    // use display-millis for stats
     // nice banner output
     // define algorithm
 
@@ -90,7 +89,7 @@ public class AliasAnalysis implements GraftAnalysis {
         }
 
         banner.println(nrEdges + " may-alias edges added");
-        banner.println("Time elapsed: " + displayMillis(System.currentTimeMillis() - start));
+        banner.println("Time elapsed: " + displayTime(System.currentTimeMillis() - start));
         banner.display();
     }
 

@@ -21,6 +21,7 @@ import graft.traversal.CpgTraversal;
 
 import static graft.Const.*;
 import static graft.traversal.__.*;
+import static graft.utils.DisplayUtil.*;
 
 /**
  * This class performs a taint analysis on the CPG, using the given source, sink and sanitizer descriptions.
@@ -32,7 +33,6 @@ public class TaintAnalysis implements GraftAnalysis {
     // TODO
     // javadocs
     // handle file problems gracefully
-    // use display-millis and nice banner output
     // use paper traversals and define algorithm
 
     private static Logger log = LoggerFactory.getLogger(TaintAnalysis.class);
@@ -84,7 +84,7 @@ public class TaintAnalysis implements GraftAnalysis {
             }
         }
 
-        log.info("Taint analysis completed in {}ms", System.currentTimeMillis() - start);
+        log.info("Taint analysis completed in {}", displayTime(System.currentTimeMillis() - start));
 
     }
 
