@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Iterator;
-import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -27,11 +26,6 @@ public class Config {
     // handle misc todos, comments
     // javadocs
 
-    /**
-     * The path to the default configuration resource
-     */
-    private static final String DEFAULT_CONFIG_RESOURCE = "default.properties";
-
     private static Logger log = LoggerFactory.getLogger(Config.class);
 
     private Configuration configuration;
@@ -40,18 +34,19 @@ public class Config {
     // private constructors
     // ********************************************************************************************
 
-    private Config() {
-        this.configuration = new PropertiesConfiguration();
-    }
-
     private Config(Configuration configuration) {
         this.configuration = configuration;
     }
 
     // ********************************************************************************************
-    // public instance methods
+    // instance methods
     // ********************************************************************************************
 
+    /**
+     * Create a copy of the Config object.
+     *
+     * @return a copy of the Config object
+     */
     public Config copy() {
         Configuration copy = new PropertiesConfiguration();
         Iterator<String> keys = configuration.getKeys();
@@ -62,7 +57,13 @@ public class Config {
         return new Config(copy);
     }
 
-    public void amend(Config other) {
+    /**
+     * Combine this Config with another Config object, overwriting any duplicate fields with values
+     * from the other Config.
+     *
+     * @param other the Config object to combine with this one
+     */
+    public void combine(Config other) {
         Iterator<String> keys = other.keys();
         while (keys.hasNext()) {
             String key = keys.next();
@@ -70,22 +71,21 @@ public class Config {
         }
     }
 
-    public Config subset(String prefix) {
-        return new Config(configuration.subset(prefix));
-    }
-
-    public List<Object> getList(String key) {
-        return configuration.getList(key);
-    }
-
+    /**
+     * Get an Iterator of the keys in this Config object.
+     *
+     * @return an Iterator of property keys
+     */
     public Iterator<String> keys() {
         return configuration.getKeys();
     }
 
-    public Iterator<String> keys(String prefix) {
-        return configuration.getKeys(prefix);
-    }
-
+    /**
+     * Check whether this Config contains the given key.
+     *
+     * @param key the key to check for membership
+     * @return true if the Config contains a value for the key, else false
+     */
     public boolean containsKey(String key) {
         return configuration.containsKey(key);
     }
@@ -93,39 +93,17 @@ public class Config {
     // property access methods
 
     public Object getProperty(String key) {
+        checkContains(key);
         return configuration.getProperty(key);
-    }
-
-    public String getString(String key) {
-        return configuration.getString(key);
-    }
-
-    public String getString(String key, String def) {
-        return configuration.getString(key, def);
-    }
-
-    public String[] getStringArray(String key) {
-        return configuration.getStringArray(key);
-    }
-
-    public int getInt(String key) {
-        return configuration.getInt(key);
-    }
-
-    public int getInt(String key, int def) {
-        return configuration.getInt(key, def);
-    }
-
-    public boolean getBoolean(String key) {
-        return configuration.getBoolean(key);
-    }
-
-    public boolean getBoolean(String key, boolean def) {
-        return configuration.getBoolean(key, def);
     }
 
     public void setProperty(String key, Object value) {
         configuration.setProperty(key, value);
+    }
+
+    public String getString(String key) {
+        checkContains(key);
+        return configuration.getString(key);
     }
 
     public void debug() {
@@ -176,6 +154,12 @@ public class Config {
         out.close();
     }
 
+    private void checkContains(String key) {
+        if (!containsKey(key)) {
+            throw new GraftRuntimeException("No value set for key '" + key + "'");
+        }
+    }
+
     public void toFile(Path path) {
         try {
             toFile(path.toFile());
@@ -222,7 +206,7 @@ public class Config {
     static Config fromFileWithDefaults(String filename) {
         Config def = getDefault();
         Config conf = fromFile(filename);
-        def.amend(conf);
+        def.combine(conf);
         return def;
     }
 

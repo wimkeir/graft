@@ -1,34 +1,37 @@
 package graft.db;
 
+import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
+
 import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
 
-import static graft.Const.*;
-
 /**
+ * Utility methods for interacting with Neo4j graph databases.
  *
+ * @author Wim Keirsgieter
  */
 public class Neo4jUtil {
 
-    // TODO
-    // javadocs
-    // what separates this from GraphUtil?
-
-    public static Neo4jGraph fromFile(String filename) {
-        return fromFile(DEFAULT_DB_DIRECTORY, filename);
+    /**
+     * Initialize a Neo4j graph instance in the given directory.
+     *
+     * @param dir the Neo4j directory
+     * @return the Neo4j graph instance
+     */
+    public static Neo4jGraph fromDir(String dir) {
+        Configuration config = new BaseConfiguration();
+        config.setProperty("gremlin.neo4j.directory", dir);
+        config.setProperty("gremlin.neo4j.conf.dbms.auto_index.nodes.enabled", "true");
+        config.setProperty("gremlin.neo4j.conf.dbms.auto_index.relationships.enabled", "true");
+        return fromConfig(config);
     }
 
-    public static Neo4jGraph fromFile(String neo4jDir, String filename) {
-        Neo4jGraph g = fromDir(neo4jDir);
-        g.traversal().io(filename).read();
-        return g;
-    }
-
-    public static Neo4jGraph fromDir(String neo4jDir) {
-        Neo4jGraph g = Neo4jGraph.open(neo4jDir);
-        return g;
-    }
-
+    /**
+     * Initialize a Neo4j graph instance from the given config.
+     *
+     * @param config the Neo4j config
+     * @return the Neo4j graph instance
+     */
     public static Neo4jGraph fromConfig(Configuration config) {
         Neo4jGraph g = Neo4jGraph.open(config);
         return g;
