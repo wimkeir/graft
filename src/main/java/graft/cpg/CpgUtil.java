@@ -7,13 +7,11 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import soot.SootMethod;
 import soot.Type;
 
 import graft.Graft;
 import graft.cpg.visitors.TypeVisitor;
 import graft.traversal.CpgTraversal;
-import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
 import static graft.traversal.__.*;
@@ -25,18 +23,25 @@ import static graft.traversal.__.*;
  */
 public class CpgUtil {
 
-    // TODO
-    // javadocs
-    // more refactoring, convenience methods
-
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
+    /**
+     * Given a vertex in the CPG, traverse up to its class node and return the source file.
+     *
+     * @param v the vertex
+     * @return the source file containing the vertex
+     */
     public static String getFileName(Vertex v) {
         return Graft.cpg().traversal().V(v)
                 .until(has(NODE_TYPE, CLASS)).repeat(in(AST_EDGE))
                 .values(FILE_PATH).next().toString();
     }
 
+    /**
+     * Drop the given method from the CPG.
+     *
+     * @param methodSig the signature of the method to drop
+     */
     public static void dropMethod(String methodSig) {
         Graft.cpg().traversal()
                 .entryOf(methodSig).store("d")
@@ -45,6 +50,11 @@ public class CpgUtil {
                 .unfold().drop().iterate();
     }
 
+    /**
+     * Drop the given class from the CPG
+     *
+     * @param fullName the full name of the class to drop
+     */
     public static void dropClass(String fullName) {
         Graft.cpg().traversal()
                 .classOf(fullName).store("d")
@@ -53,13 +63,14 @@ public class CpgUtil {
                 .unfold().drop().iterate();
     }
 
+    /**
+     * Get the stored hash of the given class file.
+     *
+     * @param className the name of the class
+     * @return the stored hash of the class, if found (else empty string)
+     */
     public static String getClassHash(String className) {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        CpgTraversal t = g.V()
-                .hasLabel(AST_NODE)
-                .has(NODE_TYPE, CLASS)
-                .has(FULL_NAME, className)
-                .values(FILE_HASH);
+        CpgTraversal t = Graft.cpg().traversal().classOf(className).values(FILE_HASH);
         if (t.hasNext()) {
             return t.next().toString();
         } else {
