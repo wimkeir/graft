@@ -32,11 +32,6 @@ import static graft.utils.FileUtil.*;
  */
 public class CpgBuilder {
 
-    // TODO
-    // serious refactoring
-    // recursive package trees between cpg root and class nodes
-    // better reporting and banners
-
     private Banner banner;
 
     private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);
@@ -45,50 +40,69 @@ public class CpgBuilder {
         banner = new Banner("CPG construction");
     }
 
+    /**
+     * Build a CPG for the program in the given target directory.
+     *
+     * @param targetDir the target directory of the program
+     */
     public void buildCpg(String targetDir) {
         log.info("Building CPG");
         log.info("Target directory: {})", targetDir);
+        banner.println("Target directory: " + targetDir);
 
         long start = System.currentTimeMillis();
         try {
-            banner.println("Target directory: " + targetDir);
+
+            // get class files in target director
             File target = getTarget(targetDir);
             List<File> classFiles = getClassFiles(target);
-
             int nrClasses = classFiles.size();
+            if (nrClasses == 0) {
+                banner.println("No class files in target dir");
+                banner.display();
+                return;
+            }
             log.info("{} class(es) to load", nrClasses);
             banner.println(nrClasses + " class(es)");
 
+            // get class names from class files
             List<String> classNames = classFiles.stream()
                     .map(file -> getClassName(target, file))
                     .collect(Collectors.toList());
 
+            // load classes into Scene
             log.info("Loading class(es)...");
             SootUtil.loadClasses(classNames.toArray(new String[0]));
             long loaded = System.currentTimeMillis();
 
+            // build CPGs for all classes
             for (int i = 0; i < nrClasses; i++) {
                 String className = classNames.get(i);
                 File classFile = classFiles.get(i);
 
+                // load class from Scene
                 log.debug("Building CPG for class '{}'...", className);
                 SootClass cls = Scene.v().loadClassAndSupport(className);
+
+                // build class CPG
                 Vertex classNode = buildCpg(cls, classFile);
 
-                // TODO: add edge from package, not root
+                // class edge from root or package node to class node
                 log.debug("Adding class edge");
+                String packageName = cls.getPackageName();
+                System.out.println("Class " + cls.getName() + ", package " + cls.getPackageName());
+                Vertex packageNode = packageNodes(packageName);
                 Graft.cpg().traversal()
-                        .cpgRoot().as("root")
                         .addAstE(CLASS, CLASS)
-                        .from("root").to(classNode)
+                        .from(packageNode).to(classNode)
                         .iterate();
             }
             long built = System.currentTimeMillis();
 
+            // generate interproc edges
             log.info("Individual CPGs loaded, adding interprocedural edges...");
             Interproc.genInterprocEdges();
             long interproc = System.currentTimeMillis();
-
 
             banner.println("CPG constructed successfully");
 
@@ -117,90 +131,14 @@ public class CpgBuilder {
         banner.display();
     }
 
-    private File getTarget(String targetDir) {
-        File target = new File(targetDir);
-
-        if (!target.exists()) {
-            throw new GraftRuntimeException("Target directory '" + targetDir + "' does not exist");
-        }
-        if (!target.isDirectory()) {
-            throw new GraftRuntimeException("Target directory '" + targetDir + "' is not a directory");
-        }
-
-        return target;
-    }
-
-    public static Vertex buildCpg(SootClass cls, File classFile) {
-        String fileHash = UNKNOWN;
-        try {
-            fileHash = hashFile(classFile);
-        } catch (GraftException e) {
-            log.warn("Could not has file '{}'", classFile.getName(), e);
-        }
-
-        Vertex classNode = (Vertex) Graft.cpg().traversal()
-                .addAstV(CLASS, cls.getShortName())
-                .property(SHORT_NAME, cls.getShortName())
-                .property(FULL_NAME, cls.getName())
-                .property(FILE_NAME, classFile.getName())
-                .property(FILE_PATH, classFile.getPath())
-                .property(FILE_HASH, fileHash)
-                .next();
-
-        log.debug("{} methods in class", cls.getMethodCount());
-        for (SootMethod method : cls.getMethods()) {
-            Body body;
-            try {
-                body = method.retrieveActiveBody();
-            } catch (RuntimeException e) {
-                // no active bodies for interface methods, abstract methods etc.
-                log.debug(e.getMessage());
-                continue;
-            }
-            if (body == null) continue;
-            try {
-                Vertex methodEntry = buildCpg(body);
-                if (method.isConstructor()) {
-                    Graft.cpg().traversal()
-                            .addAstE(CONSTRUCTOR, CONSTRUCTOR)
-                            .from(classNode).to(methodEntry)
-                            .iterate();
-                } else {
-                    Graft.cpg().traversal()
-                            .addAstE(METHOD, METHOD)
-                            .from(classNode).to(methodEntry)
-                            .iterate();
-                }
-            } catch (SootMethodRefImpl.ClassResolutionFailedException e) {
-                // TODO: reason...
-                log.debug(e.getMessage());
-            }
-        }
-
-        Graft.cpg().commit();
-
-        return classNode;
-    }
-
     /**
-     * Build a CPG for the given method body.
-     *
-     * @param body the method body
+     * Update the CPG given changes in the configured target directory.
      */
-    public static Vertex buildCpg(Body body) {
-        UnitGraph unitGraph = new BriefUnitGraph(body);
-        CfgBuilder cfgBuilder = new CfgBuilder(unitGraph, new AstBuilder());
-        Vertex methodEntry = cfgBuilder.buildCfg();
-        PdgBuilder.buildPdg(unitGraph, cfgBuilder.generatedNodes());
-
-        return methodEntry;
-    }
-
-    public static void amendCpg() {
+    public void amendCpg() {
         String targetDirName = Options.v().getString(OPT_TARGET_DIR);
         File targetDir = new File(targetDirName);
 
-        Banner banner = new Banner();
+        banner = new Banner();
         banner.println("Amending CPG");
         banner.println("Target dir: " + targetDir);
 
@@ -248,7 +186,93 @@ public class CpgBuilder {
         banner.display();
     }
 
-    public static void amendCpg(Vertex cpgRoot, SootClass cls, File classFile) {
+    /**
+     * Get a list of all classes changed since CPG construction.
+     *
+     * @return a list of changed classes
+     */
+    public static List<File> amendedClasses() {
+        String targetDirName = Options.v().getString(OPT_TARGET_DIR);
+        File targetDir = new File(targetDirName);
+
+        List<File> classFiles = getClassFiles(targetDir);
+
+        List<File> amendedClasses = new ArrayList<>();
+        for (File classFile : classFiles) {
+            String className = getClassName(targetDir, classFile);
+            try {
+                String hash = hashFile(classFile);
+                if (!hash.equals(CpgUtil.getClassHash(className))) {
+                    amendedClasses.add(classFile);
+                }
+            } catch (GraftException e) {
+                log.warn("Could not hash file '{}'", classFile.getName(), e);
+            }
+        }
+
+        return amendedClasses;
+    }
+
+    private static Vertex buildCpg(SootClass cls, File classFile) {
+        String fileHash = UNKNOWN;
+        try {
+            fileHash = hashFile(classFile);
+        } catch (GraftException e) {
+            log.warn("Could not hash file '{}'", classFile.getName(), e);
+        }
+
+        Vertex classNode = (Vertex) Graft.cpg().traversal()
+                .addAstV(CLASS, cls.getShortName())
+                .property(SHORT_NAME, cls.getShortName())
+                .property(FULL_NAME, cls.getName())
+                .property(FILE_NAME, classFile.getName())
+                .property(FILE_PATH, classFile.getPath())
+                .property(FILE_HASH, fileHash)
+                .next();
+
+        log.debug("{} methods in class", cls.getMethodCount());
+        for (SootMethod method : cls.getMethods()) {
+            Body body;
+            try {
+                body = method.retrieveActiveBody();
+            } catch (RuntimeException e) {
+                // no active bodies for interface methods, abstract methods etc.
+                log.debug("No active body for method {}", method.getSignature());
+                continue;
+            }
+            if (body == null) continue;
+            try {
+                Vertex methodEntry = buildCpg(body);
+                if (method.isConstructor()) {
+                    Graft.cpg().traversal()
+                            .addAstE(CONSTRUCTOR, CONSTRUCTOR)
+                            .from(classNode).to(methodEntry)
+                            .iterate();
+                } else {
+                    Graft.cpg().traversal()
+                            .addAstE(METHOD, METHOD)
+                            .from(classNode).to(methodEntry)
+                            .iterate();
+                }
+            } catch (SootMethodRefImpl.ClassResolutionFailedException e) {
+                log.debug("Class resolution failed for method {}", method.getSignature());
+            }
+        }
+
+        Graft.cpg().commit();
+
+        return classNode;
+    }
+
+    private static Vertex buildCpg(Body body) {
+        UnitGraph unitGraph = new BriefUnitGraph(body);
+        CfgBuilder cfgBuilder = new CfgBuilder(unitGraph, new AstBuilder());
+        Vertex methodEntry = cfgBuilder.buildCfg();
+        PdgBuilder.buildPdg(unitGraph, cfgBuilder.generatedNodes());
+        return methodEntry;
+    }
+
+    private static void amendCpg(Vertex cpgRoot, SootClass cls, File classFile) {
         CpgTraversalSource g = Graft.cpg().traversal();
         g.V().hasLabel(AST_NODE)
                 .has(NODE_TYPE, CLASS)
@@ -281,26 +305,37 @@ public class CpgBuilder {
         Graft.cpg().commit();
     }
 
-    public static List<File> amendedClasses() {
-        String targetDirName = Options.v().getString(OPT_TARGET_DIR);
-        File targetDir = new File(targetDirName);
+    private static File getTarget(String targetDir) {
+        File target = new File(targetDir);
 
-        List<File> classFiles = getClassFiles(targetDir);
-
-        List<File> amendedClasses = new ArrayList<>();
-        for (File classFile : classFiles) {
-            String className = getClassName(targetDir, classFile);
-            try {
-                String hash = hashFile(classFile);
-                if (!hash.equals(CpgUtil.getClassHash(className))) {
-                    amendedClasses.add(classFile);
-                }
-            } catch (GraftException e) {
-                log.warn("Could not hash file '{}'", classFile.getName(), e);
-            }
+        if (!target.exists()) {
+            throw new GraftRuntimeException("Target directory '" + targetDir + "' does not exist");
+        }
+        if (!target.isDirectory()) {
+            throw new GraftRuntimeException("Target directory '" + targetDir + "' is not a directory");
         }
 
-        return amendedClasses;
+        return target;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Vertex packageNodes(String packageName) {
+        String[] packages = packageName.split("\\.");
+        Vertex prev = Graft.cpg().root();
+        for (String pack : packages) {
+            if (pack.length() == 0) continue;
+            Vertex packNode = (Vertex) Graft.cpg().traversal().V()
+                    .coalesce(
+                            packageOf(pack),
+                            addPackage(pack)
+                    ).next();
+            Graft.cpg().traversal()
+                    .addAstE(PACKAGE, PACKAGE)
+                    .from(prev).to(packNode)
+                    .iterate();
+            prev = packNode;
+        }
+        return prev;
     }
 
 }

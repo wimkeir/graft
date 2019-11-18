@@ -73,6 +73,10 @@ public class CodePropertyGraph {
         return name;
     }
 
+    public Vertex root() {
+        return (Vertex) traversal().cpgRoot().next();
+    }
+
     // ********************************************************************************************
     // CPG traversals
     // ********************************************************************************************
@@ -131,7 +135,7 @@ public class CodePropertyGraph {
      * @param filename the name of the dot file to write the CPG to.
      */
     public void toDot(String filename) {
-        DotUtil.graphToDot(this, filename, name);
+        DotUtil.graphToDot(this, filename);
     }
 
     /**

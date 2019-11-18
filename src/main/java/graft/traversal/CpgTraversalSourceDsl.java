@@ -53,6 +53,14 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .inV();
     }
 
+    public CpgTraversal<Vertex, Vertex> packageNodes() {
+        return astV(PACKAGE);
+    }
+
+    public CpgTraversal<Vertex, Vertex> packageOf(String packName) {
+        return packageNodes().has(PACKAGE_NAME, packName);
+    }
+
     public CpgTraversal<Vertex, Vertex> classNodes() {
         return astV(CLASS);
     }
@@ -195,6 +203,10 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .property(TARGET_DIR, target)
                 .property(CLASSPATH, classpath)
                 .property(TEXT_LABEL, name);
+    }
+
+    public CpgTraversal<Vertex, Vertex> addPackage(String name) {
+        return addAstV(PACKAGE, name).property(PACKAGE_NAME, name);
     }
 
     // Control flow graph

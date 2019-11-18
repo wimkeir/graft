@@ -150,6 +150,7 @@ public class Const {
     public static final String INVOKE_EXPR = "invoke-expr";
     public static final String NEW_ARRAY_EXPR = "new-array-expr";
     public static final String NEW_EXPR = "new-expr";
+    public static final String PACKAGE = "package";
     public static final String UNARY_EXPR = "unary-expr";
 
     // AST edge types
@@ -189,6 +190,7 @@ public class Const {
     public static final String FILE_PATH = "file-path";
     public static final String FILE_NAME = "file-name";
     public static final String FILE_HASH = "file-hash";
+    public static final String PACKAGE_NAME = "package-name";
     public static final String REF_TYPE = "ref-type";
 
     // AST edge property keys

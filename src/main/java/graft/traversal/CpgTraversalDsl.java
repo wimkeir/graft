@@ -20,7 +20,6 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
     // TODO
     // serious cleanup here...
     // remove dead methods
-    // implement more useful methods (including all from paper - match, astnodes etc.)
     // document and organize well (this is user-facing)
 
     default GraphTraversal<S, Vertex> locals(String varName) {
@@ -38,6 +37,14 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
 
     default GraphTraversal<S, Vertex> entryOf(String methodSig) {
         return entries().has(METHOD_SIG, methodSig);
+    }
+
+    default GraphTraversal<S, Vertex> packageNodes() {
+        return astV(PACKAGE);
+    }
+
+    default GraphTraversal<S, Vertex> packageOf(String packName) {
+        return packageNodes().has(PACKAGE_NAME, packName);
     }
 
     @SuppressWarnings("unchecked")
@@ -100,13 +107,29 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
         return filter(t -> t.get().toString().matches(regex));
     }
 
-    // TODO: this was WORKING in the shell
-//    cpg.traversal().V(v)
-//      .choose(hasLabel(AST_NODE), store("a"))
-//      .repeat(timeLimit(1000).astOut().store("a"))
-//      .until(astOut().count().is(0))
-//      .cap("a")
-//      .unfold()
+    // ********************************************************************************************
+    // V traversals
+    // ********************************************************************************************
+
+    // Control flow graph
+
+    default GraphTraversal<S, Vertex> cfgV() {
+        return V().hasLabel(CFG_NODE);
+    }
+
+    default GraphTraversal<S, Vertex> cfgV(String nodeType) {
+        return cfgV().has(NODE_TYPE, nodeType);
+    }
+
+    // Abstract syntax tree
+
+    default GraphTraversal<S, Vertex> astV() {
+        return V().hasLabel(AST_NODE);
+    }
+
+    default GraphTraversal<S, Vertex> astV(String nodeType) {
+        return astV().has(NODE_TYPE, nodeType);
+    }
 
     // ********************************************************************************************
     // in traversals
@@ -254,6 +277,11 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                 .property(TARGET_DIR, target)
                 .property(CLASSPATH, classpath)
                 .property(TEXT_LABEL, name);
+    }
+
+
+    default GraphTraversal<S, Vertex> addPackage(String name) {
+        return addAstV(PACKAGE, name).property(PACKAGE_NAME, name);
     }
 
     // Control flow graph
