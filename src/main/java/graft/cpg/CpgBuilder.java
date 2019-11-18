@@ -51,8 +51,6 @@ public class CpgBuilder {
 
         long start = System.currentTimeMillis();
         try {
-            SootUtil.configureSoot();
-
             banner.println("Target directory: " + targetDir);
             File target = getTarget(targetDir);
             List<File> classFiles = getClassFiles(target);
@@ -132,16 +130,6 @@ public class CpgBuilder {
         return target;
     }
 
-    private List<File> getClassFiles(File target) {
-        List<File> classFiles = SootUtil.getClassFiles(target);
-
-        if (classFiles.size() == 0) {
-            throw new GraftRuntimeException("No class files in target directory");
-        }
-
-        return classFiles;
-    }
-
     public static Vertex buildCpg(SootClass cls, File classFile) {
         String fileHash = UNKNOWN;
         try {
@@ -216,7 +204,7 @@ public class CpgBuilder {
         banner.println("Amending CPG");
         banner.println("Target dir: " + targetDir);
 
-        List<File> classFiles = SootUtil.getClassFiles(targetDir);
+        List<File> classFiles = getClassFiles(targetDir);
         if (classFiles.size() == 0) {
             banner.println("No class files in target dir");
             banner.display();
@@ -296,7 +284,7 @@ public class CpgBuilder {
         String targetDirName = Options.v().getString(OPT_TARGET_DIR);
         File targetDir = new File(targetDirName);
 
-        List<File> classFiles = SootUtil.getClassFiles(targetDir);
+        List<File> classFiles = getClassFiles(targetDir);
 
         List<File> amendedClasses = new ArrayList<>();
         for (File classFile : classFiles) {

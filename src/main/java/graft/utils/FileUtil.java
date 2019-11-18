@@ -6,18 +6,25 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import graft.GraftException;
 
+import static graft.Const.*;
+
+/**
+ * Miscellaneous utility methods for dealing with Java class files.
+ *
+ * @author Wim Keirsgieter
+ */
 public class FileUtil {
-
-    // TODO: logging and error handling
-
-    private static Logger log = LoggerFactory.getLogger(FileUtil.class);
 
     private static final int BUFFER_SIZE = 8192;
     private static final String HASH_ALGORITHM = "SHA-256";
+
+    private static Logger log = LoggerFactory.getLogger(FileUtil.class);
 
     /**
      * Hash the contents of a file.
@@ -30,7 +37,6 @@ public class FileUtil {
         // see https://stackoverflow.com/a/32032908/6208351
         byte[] buffer = new byte[BUFFER_SIZE];
         int count;
-
         try {
             MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
             BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
@@ -60,4 +66,24 @@ public class FileUtil {
                 .replace('/', '.')
                 .replace(".class", "");
     }
+
+    /**
+     * Get a list of all Java class files in a given directory, including its subdirectories.
+     *
+     * @param targetDir the name of the target directory
+     * @return a list of all class files in the directory
+     */
+    public static List<File> getClassFiles(File targetDir) {
+        List<File> classFiles = new ArrayList<>();
+        for (File file : targetDir.listFiles()) {
+            if (file.isDirectory()) {
+                classFiles.addAll(getClassFiles(file));
+            }
+            if (file.getName().matches(CLASS_FILE_REGEX)) {
+                classFiles.add(file);
+            }
+        }
+        return classFiles;
+    }
+
 }

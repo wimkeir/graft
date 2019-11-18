@@ -147,15 +147,6 @@ public class Graft {
         // set up new database
         initNewDb();
 
-        // generate the root node of the CPG
-        cpg.traversal().addCpgRoot(
-                Options.v().getString(OPT_PROJECT_NAME),
-                Options.v().getString(OPT_TARGET_DIR),
-                Options.v().getString(OPT_CLASSPATH)
-        ).iterate();
-
-        cpg.commit();
-
         // write project configuration to properties file
         Options.v().debug();
         Options.v().toFile(PROPERTIES_FILE);
@@ -186,6 +177,8 @@ public class Graft {
             System.out.print("overwrite? y/n: ");
 
             // TODO: we need to actually overwrite here...
+            // Drop entire CPG *except* for root
+            // clearCpg?
 
             Scanner in = new Scanner(new InputStreamReader(System.in));
             String choice = in.next();
@@ -318,12 +311,12 @@ public class Graft {
         switch (format) {
             case "graphson":
             case "json":
-                return Options.v().getString(DB_FILE_NAME) + ".json";
+                return Options.v().getString(OPT_PROJECT_NAME) + ".json";
             case "xml":
             case "graphml":
-                return Options.v().getString(DB_FILE_NAME) + ".xml";
+                return Options.v().getString(OPT_PROJECT_NAME) + ".xml";
             case "kryo":
-                return Options.v().getString(DB_FILE_NAME) + ".kryo";
+                return Options.v().getString(OPT_PROJECT_NAME) + ".kryo";
             default:
                 throw new GraftRuntimeException("Unrecognised DB file format '" + format);
         }

@@ -29,14 +29,14 @@ public class Interproc {
 
     private static void callsTo(Vertex calleeEntry) {
         String calleeSig = calleeEntry.value(METHOD_SIG);
-        log.warn("Generating interproc edges for calls to {}", calleeSig);
+        log.debug("Generating interproc edges for calls to {}", calleeSig);
 
         // call sites
         CpgTraversal calls = Graft.cpg().traversal()
                 .invokesOf(calleeSig)
                 .repeat(astIn()).until(label().is(CFG_NODE));
         long nrCalls = (long) calls.copy().count().next();
-        log.warn("{} calls", nrCalls);
+        log.debug("{} calls", nrCalls);
         if (nrCalls == 0) {
             // method is never invoked
             return;

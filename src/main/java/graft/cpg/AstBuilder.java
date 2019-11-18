@@ -17,9 +17,6 @@ import graft.cpg.visitors.ConstantVisitor;
 import graft.cpg.visitors.ExprVisitor;
 import graft.cpg.visitors.RefVisitor;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static graft.Const.*;
 import static graft.cpg.CpgUtil.*;
 
@@ -30,20 +27,12 @@ import static graft.cpg.CpgUtil.*;
  */
 public class AstBuilder {
 
-    // TODO:
-    // sort out locals business
-
     private static Logger log = LoggerFactory.getLogger(AstBuilder.class);
 
-    private Map<Local, Vertex> locals;
-
-    // ********************************************************************************************
-    // public methods
-    // ********************************************************************************************
-
-    public AstBuilder() {
-        this.locals = new HashMap<>();
-    }
+    /**
+     * Initialize a new AstBuilder instance (should be done for each method).
+     */
+    public AstBuilder() { }
 
     /**
      * Generate an AST node (possibly a subtree) for the given Soot value.
@@ -66,22 +55,13 @@ public class AstBuilder {
         }
     }
 
-    // ********************************************************************************************
-    // private methods
-    // ********************************************************************************************
-
     // Generates an AST node for a local variable
     private Vertex genLocalNode(Local local) {
-        Vertex localNode = locals.get(local);
-        if (localNode == null) {
-            boolean refType = local.getType() instanceof RefType;
-            localNode = (Vertex) Graft.cpg().traversal()
-                    .addLocalNode(getTypeString(local.getType()), local.toString(), local.getName())
-                    .property(REF_TYPE, refType)
-                    .next();
-//            locals.put(local, localNode);
-        }
-        return localNode;
+        boolean refType = local.getType() instanceof RefType;
+        return (Vertex) Graft.cpg().traversal()
+                .addLocalNode(getTypeString(local.getType()), local.toString(), local.getName())
+                .property(REF_TYPE, refType)
+                .next();
     }
 
     // Generates an AST node for a constant value using the ConstantVisitor
