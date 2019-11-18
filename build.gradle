@@ -45,24 +45,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
-// TODO: jars are apparently too big?
-//task fatJar(type: Jar) {
-//    manifest {
-//        attributes 'Implementation-Version': version, 'Main-Class': 'graft.Graft'
-//    }
-//    baseName = project.name + '-all'
-//    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-//    with jar
-//}
-//
-// task uberJar(type: Jar) {
-//    from sourceSets.main.output
-//    dependsOn configurations.runtimeClasspath
-//    from {
-//        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
-//    }
-// }
-
 clean {
     delete += 'bin'
     delete += 'sootOutput'
