@@ -26,69 +26,31 @@ import static graft.traversal.__.*;
 public class CpgUtil {
 
     // TODO
-    // nrNodes/edges can be moved to CodePropertyGraph
     // javadocs
     // more refactoring, convenience methods
 
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
 
-    public static long nrNodes() {
-        return Graft.cpg().traversal().V().count().next();
-    }
-
-    public static long nrNodes(String label) {
-        return Graft.cpg().traversal().V().hasLabel(label).count().next();
-    }
-
-    public static long nrEdges() {
-        return Graft.cpg().traversal().E().count().next();
-    }
-
-    public static long nrEdges(String label) {
-        return Graft.cpg().traversal().E().hasLabel(label).count().next();
-    }
-
     public static String getFileName(Vertex v) {
         return Graft.cpg().traversal().V(v)
-                .until(hasLabel(CFG_NODE)).repeat(in())
-                .until(has(NODE_TYPE, ENTRY)).repeat(in(CFG_EDGE))
                 .until(has(NODE_TYPE, CLASS)).repeat(in(AST_EDGE))
                 .values(FILE_PATH).next().toString();
     }
 
-    /**
-     * Get the number of nodes currently in the CPG.
-     *
-     * @return the number of nodes in the CPG
-     */
-    public static long getNodeCount() {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        return g.V().count().next();
+    public static void dropMethod(String methodSig) {
+        Graft.cpg().traversal()
+                .entryOf(methodSig).store("d")
+                .repeat(astOut().store("d"))
+                .cap("d")
+                .unfold().drop().iterate();
     }
 
-    /**
-     * Get the number of edges currently in the CPG.
-     *
-     * @return the number of edges in the CPG
-     */
-    public static long getEdgeCount() {
-        CpgTraversalSource g = Graft.cpg().traversal();
-        return g.E().count().next();
-    }
-
-    public static void dropCfg(SootMethod method) {
-        log.debug("Dropping method '{}'", method.getName());
-        CpgTraversalSource g = Graft.cpg().traversal();
-        String methodSig = method.getSignature();
-
-        // delete all method nodes and any interproc edges to/from them
-        g.V().hasLabel(CFG_NODE)
-                .has(METHOD_SIG, methodSig)
-                .store("d")
-                .repeat(out(AST_EDGE).store("d"))
-                .cap("d").unfold()
-                .drop()
-                .iterate();
+    public static void dropClass(String fullName) {
+        Graft.cpg().traversal()
+                .classOf(fullName).store("d")
+                .repeat(astOut().store("d"))
+                .cap("d")
+                .unfold().drop().iterate();
     }
 
     public static String getClassHash(String className) {
@@ -101,7 +63,7 @@ public class CpgUtil {
         if (t.hasNext()) {
             return t.next().toString();
         } else {
-            log.warn("Cannot get file hash of class '{}': no results", className);
+            log.debug("Cannot get file hash of class '{}': no results", className);
             return "";
         }
     }
@@ -116,24 +78,6 @@ public class CpgUtil {
         TypeVisitor visitor = new TypeVisitor();
         type.apply(visitor);
         return visitor.getResult().toString();
-    }
-
-    /**
-     * Get the CFG root of an AST node (returns the given vertex if it is already a CFG node).
-     *
-     * @param vertex the node to find the CFG root of
-     * @return the CFG root of the node, or the node itself if it is already a CFG node
-     */
-    public static Vertex getCfgRoot(Vertex vertex) {
-        if (vertex.label().equals(CFG_NODE))  {
-            return vertex;
-        }
-
-        CpgTraversalSource g = Graft.cpg().traversal();
-        return g.V(vertex)
-                .repeat(in(AST_EDGE))
-                .until(hasLabel(CFG_NODE))
-                .next();
     }
 
     /**

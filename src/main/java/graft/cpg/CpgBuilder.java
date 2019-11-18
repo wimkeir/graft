@@ -231,8 +231,8 @@ public class CpgBuilder {
 
         Vertex cpgRoot = Graft.cpg().traversal().V().hasLabel(CPG_ROOT).next();
         SootUtil.loadClasses(classNames.toArray(new String[0]));
-        long prevNodes = CpgUtil.getNodeCount();
-        long prevEdges = CpgUtil.getEdgeCount();
+        long prevNodes = Graft.cpg().nrV();
+        long prevEdges = Graft.cpg().nrE();
 
         for (int i = 0; i < amendedClasses.size(); i++) {
             log.debug("Amending CPG of class '{}'", classNames.get(i));
@@ -243,8 +243,8 @@ public class CpgBuilder {
         Graft.cpg().commit();
 
         banner.println("CPG amended successfully in " + (System.currentTimeMillis() - start) + "ms");
-        banner.println("Nodes: " + CpgUtil.getNodeCount() + " (prev " + prevNodes + ")");
-        banner.println("Edges: " + CpgUtil.getEdgeCount() + " (prev " + prevEdges + ")");
+        banner.println("Nodes: " + Graft.cpg().nrV() + " (prev " + prevNodes + ")");
+        banner.println("Edges: " + Graft.cpg().nrE() + " (prev " + prevEdges + ")");
         banner.display();
     }
 
@@ -257,8 +257,9 @@ public class CpgBuilder {
                 .iterate();
 
         for (SootMethod method : cls.getMethods()) {
-            CpgUtil.dropCfg(method);
+            CpgUtil.dropMethod(method.getSignature());
         }
+        CpgUtil.dropClass(cls.getName());
 
         Vertex classNode = buildCpg(cls, classFile);
         Graft.cpg().traversal()

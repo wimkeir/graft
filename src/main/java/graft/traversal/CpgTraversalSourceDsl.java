@@ -57,12 +57,20 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         return astV(CLASS);
     }
 
+    public CpgTraversal<Vertex, Vertex> classOf(String fullName) {
+        return classNodes().has(FULL_NAME, fullName);
+    }
+
     public CpgTraversal<Vertex, Vertex> entries() {
         return cfgV(ENTRY);
     }
 
     public CpgTraversal<Vertex, Vertex> entryOf(String methodSig) {
         return entries().has(METHOD_SIG, methodSig);
+    }
+
+    public CpgTraversal<Vertex, Vertex> stmtsOf(String methodSig) {
+        return entryOf(methodSig).astOut(STATEMENT);
     }
 
     public CpgTraversal<Vertex, Vertex> returns() {
