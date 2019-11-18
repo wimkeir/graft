@@ -203,7 +203,8 @@ public class Graft {
 
     private static void update() {
         startup();
-        CpgBuilder.amendCpg();
+        CpgBuilder cpgBuilder = new CpgBuilder();
+        cpgBuilder.amendCpg();
         shutdown();
     }
 

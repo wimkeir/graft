@@ -12,7 +12,6 @@ import java.io.IOException;
 
 import graft.cpg.structure.CodePropertyGraph;
 import graft.traversal.CpgTraversal;
-import graft.traversal.CpgTraversalSource;
 
 import static graft.Const.*;
 
@@ -23,27 +22,30 @@ import static graft.Const.*;
  */
 public class DotUtil {
 
-    // TODO: javadoc and make sure this is good
-
     private static Logger log = LoggerFactory.getLogger(DotUtil.class);
 
-    public static void graphToDot(CodePropertyGraph graph, String filename, String graphName) {
-        CpgTraversalSource g = graph.traversal();
+    /**
+     * Write the given CPG to a dot file.
+     *
+     * @param graph the CPG to write to the file
+     * @param filename the name of the dot file
+     */
+    public static void graphToDot(CodePropertyGraph graph, String filename) {
         try {
             FileWriter out = new FileWriter(new File(filename));
-            out.write("digraph " + graphName + "{\n");
-            CpgTraversal nodes = g.V();
+            out.write("digraph " + graph.name() + "{\n");
+            CpgTraversal nodes = graph.traversal().V();
             while (nodes.hasNext()) {
                 vertexToDot((Vertex) nodes.next(), out);
             }
-            CpgTraversal edges = g.E();
+            CpgTraversal edges = graph.traversal().E();
             while (edges.hasNext()) {
                 edgeToDot((Edge) edges.next(), out);
             }
             out.write("}");
             out.close();
         } catch (IOException e) {
-            log.error("Unable to write graph '{}' to dotfile '{}'", graphName, filename, e);
+            log.error("Unable to write graph '{}' to dotfile '{}'", graph.name(), filename, e);
         }
     }
 
