@@ -17,15 +17,45 @@ import static graft.Const.*;
 @GremlinDsl(traversalSource = "graft.traversal.CpgTraversalSourceDsl")
 public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
 
-    // TODO
-    // serious cleanup here...
-    // remove dead methods
-    // document and organize well (this is user-facing)
+    // ********************************************************************************************
+    // general purpose traversals
+    // ********************************************************************************************
+
+    /**
+     * Returns true if the property specified by the given key has a value that matches the given regex.
+     *
+     * @param key the key of the property to check
+     * @param regex the regex pattern to check the property value against
+     * @return true if the property value sanitizes the regex, else false
+     */
+    default GraphTraversal<S, ?> hasPattern(String key, String regex) {
+        return filter(x -> {
+            if (x.get() instanceof Vertex) {
+                Vertex vertex = (Vertex) x.get();
+                return vertex.value(key).toString().matches(regex);
+            } else if (x.get() instanceof Edge) {
+                Edge edge = (Edge) x.get();
+                return edge.value(key).toString().matches(regex);
+            } else {
+                return false;
+            }
+        });
+    }
+
+    default GraphTraversal<S, ?> copy() {
+        return this.clone();
+    }
+
+    default GraphTraversal<S, ?> matches(String regex) {
+        return filter(t -> t.get().toString().matches(regex));
+    }
+
+    // ********************************************************************************************
+    // TODO: categorise
+    // ********************************************************************************************
 
     default GraphTraversal<S, Vertex> locals(String varName) {
-        // TODO: specify method sig too
-        return (CpgTraversal<S, Vertex>) V()
-                .hasLabel(AST_NODE)
+        return (CpgTraversal<S, Vertex>) hasLabel(AST_NODE)
                 .has(NODE_TYPE, LOCAL_VAR)
                 .has(NAME, varName);
     }
@@ -45,6 +75,10 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
 
     default GraphTraversal<S, Vertex> packageOf(String packName) {
         return packageNodes().has(PACKAGE_NAME, packName);
+    }
+
+    default GraphTraversal<S, Vertex> assignStmts() {
+        return (CpgTraversal<S, Vertex>) has(NODE_TYPE, ASSIGN_STMT);
     }
 
     @SuppressWarnings("unchecked")
@@ -83,28 +117,9 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                 .repeat((CpgTraversal) __.timeLimit(5).astIn());
     }
 
-    /**
-     * Gather all AST nodes in the AST subtree rooted at the current vertex.
-     *
-     * @return all nodes in the AST subtree rooted at the current vertex
-     */
-    @SuppressWarnings("unchecked")
-    default GraphTraversal<S, Vertex> astNodes() {
-        // TODO: really get this working
-        return choose(label().is(AST_NODE), store("a"))
-                .repeat((CpgTraversal) __.timeLimit(5).astOut().store("a"))
-//                .until(astOut().count().is(0))
-                .cap("a")
-                .unfold();
-    }
-
     @SuppressWarnings("unchecked")
     default GraphTraversal<S, Vertex> cfgRoot() {
         return until(label().is(CFG_NODE)).repeat(((CpgTraversal) timeLimit(100)).astIn());
-    }
-
-    default GraphTraversal<S, ?> matches(String regex) {
-        return filter(t -> t.get().toString().matches(regex));
     }
 
     // ********************************************************************************************
@@ -267,6 +282,74 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
     }
 
     // ********************************************************************************************
+    // inE traversals
+    // ********************************************************************************************
+
+    // Control flow graph
+
+    default GraphTraversal<S, Edge> cfgInE() {
+        return inE(CFG_EDGE);
+    }
+
+    default GraphTraversal<S, Edge> cfgInE(String edgeType) {
+        return cfgInE().has(EDGE_TYPE, edgeType);
+    }
+
+    // Abstract syntax tree
+
+    default GraphTraversal<S, Edge> astInE() {
+        return inE(AST_EDGE);
+    }
+
+    default GraphTraversal<S, Edge> astInE(String edgeType) {
+        return astInE().has(EDGE_TYPE, edgeType);
+    }
+
+    // Program dependence graph
+
+    default GraphTraversal<S, Edge> pdgInE() {
+        return inE(PDG_EDGE);
+    }
+
+    default GraphTraversal<S, Edge> pdgInE(String edgeType) {
+        return pdgInE().has(EDGE_TYPE, edgeType);
+    }
+
+    // ********************************************************************************************
+    // outE traversals
+    // ********************************************************************************************
+
+    // Control flow graph
+
+    default GraphTraversal<S, Edge> cfgOutE() {
+        return outE(CFG_EDGE);
+    }
+
+    default GraphTraversal<S, Edge> cfgOutE(String edgeType) {
+        return cfgOutE().has(EDGE_TYPE, edgeType);
+    }
+
+    // Abstract syntax tree
+
+    default GraphTraversal<S, Edge> astOutE() {
+        return outE(AST_EDGE);
+    }
+
+    default GraphTraversal<S, Edge> astOutE(String edgeType) {
+        return astOutE().has(EDGE_TYPE, edgeType);
+    }
+
+    // Program dependence graph
+
+    default GraphTraversal<S, Edge> pdgOutE() {
+        return outE(PDG_EDGE);
+    }
+
+    default GraphTraversal<S, Edge> pdgOutE(String edgeType) {
+        return pdgOutE().has(EDGE_TYPE, edgeType);
+    }
+
+    // ********************************************************************************************
     // addV traversals
     // ********************************************************************************************
 
@@ -415,6 +498,9 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
         return addPdgE(RET_DEP, RET_DEP);
     }
 
+    // ********************************************************************************************
+    // statement AST traversals
+    // ********************************************************************************************
 
     /**
      * Get the value node of an assign statement.
@@ -436,46 +522,6 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
         return hasLabel(CFG_NODE).has(NODE_TYPE, ASSIGN_STMT) // ensure we're on an assign stmt
                 .outE(AST_EDGE).has(EDGE_TYPE, TARGET)
                 .inV();
-    }
-
-    /**
-     * Returns the ith argument node of a method call expression vertex.
-     *
-     * @param i the index of the argument
-     * @return the ith argument
-     */
-    default GraphTraversal<S, Vertex> ithArg(int i) {
-        // TODO: call expressions aren't the only expressions with args
-        return hasLabel(AST_NODE).has(NODE_TYPE, INVOKE_EXPR)
-                .outE(AST_EDGE)
-                .has(EDGE_TYPE, ARG)
-                .has(INDEX, i)
-                .inV();
-    }
-
-    /**
-     * Returns true if the property specified by the given key has a value that sanitizes the given regex.
-     *
-     * @param key the key of the property to check
-     * @param regex the regex pattern to check the property value against
-     * @return true if the property value sanitizes the regex, else false
-     */
-    default GraphTraversal<S, ?> hasPattern(String key, String regex) {
-        return filter(x -> {
-            if (x.get() instanceof Vertex) {
-                Vertex vertex = (Vertex) x.get();
-                return vertex.value(key).toString().matches(regex);
-            } else if (x.get() instanceof Edge) {
-                Edge edge = (Edge) x.get();
-                return edge.value(key).toString().matches(regex);
-            } else {
-                return false;
-            }
-        });
-    }
-
-    default GraphTraversal<S, ?> copy() {
-        return this.clone();
     }
 
 }

@@ -15,8 +15,6 @@ import static graft.traversal.__.*;
 
 public class CpgTraversalSourceDsl extends GraphTraversalSource {
 
-    // TODO: same as CpgTraversal
-
     // ********************************************************************************************
     // constructors
     // ********************************************************************************************
@@ -29,16 +27,26 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         super(graph);
     }
 
-    // TODO: CATEGORISE
+    // ********************************************************************************************
+    // general purpose traversal sources
+    // ********************************************************************************************
 
+    /**
+     * Return the root of the CPG.
+     *
+     * @return the CPG root
+     */
     public CpgTraversal<Vertex, Vertex> cpgRoot() {
         return getV()
                 .hasLabel(CPG_ROOT)
                 .has(NODE_TYPE, CPG_ROOT);
     }
 
+    // ********************************************************************************************
+    // TODO: categorize
+    // ********************************************************************************************
+
     public CpgTraversal<Vertex, Vertex> locals(String varName) {
-        // TODO: specify method sig too
         return getV()
                 .hasLabel(AST_NODE)
                 .has(NODE_TYPE, LOCAL_VAR)
@@ -341,7 +349,7 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
     }
 
     // ********************************************************************************************
-    //
+    // grab specific statement types
     // ********************************************************************************************
 
     /**
@@ -450,6 +458,10 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         return cfgV(ASSIGN_STMT);
     }
 
+    // ********************************************************************************************
+    // paths between vertices
+    // ********************************************************************************************
+
     public CpgTraversal<Vertex, Path> pathsBetween(Vertex v, Vertex w, String edgeLabel) {
         return (CpgTraversal<Vertex, Path>) V(v)
                 .repeat(timeLimit(1000).out(edgeLabel).simplePath())
@@ -472,6 +484,10 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .until(is(w))
                 .path();
     }
+
+    // ********************************************************************************************
+    // utility traversals
+    // ********************************************************************************************
 
     protected CpgTraversal<Vertex, Vertex> getV() {
         CpgTraversalSource clone = (CpgTraversalSource) this.clone();
