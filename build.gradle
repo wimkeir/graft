@@ -45,6 +45,10 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
+configurations.all {
+    exclude module: 'slf4j-nop'
+}
+
 clean {
     delete += 'bin'
     delete += 'sootOutput'
