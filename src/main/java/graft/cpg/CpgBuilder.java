@@ -37,7 +37,7 @@ public class CpgBuilder {
     private static Logger log = LoggerFactory.getLogger(CpgBuilder.class);
 
     public CpgBuilder() {
-        banner = new Banner("CPG construction");
+        banner = new Banner("CPG construction summary");
     }
 
     /**
@@ -48,7 +48,6 @@ public class CpgBuilder {
     public void buildCpg(String targetDir) {
         log.info("Building CPG");
         log.info("Target directory: {})", targetDir);
-        banner.println("Target directory: " + targetDir);
 
         long start = System.currentTimeMillis();
         try {
@@ -58,12 +57,11 @@ public class CpgBuilder {
             List<File> classFiles = getClassFiles(target);
             int nrClasses = classFiles.size();
             if (nrClasses == 0) {
-                banner.println("No class files in target dir");
+                banner.println("- No class files in target dir");
                 banner.display();
                 return;
             }
             log.info("{} class(es) to load", nrClasses);
-            banner.println(nrClasses + " class(es)");
 
             // get class names from class files
             List<String> classNames = classFiles.stream()
@@ -103,24 +101,28 @@ public class CpgBuilder {
             Interproc.genInterprocEdges();
             long interproc = System.currentTimeMillis();
 
-            banner.println("CPG constructed successfully");
+            banner.println("CPG constructed successfully!");
+            banner.println();
 
             // performance stats
+            banner.println("Elapsed times:");
             long timeToLoad = loaded - start;
             long timeToBuild = built - loaded;
             long timeToInter = interproc - built;
-            banner.println("Class(es) loaded in " + displayTime(timeToLoad));
-            banner.println("Individual CPGs built in " + displayTime(timeToBuild));
-            banner.println("Interprocedural edges generated in " + displayTime(timeToInter));
-            banner.println("Total elapsed time: " + displayTime(timeToLoad + timeToBuild + timeToInter));
+            banner.println("* " + nrClasses + " class(es) loaded in " + displayTime(timeToLoad));
+            banner.println("* Intraprocedural CPGs built in " + displayTime(timeToBuild));
+            banner.println("* Interprocedural edges generated in " + displayTime(timeToInter));
+            banner.println("* TOTAL ELAPSED TIME: " + displayTime(timeToLoad + timeToBuild + timeToInter));
+            banner.println();
 
             // CPG stats
+            banner.println("CPG info:");
             long nrNodes = Graft.cpg().traversal().V().count().next();
             long nrEdges = Graft.cpg().traversal().E().count().next();
             long nrMethods = (long) Graft.cpg().traversal().entries().count().next();
-            banner.println(nrMethods + " methods in " + nrClasses + " classes");
-            banner.println(nrNodes + " nodes");
-            banner.println(nrEdges + " edges");
+            banner.println("* " + nrMethods + " methods in " + nrClasses + " class(es)");
+            banner.println("* " + nrNodes + " nodes");
+            banner.println("* " + nrEdges + " edges");
 
         } catch (GraftRuntimeException e) {
             banner.println(e.getClass().getName() + " during CPG construction");

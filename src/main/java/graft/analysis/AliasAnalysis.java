@@ -41,6 +41,14 @@ public class AliasAnalysis implements GraftAnalysis {
         mayAlias();
     }
 
+    private void mayAlias(Vertex entry) {
+        // TODO
+//        String methodSig = entry.value(METHOD_SIG);
+//        log.debug("Running may-alias analysis for method {}", methodSig);
+//
+//        Map<String, Set<String>> pts = new HashMap<>();
+    }
+
     private void mayAlias() {
         Banner banner = new Banner("Alias analysis");
 

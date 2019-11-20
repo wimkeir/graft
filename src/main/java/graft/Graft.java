@@ -266,7 +266,7 @@ public class Graft {
         }
 
         List<File> amendedClasses = CpgBuilder.amendedClasses();
-        if (amendedClasses.size() != 0) {
+        if (amendedClasses.size() != 0 && cpg.nrV() > 1) {
             log.info("{} classes changed since CPG construction", amendedClasses.size());
             log.info("Run 'graft update' to update CPG");
         }
