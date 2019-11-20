@@ -90,7 +90,6 @@ public class CpgBuilder {
                 // class edge from root or package node to class node
                 log.debug("Adding class edge");
                 String packageName = cls.getPackageName();
-                System.out.println("Class " + cls.getName() + ", package " + cls.getPackageName());
                 Vertex packageNode = packageNodes(packageName);
                 Graft.cpg().traversal()
                         .addAstE(CLASS, CLASS)
