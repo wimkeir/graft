@@ -1,5 +1,6 @@
 package graft.cpg;
 
+import org.apache.tinkerpop.gremlin.process.traversal.strategy.decoration.SubgraphStrategy;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import soot.Type;
 
 import graft.Graft;
+import graft.cpg.structure.CodePropertyGraph;
 import graft.cpg.visitors.TypeVisitor;
 import graft.traversal.CpgTraversal;
 
@@ -24,6 +26,40 @@ import static graft.traversal.__.*;
 public class CpgUtil {
 
     private static Logger log = LoggerFactory.getLogger(CpgUtil.class);
+
+    /**
+     * Given a vertex, returns a traversal over all nodes in the AST rooted at that vertex.
+     *
+     * @param root the vertex at which the AST is rooted
+     * @return a traversal over all nodes in the AST subtree
+     */
+    public static CpgTraversal astNodes(Vertex root) {
+        return Graft.cpg().traversal().V(root).union(
+            __(),
+            repeat(timeLimit(10000).astOut()).emit()
+        );
+    }
+
+    // XXX
+//    public static CpgTraversal astNodes(CodePropertyGraph cpg, Vertex root) {
+//        return cpg.traversal().V(root).union(
+//                __(),
+//                repeat(timeLimit(10000).astOut()).emit()
+//        );
+//    }
+
+    /**
+     * Returns a SubgraphStrategy that will only traverse the statement nodes of a given method.
+     *
+     * @param methodSig the signature of the method
+     * @return the SubgraphStrategy for traversals of the method's statement nodes
+     */
+    public static SubgraphStrategy methodSubgraphStrategy(String methodSig) {
+        return SubgraphStrategy.build().vertices(and(
+                hasLabel(CFG_NODE),
+                astIn(STATEMENT).has(METHOD_SIG, methodSig)
+        )).create();
+    }
 
     /**
      * Given a vertex in the CPG, traverse up to its class node and return the source file.
