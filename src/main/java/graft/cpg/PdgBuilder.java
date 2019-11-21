@@ -17,6 +17,7 @@ import soot.toolkits.scalar.LocalDefs;
 import soot.toolkits.scalar.SimpleLocalDefs;
 
 import graft.Graft;
+import graft.GraftRuntimeException;
 import graft.traversal.CpgTraversalSource;
 
 /**
@@ -25,10 +26,6 @@ import graft.traversal.CpgTraversalSource;
  * @author Wim Keirsgieter
  */
 public class PdgBuilder {
-
-    // TODO
-    // whats up with variables not having def sites?
-    // NB control dependencies! see paper?
 
     private static Logger log = LoggerFactory.getLogger(PdgBuilder.class);
 
@@ -59,11 +56,11 @@ public class PdgBuilder {
                 Local local = (Local) value;
                 for (Unit defSite : localDefs.getDefsOfAt(local, unit)) {
                     if (unitNodes.get(defSite) == null) {
-                        // TODO: this should probably never be the case
                         log.warn("No def site for local '{}' in method '{}'",
                                 local.getName(),
                                 unitGraph.getBody().getMethod().getSignature());
-                        continue;
+                        throw new GraftRuntimeException();
+                        //continue;
                     }
                     Vertex defVertex = g.V(unitNodes.get(defSite)).next();
                     Graft.cpg().traversal()

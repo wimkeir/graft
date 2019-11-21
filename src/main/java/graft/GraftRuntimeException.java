@@ -5,6 +5,10 @@ public class GraftRuntimeException extends RuntimeException {
     private String message;
     private Throwable cause;
 
+    public GraftRuntimeException() {
+        this("");
+    }
+
     public GraftRuntimeException(String message) {
         this.message = message;
         this.cause = null;

@@ -21,10 +21,6 @@ import static graft.traversal.__.*;
  */
 public class Interproc {
 
-    // TODO
-    // this is disgusting and needs some serious refactoring
-    // getting it to run faster would be great too (use traversals instead of loops)
-
     private static Logger log = LoggerFactory.getLogger(Interproc.class);
 
     private static void callsTo(Vertex calleeEntry) {
@@ -55,11 +51,6 @@ public class Interproc {
         CpgTraversal retSites = calls.copy().cfgOut(false);
         long nrRetSites = (long) retSites.copy().count().next();
 
-        if (nrRetSites == 0) {
-            // TODO: is this a problem?
-            log.debug("No ret sites for method " + calleeSig);
-        }
-
         callEdges(calleeEntry, calls.copy());
         argDepEdges(calleeEntry, calls.copy());
         retDepEdges(rets.copy(), calls.copy());
@@ -84,7 +75,6 @@ public class Interproc {
                     .cfgOut()
                     .next();
         } catch (NoSuchElementException e) {
-            log.warn("No ret site");
             retSite = null;
         }
 
@@ -99,7 +89,7 @@ public class Interproc {
             return;
         }
 
-        log.info("Handling call to {}", calleeSig);
+        log.debug("Handling call to {}", calleeSig);
 
         // call edge
         Graft.cpg().traversal()
@@ -180,19 +170,22 @@ public class Interproc {
 
     }
 
+    /**
+     * Generate interprocedural call and return edges into and out of the given method.
+     *
+     * @param callerEntry the entry of the method to generate interproc edges for
+     */
     public static void genInterprocEdges(Vertex callerEntry) {
         String callerSig = callerEntry.value(METHOD_SIG);
-        log.info("Generating interprocedural edges for method {}...", callerSig);
+        log.debug("Generating interprocedural edges for method {}...", callerSig);
+
+        callsTo(callerEntry);
 
         CpgTraversal calls = Graft.cpg().traversal()
                 .invokeExprs()
-                .where(
-                        repeat(astIn()).until(values(NODE_TYPE).is(ENTRY))
+                .where(repeat(astIn()).until(values(NODE_TYPE).is(ENTRY))
                         .values(METHOD_SIG).is(callerSig)
                 );
-        System.out.println("Calls from method: " + calls.copy().count().next());
-
-        callsTo(callerEntry);
 
         while (calls.hasNext()) {
             Vertex call = (Vertex) calls.next();

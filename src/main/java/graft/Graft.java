@@ -24,15 +24,13 @@ import static graft.Const.*;
 import static graft.db.GraphUtil.*;
 
 /**
- * TODO: javadoc
+ * Graft is a code property graph analysis tool for Java programs.
+ *
+ * See the README for more information.
+ *
+ * @author Wim Keirsgieter
  */
 public class Graft {
-
-    // TODO
-    // serious javadocs needed here
-    // better reporting (banners for every command)
-    // refactor into more modular functions and error handling
-    // graft-shell!
 
     private static Logger log = LoggerFactory.getLogger(Graft.class);
 
@@ -171,27 +169,9 @@ public class Graft {
         checkOrExit(1, targetDir != null, "Target directory not set");
         CpgBuilder cpgBuilder;
 
-        // If the CPG already exists, we can overwrite it or cancel
         if (cpg.traversal().V().count().next() > 1) {
-            System.out.print("CPG already exists for project '" + Options.v().getString(OPT_PROJECT_NAME) + "'...");
-            System.out.print("overwrite? y/n: ");
-
-            // TODO: we need to actually overwrite here...
-            // Drop entire CPG *except* for root
-            // clearCpg?
-
-            Scanner in = new Scanner(new InputStreamReader(System.in));
-            String choice = in.next();
-            while (!(choice.equals("y") || choice.equals("n"))) {
-                System.out.print("Choose y/n: ");
-                choice = in.next();
-            }
-
-            if (choice.equals("y")) {
-                cpgBuilder = new CpgBuilder();
-                cpgBuilder.buildCpg(targetDir);
-            }
-
+            System.out.println("CPG already exists for project '" + Options.v().getString(OPT_PROJECT_NAME) + "'...");
+            System.out.println("Use 'graft update' instead");
             shutdown();
         }
 
@@ -214,7 +194,6 @@ public class Graft {
         GraftAnalysis analysis;
         switch (analysisClass) {
             case TAINT_ANALYSIS:
-                // XXX
                 analysis = new TaintAnalysis("etc/taint.groovy");
                 break;
             case ALIAS_ANALYSIS:
@@ -227,10 +206,6 @@ public class Graft {
 
         analysis.doAnalysis();
         shutdown();
-    }
-
-    private static void shell() {
-        // TODO: use this instead of graft-shell script
     }
 
     private static void dot(String filename) {
@@ -323,11 +298,6 @@ public class Graft {
         }
     }
 
-    /**
-     * TODO: javadoc
-     *
-     * @param args command line arguments
-     */
     public static void main(String[] args) {
         checkOrExit(0, args.length >= 1, "Invalid command line arguments");
 
@@ -348,9 +318,6 @@ public class Graft {
                     System.exit(0);
                 }
                 runAnalysis(args[1]);
-                break;
-            case CMD_SHELL:
-                shell();
                 break;
             case CMD_DOT:
                 checkOrExit(0, args.length == 2, "No dotfile provided");

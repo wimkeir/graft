@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import soot.Type;
 
 import graft.Graft;
-import graft.cpg.structure.CodePropertyGraph;
 import graft.cpg.visitors.TypeVisitor;
 import graft.traversal.CpgTraversal;
 
@@ -33,20 +32,13 @@ public class CpgUtil {
      * @param root the vertex at which the AST is rooted
      * @return a traversal over all nodes in the AST subtree
      */
+    @SuppressWarnings("unchecked")
     public static CpgTraversal astNodes(Vertex root) {
         return Graft.cpg().traversal().V(root).union(
             __(),
             repeat(timeLimit(10000).astOut()).emit()
         );
     }
-
-    // XXX
-//    public static CpgTraversal astNodes(CodePropertyGraph cpg, Vertex root) {
-//        return cpg.traversal().V(root).union(
-//                __(),
-//                repeat(timeLimit(10000).astOut()).emit()
-//        );
-//    }
 
     /**
      * Returns a SubgraphStrategy that will only traverse the statement nodes of a given method.

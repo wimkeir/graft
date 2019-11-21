@@ -1,17 +1,20 @@
 package graft;
 
+/**
+ * Basic banner for terminal display.
+ *
+ * @author Wim Keirsgieter
+ */
 public class Banner {
-
-    // TODO:
-    // fix spacing/wrap issues (check widths)
-    // see COASTAL banner
-    // javadocs
 
     private static int DEFAULT_WIDTH = 100;
 
     private StringBuilder sb;
-    private int width = 100;
-    private String heading;
+    private int width;
+
+    // ********************************************************************************************
+    // constructors
+    // ********************************************************************************************
 
     public Banner() {
         this(DEFAULT_WIDTH);
@@ -27,7 +30,6 @@ public class Banner {
 
     public Banner(int width, String heading) {
         this.width = width;
-        this.heading = heading;
         sb = new StringBuilder();
 
         border();
@@ -40,15 +42,29 @@ public class Banner {
         }
     }
 
+    // ********************************************************************************************
+    // instance methods
+    // ********************************************************************************************
 
+    /**
+     * Print an empty line to the banner.
+     */
     public void println() {
         sb.append(String.format("| %1$-" + (width - 4) + "s |\n", " "));
     }
 
+    /**
+     * Print the given string to the banner.
+     *
+     * @param s the string to print
+     */
     public void println(String s) {
         sb.append(String.format("| %1$-" + (width - 4) + "s |\n", s));
     }
 
+    /**
+     * Display the banner to stdout.
+     */
     public void display() {
         println();
         border();

@@ -13,6 +13,11 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import static graft.Const.*;
 import static graft.traversal.__.*;
 
+/**
+ * Custom traversal sources for the Graft CPG traversal DSL.
+ *
+ * @author Wim Keirsgieter
+ */
 public class CpgTraversalSourceDsl extends GraphTraversalSource {
 
     // ********************************************************************************************
@@ -41,10 +46,6 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
                 .hasLabel(CPG_ROOT)
                 .has(NODE_TYPE, CPG_ROOT);
     }
-
-    // ********************************************************************************************
-    // TODO: categorize
-    // ********************************************************************************************
 
     public CpgTraversal<Vertex, Vertex> locals(String varName) {
         return getV()
@@ -466,7 +467,7 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
         return (CpgTraversal<Vertex, Path>) V(v)
                 .repeat(timeLimit(1000).out(edgeLabel).simplePath())
                 .until(is(w))
-                .path();
+                .path().dedup();
     }
 
     @SuppressWarnings("unchecked")
@@ -478,7 +479,6 @@ public class CpgTraversalSourceDsl extends GraphTraversalSource {
     }
 
     public CpgTraversal<Vertex, Path> controlFlowsBetween(Vertex v, Vertex w) {
-        // TODO: only intraproc!
         return (CpgTraversal<Vertex, Path>) V(v)
                 .repeat(timeLimit(1000).outEmpty().simplePath())
                 .until(is(w))

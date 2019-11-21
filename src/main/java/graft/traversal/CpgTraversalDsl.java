@@ -10,7 +10,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import static graft.Const.*;
 
 /**
- * TODO: javadoc
+ * Custom traversals for the Graft CPG traversal DSL.
  *
  * @author Wim Keirsgieter
  */
@@ -50,9 +50,15 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
         return filter(t -> t.get().toString().matches(regex));
     }
 
-    // ********************************************************************************************
-    // TODO: categorise
-    // ********************************************************************************************
+    default GraphTraversal<S, ?> defines(String varName) {
+        return and(
+                label().is(CFG_NODE),
+                values(NODE_TYPE).is(ASSIGN_STMT),
+                getTgt().and(
+                        values(NODE_TYPE).is(LOCAL_VAR),
+                        values(NAME).is(varName)
+                ));
+    }
 
     default GraphTraversal<S, Vertex> locals(String varName) {
         return (CpgTraversal<S, Vertex>) hasLabel(AST_NODE)
@@ -96,7 +102,6 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
 
     @SuppressWarnings("unchecked")
     default GraphTraversal<S, Path> controlFlowsTo(Vertex w) {
-        // TODO: only intraproc!
         return repeat((CpgTraversal) timeLimit(1000).outE(CFG_EDGE).has(INTERPROC, false).inV().simplePath())
                 .until(is(w))
                 .path();

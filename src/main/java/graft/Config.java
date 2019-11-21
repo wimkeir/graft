@@ -22,10 +22,6 @@ import static graft.Const.*;
  */
 public class Config {
 
-    // TODO
-    // handle misc todos, comments
-    // javadocs
-
     private static Logger log = LoggerFactory.getLogger(Config.class);
 
     private Configuration configuration;
@@ -92,20 +88,41 @@ public class Config {
 
     // property access methods
 
+    /**
+     * Returns the given property if it exists.
+     *
+     * @param key the property key
+     * @return the property value
+     */
     public Object getProperty(String key) {
         checkContains(key);
         return configuration.getProperty(key);
     }
 
+    /**
+     * Set the given property value.
+     *
+     * @param key the property key
+     * @param value the property value
+     */
     public void setProperty(String key, Object value) {
         configuration.setProperty(key, value);
     }
 
+    /**
+     * Get the given string property if it exists.
+     *
+     * @param key the property key
+     * @return the property value
+     */
     public String getString(String key) {
         checkContains(key);
         return configuration.getString(key);
     }
 
+    /**
+     * Debug the properties of the Config object.
+     */
     public void debug() {
         if (log.isDebugEnabled()) {
             log.debug("Running with options:");
@@ -117,19 +134,16 @@ public class Config {
         }
     }
 
-    public void toFile(String filename) {
-        File file = new File(filename);
+    /**
+     * Write the Config object to a properties file.
+     *
+     * @param path the path to the file
+     */
+    public void toFile(Path path) {
         try {
-            if (file.exists()) {
-                // TODO: ensure we're actually overwriting and not just appending
-                log.warn("Config file '{}' already exists, overwriting...");
-            }
-            if (!file.createNewFile()) {
-                throw new GraftRuntimeException("Could not create new file '" + filename + "'");
-            }
-            toFile(file);
+            toFile(path.toFile());
         } catch (IOException e) {
-            throw new GraftRuntimeException("Cannot write config to file '" + filename + "'", e);
+            throw new GraftRuntimeException("Cannot write config to file '" + path.toFile().getName() + "'", e);
         }
     }
 
@@ -141,16 +155,12 @@ public class Config {
         FileWriter out = new FileWriter(file);
         out.write(PROPERTIES_HEADER);
 
-        // TODO: this won't handle arrays and ref types
         Iterator<String> keys = keys();
         while (keys.hasNext()) {
             String key = keys.next();
             out.write(key + " = " + getProperty(key) + "\n");
         }
 
-        // TODO NB XXX
-        // This resource isn't closed on error paths in the enclosing try-catch block in toFile(String)
-        // See if we can actually pick this up with Graft?
         out.close();
     }
 
@@ -160,18 +170,15 @@ public class Config {
         }
     }
 
-    public void toFile(Path path) {
-        try {
-            toFile(path.toFile());
-        } catch (IOException e) {
-            throw new GraftRuntimeException("Cannot write config to file '" + path.toFile().getName() + "'", e);
-        }
-    }
-
     // ********************************************************************************************
     // public static methods
     // ********************************************************************************************
 
+    /**
+     * Get the default configuration.
+     *
+     * @return the default configuration
+     */
     static Config getDefault() {
         URL url = ClassLoader.getSystemClassLoader().getResource(DEFAULT_CONFIG_RESOURCE);
         assert url != null;
@@ -183,6 +190,12 @@ public class Config {
         }
     }
 
+    /**
+     * Load a configuration from a properties file.
+     *
+     * @param file the properties file
+     * @return the configuration
+     */
     static Config fromFile(File file) {
         try {
             Configuration configuration = new PropertiesConfiguration(file);
@@ -192,6 +205,12 @@ public class Config {
         }
     }
 
+    /**
+     * Load a configuration from a properties file.
+     *
+     * @param filename the properties file
+     * @return the configuration
+     */
     static Config fromFile(String filename) {
         File file = new File(filename);
         if (!file.exists()) {
@@ -203,6 +222,12 @@ public class Config {
         return fromFile(file);
     }
 
+    /**
+     * Load a configuration from a properties file with defaults.
+     *
+     * @param filename the properties file
+     * @return the configuration
+     */
     static Config fromFileWithDefaults(String filename) {
         Config def = getDefault();
         Config conf = fromFile(filename);

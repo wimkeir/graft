@@ -68,6 +68,18 @@ public class FileUtil {
     }
 
     /**
+     * Get the full name of a Java class from its file path.
+     *
+     * @param path the file path of the class
+     * @return the class name
+     */
+    public static String getClassName(String path) {
+        return path
+                .replace('/', '.')
+                .replace(".class", "");
+    }
+
+    /**
      * Get a list of all Java class files in a given directory, including its subdirectories.
      *
      * @param targetDir the name of the target directory

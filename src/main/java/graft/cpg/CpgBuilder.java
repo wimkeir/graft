@@ -180,8 +180,9 @@ public class CpgBuilder {
         }
 
         Graft.cpg().commit();
+        long end = System.currentTimeMillis();
 
-        banner.println("CPG amended successfully in " + (System.currentTimeMillis() - start) + "ms");
+        banner.println("CPG amended successfully in " + displayTime(end - start));
         banner.println("Nodes: " + Graft.cpg().nrV() + " (prev " + prevNodes + ")");
         banner.println("Edges: " + Graft.cpg().nrE() + " (prev " + prevEdges + ")");
         banner.display();

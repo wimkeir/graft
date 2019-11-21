@@ -28,9 +28,6 @@ import static graft.traversal.__.*;
  */
 public class CfgBuilder {
 
-    // TODO
-    // sort out switch business
-
     private static Logger log = LoggerFactory.getLogger(CfgBuilder.class);
 
     private AstBuilder astBuilder;
@@ -148,32 +145,29 @@ public class CfgBuilder {
     private Vertex genLookupSwitchAndSuccs(Vertex switchNode, LookupSwitchStmt switchStmt) {
         for (int i = 0; i < switchStmt.getTargetCount(); i++) {
             Vertex targetNode = genUnitNode(switchStmt.getTarget(i));
-            // TODO: how to handle lookup values?
             Graft.cpg().traversal()
                     .addCondEdge(switchStmt.getLookupValue(i) + "")
                     .from(switchNode).to(targetNode)
                     .iterate();
         }
-        if (switchStmt.getDefaultTarget() != null) {
-            Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget());
-            Graft.cpg().traversal()
-                    .addCondEdge(DEFAULT_TARGET)
-                    .from(switchNode).to(defaultNode)
-                    .iterate();
-        }
+        genDefaultTarget(switchNode, switchStmt);
         return switchNode;
     }
 
     private Vertex genTableSwitchAndSuccs(Vertex switchNode, TableSwitchStmt switchStmt) {
+        int i = 0;
         for (Unit target : switchStmt.getTargets()) {
             Vertex targetNode = genUnitNode(target);
-            // TODO: how to handle table values?
             Graft.cpg().traversal()
-                    // TODO NB
-                    .addCondEdge(UNKNOWN)
+                    .addCondEdge((i++) + "")
                     .from(switchNode).to(targetNode)
                     .iterate();
         }
+        genDefaultTarget(switchNode, switchStmt);
+        return switchNode;
+    }
+
+    private void genDefaultTarget(Vertex switchNode, SwitchStmt switchStmt) {
         if (switchStmt.getDefaultTarget() != null) {
             Vertex defaultNode = genUnitNode(switchStmt.getDefaultTarget());
             Graft.cpg().traversal()
@@ -181,7 +175,6 @@ public class CfgBuilder {
                     .from(switchNode).to(defaultNode)
                     .iterate();
         }
-        return switchNode;
     }
 
 }
