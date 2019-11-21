@@ -102,20 +102,12 @@ public interface CpgTraversalDsl<S, E> extends GraphTraversal.Admin<S, E> {
                 .path();
     }
 
-    default GraphTraversal<S, Vertex> stmt() {
-        return coalesce(
-                hasLabel(CFG_NODE),
-                repeat(((CpgTraversal) timeLimit(500)).astIn()).until(label().is(CFG_NODE))
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    default GraphTraversal<S, Vertex> stmtRoot() {
-        // TODO: really get this working
-        // TODO: make sure this works for AST nodes "above" the statements
-        return until(label().is(CFG_NODE))
-                .repeat((CpgTraversal) __.timeLimit(5).astIn());
-    }
+//    default GraphTraversal<S, Vertex> stmt() {
+//        return coalesce(
+//                hasLabel(CFG_NODE),
+//                repeat(((CpgTraversal) timeLimit(500)).astIn()).until(label().is(CFG_NODE))
+//        );
+//    }
 
     @SuppressWarnings("unchecked")
     default GraphTraversal<S, Vertex> cfgRoot() {

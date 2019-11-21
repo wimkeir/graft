@@ -12,57 +12,57 @@ import graft.Graft;
 import graft.traversal.CpgTraversal;
 
 import static graft.Const.*;
+import static graft.cpg.CpgUtil.*;
 import static graft.traversal.__.*;
 import static graft.utils.DisplayUtil.*;
 
 /**
- *
+ * Basic, intraprocedural may-alias analysis.
  */
 public class AliasAnalysis implements GraftAnalysis {
 
-    // TODO:
-    // javadocs
-    // run may-alias locally per method
-    // get rid of traversal warnings?
-    // nice banner output
-    // define algorithm
-
     private static Logger log = LoggerFactory.getLogger(AliasAnalysis.class);
 
+    private Banner banner;
+
     /**
-     *
+     * Instantiate a new alias analysis.
      */
     public AliasAnalysis() {
-
+        banner = new Banner("Alias Analysis");
     }
 
     @Override
     public void doAnalysis() {
-        mayAlias();
+        CpgTraversal entries = Graft.cpg().traversal().entries();
+
+        int nrMethods = 0;
+        long start = System.currentTimeMillis();
+        while (entries.hasNext()) {
+            Vertex entry = (Vertex) entries.next();
+            mayAlias(entry);
+            nrMethods++;
+        }
+        long end = System.currentTimeMillis();
+
+        banner.println("Alias analysis successfully performed on " + nrMethods + " methods");
+        banner.println("Elapsed time: " + displayTime(end - start));
+        banner.display();
     }
 
+    @SuppressWarnings("unchecked")
     private void mayAlias(Vertex entry) {
-        // TODO
-//        String methodSig = entry.value(METHOD_SIG);
-//        log.debug("Running may-alias analysis for method {}", methodSig);
-//
-//        Map<String, Set<String>> pts = new HashMap<>();
-    }
-
-    private void mayAlias() {
-        Banner banner = new Banner("Alias analysis");
-
-        // TODO: do this locally within a method (use stmt edges)
-        log.debug("Running mayAlias");
+        String methodSig = entry.value(METHOD_SIG);
+        log.debug("Running mayAlias on method '{}'", methodSig);
         Map<String, Set<String>> pts = new HashMap<>();
 
-        long start = System.currentTimeMillis();
-        CpgTraversal refAssigns = Graft.cpg().traversal().getRefAssignStmts();
+        CpgTraversal refAssigns = Graft.cpg().traversal()
+                .getRefAssignStmts()
+                .where(astIn(STATEMENT).values(METHOD_SIG).is(methodSig));
         log.debug("{} ref assigns", refAssigns.clone().count().next());
 
         while (refAssigns.hasNext()) {
             Vertex refAssign = (Vertex) refAssigns.next();
-            log.debug("Ref assign '{}'", refAssign.value(TEXT_LABEL).toString());
             String tgtName = Graft.cpg().traversal()
                     .V(refAssign)
                     .getTgt()
@@ -71,34 +71,24 @@ public class AliasAnalysis implements GraftAnalysis {
                     .V(refAssign)
                     .getVal()
                     .values(NAME).next().toString();
-
             addToSet(pts, tgtName, valName);
         }
+        log.debug("Points-to sets filled");
 
-        banner.println(pts.keySet().size() + " refs analysed");
-        int nrEdges = 0;
         for (String key : pts.keySet()) {
-            log.debug("Points to set of {}", key);
             for (String val : pts.get(key)) {
-                log.debug(val);
-                log.debug("Adding may-alias edge between {} and {}", key, val);
-                nrEdges++;
-                Graft.cpg().traversal()
-                        .locals(key).as("v")
+                CpgTraversal keyLocals = astNodes(entry).locals(key);
+                astNodes(entry).copy()
                         .locals(val)
                         .coalesce(
-                                inE(MAY_ALIAS).where(outV().as("v")),
+                                inE(MAY_ALIAS).where(outV().is(keyLocals.copy())),
                                 addE(MAY_ALIAS)
-                                .from("v")
+                                .from(keyLocals.copy())
                                 .property(EDGE_TYPE, MAY_ALIAS)
                                 .property(TEXT_LABEL, MAY_ALIAS)
                         ).iterate();
             }
         }
-
-        banner.println(nrEdges + " may-alias edges added");
-        banner.println("Time elapsed: " + displayTime(System.currentTimeMillis() - start));
-        banner.display();
     }
 
     private void addToSet(Map<String, Set<String>> map, String key, String val) {
