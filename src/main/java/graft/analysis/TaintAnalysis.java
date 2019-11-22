@@ -153,7 +153,6 @@ public class TaintAnalysis implements GraftAnalysis {
                     .path().dedup().toList();
 
             for (Path cfgPath : cfgPaths) {
-                System.out.println("NEW PATH");
                 boolean cfgSanitized = false;
                 for (int j = 0; j < cfgPath.size(); j++) {
                     //System.out.println(debugVertex(cfgPath.get(j)));
