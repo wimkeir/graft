@@ -43,7 +43,7 @@ public class Interproc {
         long nrReturns = (long) rets.copy().count().next();
 
         if (nrReturns == 0) {
-            log.warn("No returns for method {}", calleeSig);
+            log.debug("No returns for method {}", calleeSig);
             //throw new GraftRuntimeException("No returns for method " + methodSig);
         }
 
