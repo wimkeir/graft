@@ -7,15 +7,6 @@ The graph can be traversed to find various common security vulnerabilities, incl
 
 A command line shell is also provided that allows the user to perform ad-hoc traversals on the CPG interactively.
 
-## TODO
-
-- user-defined analyses (include on classpath)
-- hook up `graft-shell` to `graft shell` and set up CPG
-- also explain `graft shell` section a bit better (ie. traversals)
-- handle class removal or addition in update
-- examples in repo
-- output nice-ifying
-
 ## Usage
 
 Graft needs to be initialized within the project by running `graft init` before the CPG can be built and analysed.
