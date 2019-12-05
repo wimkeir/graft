@@ -7,6 +7,13 @@ The graph can be traversed to find various common security vulnerabilities, incl
 
 A command line shell is also provided that allows the user to perform ad-hoc traversals on the CPG interactively.
 
+## Building and running Graft
+
+Graft is a Gradle project, and can be built by simply running `gradle build` (or `./gradlew build`).
+
+During the build, two executable scripts are generated: `graft` and `graft-shell`. All references to `graft` in the Usage section refer to the `graft` executable.
+`graft-shell` opens a Groovy shell on the Graft classpath (see `graft-shell` section in Usage).
+
 ## Usage
 
 Graft needs to be initialized within the project by running `graft init` before the CPG can be built and analysed.
@@ -44,15 +51,6 @@ This procedure is much faster than reconstructing the entire graph each time, an
 This command can be used to run a predefined analysis on the graph. 
 Two such analyses (`TaintAnalysis` and `AliasAnalysis`) are built in and can be run with `graft run taint` and `graft run alias` respectively.
 
-The user can also define their own custom analyses by implementing the `graft.analysis.GraftAnalysis` interface.
-They can be run with `graft run <fully-qualified-name>`, after ensuring that they are on the classpath.
-
-### `graft shell`
-
-This command opens the Graft shell, a command line interface that allows the user to run traversals interactively on the CPG.
-
-The CPG is available as `cpg`, and all Graft constants and traversals in the DSL are in scope. 
-Traversals can be run by using `cpg.traversal()` as the source.
 
 ### `graft dot <dotfile>`
 
@@ -62,3 +60,29 @@ Not recommended for anything other than trivially small programs (this command i
 ### `graft dump <dumpfile>`
 
 This command dumps the CPG to the given file for portability. Again not recommended for larger graphs.
+
+### `graft-shell`
+
+This command opens the Graft shell. From here, the user can interactively inspect the CPG and run traversals on it.
+
+Example work flow:
+
+```java
+import graft.cpg.structure.CodePropertyGraph
+import static graft.traversal.__.*
+import static graft.Const.*
+
+cpg = CodePropertyGraph.fromFile('<db_filename>')
+
+// get a list of all method entry nodes in the CPG
+entries = cpg.traversal().entries().toList()
+
+// get a list of all assignments to the variable 'x'
+assigns = cpg.traversal().getAssignStmts().where(getTgt().has(NAME, 'x')).toList()
+
+// dump the current CPG to a file
+cpg.dump('<filename>')
+
+// write the current CPG to a dotfile
+cpg.toDot('<filename>')
+```
