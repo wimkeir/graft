@@ -1,11 +1,23 @@
 # Graft
 
+> Keirsgieter, W., & Visser, W. (2020). Graft: Static Analysis of Java Bytecode with Graph Databases. Conference of the South African Institute of Computer Scientists and Information Technologists 2020.
+
 Graft is a static analysis tool for Java programs, based on the theory of *[code property graphs](https://www.sec.cs.tu-bs.de/pubs/2014-ieeesp.pdf)* (CPGs).
 
 The CPG is generated from Java bytecode and stored in a local graph database. 
 The graph can be traversed to find various common security vulnerabilities, including taint-related vulnerabilities.
 
 A command line shell is also provided that allows the user to perform ad-hoc traversals on the CPG interactively.
+
+You are welcome to use this project for research purposes, but please remember to cite us!
+```
+@article{Keirsgieter2020GraftSA,
+  title={Graft: Static Analysis of Java Bytecode with Graph Databases},
+  author={Wim Keirsgieter and Willem Visser},
+  journal={Conference of the South African Institute of Computer Scientists and Information Technologists 2020},
+  year={2020}
+}
+```
 
 ## Building and running Graft
 
